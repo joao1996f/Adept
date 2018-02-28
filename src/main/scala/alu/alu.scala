@@ -5,6 +5,18 @@ import chisel3.util._
 
 import adept.config.AdeptConfig
 
+/*
+ *  This is an ALU used in a RISC-V processor. The main idea behind it is to be
+ *  able to generate an ALU for any RISC-V ISA. Currently, it only supports the
+ *  base instruction set for the R-Type and I-Type instructions.
+ *
+ *  TODO:
+ *  - S-Type
+ *  - B-Type
+ *  - U-Type
+ *  - J-Type
+ *  - Add SLT and SLTU instructions
+ */
 class ALU(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
                 // Input
@@ -43,7 +55,7 @@ class ALU(config: AdeptConfig) extends Module {
     val tmp_sel_oper_B = Wire(UInt(config.XLen.W))
     when (io.op(1, 0) === "b01".U) {
       // special case shift
-      tmp_sel_oper_B := 2048.U & io.imm.asUInt
+      tmp_sel_oper_B := "hffff_fbff".U & io.imm.asUInt
     } .otherwise {
       tmp_sel_oper_B := io.imm.asUInt
     }
@@ -86,6 +98,8 @@ class ALU(config: AdeptConfig) extends Module {
                             7.U -> and_result))
 }
 
+// This is needed to generate the verilog just for this module. When generating
+// the verilog this will only be needed in the top module
 object ALU extends App {
   val config = new AdeptConfig
   chisel3.Driver.execute(args, () => new ALU(config))
