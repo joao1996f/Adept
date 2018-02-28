@@ -27,7 +27,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // Only support ALU instructions with immediates right now
   // OP Code: 0010011 (6 dw 0) of instruction
-  when (io.instruction(26, 31) === "0010011") {
+  when (io.instruction(26, 31) === "b0010011".U) {
     io.rs1 := io.instruction(16, 20)
     // Shift instructions don't have rs2. In that case rs2 contains the shift
     // amount.

@@ -30,30 +30,32 @@ class ALU(config: AdeptConfig) extends Module {
   val carry_in = Wire(Bool())
 
   // Select Operand A
-  when (io.imm(22) === true.B && (io.op_code(1, 2) === 3.U || io.op_code(1, 2) === 1.U)) {
-    operand_A := rs1.asSInt
+  when (io.imm(22) === true.B && (io.op_code(5, 4) === "b11".U || io.op_code(5, 4) === "b01".U)) {
+    // TODO: need to cast to SInt
+    operand_A := io.rs1
   } .otherwise {
-    operand_A := rs1
+    operand_A := io.rs1
   }
 
   // Select Operand B
   // Immediate instructions
-  when(io.op_code(1, 2) === 1.U) {
-    when (io.op(2, 3) === 1.U) {
+  when(io.op_code(5, 4) === "b01".U) {
+    val tmp_sel_oper_B = Wire(UInt(config.XLen.W))
+    when (io.op(1, 0) === "b01".U) {
       // special case shift
-      sel_oper_B := io.imm(27, 31)
+      tmp_sel_oper_B := 2048.U & io.imm.asUInt
     } .otherwise {
-      // Regular Immediate
-      sel_oper_B := io.imm
+      tmp_sel_oper_B := io.imm.asUInt
     }
+    sel_oper_B := tmp_sel_oper_B
   } .otherwise {
     // Register instructions
     sel_oper_B := io.rs2
   }
 
   // Small modification to operand B when performing signed addition
-  when (io.imm(22) === true.B && io.op_code(1, 2) === 3.U) {
-    operand_B := not(sel_oper_B)
+  when (io.imm(22) === true.B && io.op_code(5, 4) === "b01".U) {
+    operand_B := ~sel_oper_B
     carry_in := true.B
   } .otherwise {
     operand_B := sel_oper_B
@@ -62,14 +64,17 @@ class ALU(config: AdeptConfig) extends Module {
 
   // Execution Units
   // Subtraction is derived from add, two's complement
-  val add_result = operand_A + operand_B + carry_in
-  val xor_result = operand_A ^ operand_B
-  val or_result = operand_A | operand_B
-  val and_result = operand_A & operand_B
-  val shift_left_logic_result = operand_A << operand_B
-  val shift_right_result = operand_A >> operand_B
+  val add_result               = operand_A + operand_B + carry_in
+  val xor_result               = operand_A ^ operand_B
+  val or_result                = operand_A | operand_B
+  val and_result               = operand_A & operand_B
+  val shift_left_logic_result  = operand_A << operand_B(4, 0)
+  val shift_right_result       = operand_A >> operand_B(4, 0)
+  // TODO
+  val set_less_result          = 0.U
+  val set_less_unsigned_result = 0.U
 
-
+  // Output MUX
   io.result :=  MuxLookup(io.op, 0.U, Array(
                             0.U -> add_result,
                             1.U -> shift_left_logic_result,
@@ -79,4 +84,9 @@ class ALU(config: AdeptConfig) extends Module {
                             5.U -> shift_right_result,
                             6.U -> or_result,
                             7.U -> and_result))
+}
+
+object ALU extends App {
+  val config = new AdeptConfig
+  chisel3.Driver.execute(args, () => new ALU(config))
 }
