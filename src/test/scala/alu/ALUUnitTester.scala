@@ -22,34 +22,31 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   ////////////////////////////////////////////////
 
   // ADDI
+  def ADDI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 0) // b000
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 + imm)
+  }
+
+  // Basic Functionality
   // Simple Test: two positive values 5 + 1 = 6
-  poke(c.io.rs1, 5)
-  poke(c.io.imm, 1)
-  poke(c.io.op, 0) // b000
-  poke(c.io.op_code, 19) // b0010011
-  step(1)
-  expect(c.io.result, 6)
+  ADDI(5, 1)
   // Positive rs1 and Negative immediate 5 + (-1) = 4
-  poke(c.io.rs1, 5)
-  poke(c.io.imm, -1)
-  poke(c.io.op, 0) // b000
-  poke(c.io.op_code, 19) // b0010011
-  step(1)
-  expect(c.io.result, 4)
+  ADDI(5, -1)
   // Negative rs1 and Positive immediate -5 + 1 = -4
-  poke(c.io.rs1, -5)
-  poke(c.io.imm, 1)
-  poke(c.io.op, 0) // b000
-  poke(c.io.op_code, 19) // b0010011
-  step(1)
-  expect(c.io.result, -4)
+  ADDI(-5, 1)
   // Negative rs1 and Negative immediate -5 + (-1) = -6
-  poke(c.io.rs1, -5)
-  poke(c.io.imm, -1)
-  poke(c.io.op, 0) // b000
-  poke(c.io.op_code, 19) // b0010011
-  step(1)
-  expect(c.io.result, -6)
+  ADDI(-5, -1)
+  // Fuzz here
+  // Generate a random rs1 value and a random immediate
+  for (i <- 0 until 10000) {
+    val rs1 = rnd.nextInt(2000000000)
+    val imm = rnd.nextInt(2000000000)
+    ADDI(rs1, imm)
+  }
 }
 
 /**
