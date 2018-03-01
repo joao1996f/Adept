@@ -36,16 +36,18 @@ class ALU(config: AdeptConfig) extends Module {
               })
 
   // Select operands
-  val operand_A = Wire(SInt(config.XLen.W))
+  val operand_A = io.rs1
   val operand_B = Wire(SInt(config.XLen.W))
   val carry_in = Wire(Bool())
+  val operand_A_shift_sel = Wire(Bool())
 
-  // Select Operand A
+  // Select Operand A for right shift
   when (io.imm(10) === true.B && (io.op_code(5, 4) === "b11".U || io.op_code(5, 4) === "b01".U)) {
-    operand_A := io.rs1
+    // Arithmetic right shift
+    operand_A_shift_sel := true.B
   } .otherwise {
-    // TODO: need to cast to UInt
-    operand_A := io.rs1
+    // Logic right shift
+    operand_A_shift_sel := false.B
   }
 
   // Select Operand B
@@ -68,12 +70,17 @@ class ALU(config: AdeptConfig) extends Module {
 
   // Execution Units
   // Subtraction is derived from add, two's complement
-  val add_result               = operand_A + operand_B + carry_in.asSInt
-  val xor_result               = operand_A ^ operand_B
-  val or_result                = operand_A | operand_B
-  val and_result               = operand_A & operand_B
-  val shift_left_logic_result  = operand_A << operand_B(4, 0).asUInt
-  val shift_right_result       = operand_A >> operand_B(4, 0) // TODO: support logic shift
+  val add_result                  = operand_A + operand_B + carry_in.asSInt
+  val xor_result                  = operand_A ^ operand_B
+  val or_result                   = operand_A | operand_B
+  val and_result                  = operand_A & operand_B
+  val shift_left_logic_result     = operand_A << operand_B(4, 0).asUInt
+
+  val shift_right_result_signed   = operand_A >> operand_B(4, 0)
+  val shift_right_result_unsigned = operand_A.asUInt >> operand_B(4, 0)
+  val shift_right_result          = Mux(operand_A_shift_sel,
+                                        shift_right_result_signed,
+                                        shift_right_result_unsigned.asSInt)
   // TODO
   val set_less_result          = -1.S
   val set_less_unsigned_result = -1.S

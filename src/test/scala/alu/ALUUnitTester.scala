@@ -31,16 +31,6 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     expect(c.io.result, rs1 + imm)
   }
 
-  // Basic Functionality
-  // Simple Test: two positive values 5 + 1 = 6
-  ADDI(5, 1)
-  // Positive rs1 and Negative immediate 5 + (-1) = 4
-  ADDI(5, -1)
-  // Negative rs1 and Positive immediate -5 + 1 = -4
-  ADDI(-5, 1)
-  // Negative rs1 and Negative immediate -5 + (-1) = -6
-  ADDI(-5, -1)
-
   // XORI
   private def XORI(rs1: Int, imm: Int) {
     poke(c.io.rs1, rs1)
@@ -82,6 +72,18 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     expect(c.io.result, rs1 << special_imm)
   }
 
+  // SRLI
+  private def SRLI(rs1: Int, imm: Int) {
+    val special_imm =  31 & imm // h_0000_001f
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, special_imm)
+    poke(c.io.op, 5) // b101
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    // >>> is the logic right shift operator
+    expect(c.io.result, rs1 >>> special_imm)
+  }
+
   // SRAI
   private def SRAI(rs1: Int, imm: Int) {
     val special_imm_2_shift =  31 & imm // h_0000_001f
@@ -97,14 +99,24 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   // Fuzz here
   // Generate a random rs1 value and a random immediate
   for (i <- 0 until 10000) {
-    val rs1 = rnd.nextInt(2000000000)
-    val imm = rnd.nextInt(2000000000)
+    var rs1 = rnd.nextInt(2000000000)
+    var imm = rnd.nextInt(2000000000)
+    val signedness = rnd.nextInt(50)
+    if (signedness % 4 == 0) {
+      rs1 = rs1 * -1
+      imm = imm * -1
+    } else if (signedness % 2 == 0) {
+      rs1 = rs1 * -1
+    } else if (signedness % 3 == 0) {
+      imm = imm * -1
+    }
     ADDI(rs1, imm)
     XORI(rs1, imm)
     ORI(rs1, imm)
     ANDI(rs1, imm)
     SLLI(rs1, imm)
     SRAI(rs1, imm)
+    SRLI(rs1, imm)
   }
 }
 
