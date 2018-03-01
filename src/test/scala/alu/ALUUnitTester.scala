@@ -119,20 +119,148 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     expect(c.io.result, rs1 & imm)
   }
 
+  ////////////////////////////////////////////////
+  // Register Type instructions
+  ////////////////////////////////////////////////
+
+  // ADD
+  private def ADD(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 0) // b000
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 + rs2)
+  }
+
+  // SUB
+  private def SUB(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 1024)
+    poke(c.io.op, 0) // b000
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 - rs2)
+  }
+
+  // SLL
+  private def SLL(rs1: Int, rs2: Int, imm: Int) {
+    val special_rs2 = 31 & rs2 // h_0000_001f
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, special_rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 1) // b001
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 << special_rs2)
+  }
+
+  // SLT
+  private def SLT(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 2) // b010
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 < rs2)
+  }
+
+  // SLTU
+  private def SLTU(rs1: Int, rs2: Int, imm: Int) {
+    // Turns out Scala doesn't have unsigned types so we do this trickery
+    val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
+    val u_rs2 = rs2.asInstanceOf[Long] & 0x00000000ffffffffL
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 3) // b011
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, u_rs1 < u_rs2)
+  }
+
+  // XOR
+  private def XOR(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 4) // b100
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 ^ rs2)
+  }
+
+  // SRL
+  private def SRL(rs1: Int, rs2: Int, imm: Int) {
+    val special_rs2 =  31 & rs2 // h_0000_001f
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, special_rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 5) // b101
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    // >>> is the logic right shift operator
+    expect(c.io.result, rs1 >>> special_rs2)
+  }
+
+  // SRA
+  private def SRA(rs1: Int, rs2: Int, imm: Int) {
+    val special_rs2_2_shift =  31 & rs2 // h_0000_001f
+    val special_rs2 =  1024 | special_rs2_2_shift // h_0000_0400
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, special_rs2)
+    poke(c.io.imm, 1024)
+    poke(c.io.op, 5) // b101
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 >> special_rs2_2_shift)
+  }
+
+  // OR
+  private def OR(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 6) // b110
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 | rs2)
+  }
+
+  // AND
+  private def AND(rs1: Int, rs2: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.rs2, rs2)
+    poke(c.io.imm, 31 & imm)
+    poke(c.io.op, 7) // b111
+    poke(c.io.op_code, 51) // b0110011
+    step(1)
+    expect(c.io.result, rs1 & rs2)
+  }
+
   // Fuzz here
   // Generate a random rs1 value and a random immediate
   for (i <- 0 until 10000) {
     var rs1 = rnd.nextInt(2000000000)
+    var rs2 = rnd.nextInt(2000000000)
     var imm = rnd.nextInt(2000000000)
+
     val signedness = rnd.nextInt(50)
     if (signedness % 4 == 0) {
       rs1 = rs1 * -1
       imm = imm * -1
+      rs2 = rs2 * -1
+    } else if (signedness % 5 == 0) {
+      rs2 = rs2 * -1
     } else if (signedness % 2 == 0) {
       rs1 = rs1 * -1
     } else if (signedness % 3 == 0) {
       imm = imm * -1
     }
+
     // Immediate Type instructions
     ADDI(rs1, imm)
     XORI(rs1, imm)
@@ -143,6 +271,18 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     SRLI(rs1, imm)
     SLTI(rs1, imm)
     SLTIU(rs1, imm)
+
+    // Register Type instructions
+    ADD(rs1, rs2, imm)
+    // SUB(rs1, rs2, imm)
+    XOR(rs1, rs2, imm)
+    OR(rs1, rs2, imm)
+    AND(rs1, rs2, imm)
+    SLL(rs1, rs2, imm)
+    SRA(rs1, rs2, imm)
+    SRL(rs1, rs2, imm)
+    SLT(rs1, rs2, imm)
+    SLTU(rs1, rs2, imm)
   }
 }
 

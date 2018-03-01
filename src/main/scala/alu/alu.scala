@@ -40,33 +40,27 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   val operand_A = io.rs1
   val operand_B = Wire(SInt(config.XLen.W))
-  val carry_in = Wire(Bool())
+  val carry_in = Wire(SInt(config.XLen.W))
   val operand_A_shift_sel = Wire(Bool())
 
   // Select Operand A for right shift
-  when (io.imm(10) === true.B && (io.op_code(5, 4) === "b11".U || io.op_code(5, 4) === "b01".U)) {
-    // Arithmetic right shift
-    operand_A_shift_sel := true.B
-  } .otherwise {
-    // Logic right shift
-    operand_A_shift_sel := false.B
-  }
+  operand_A_shift_sel := io.imm(10)
 
   // Select Operand B
   // Immediate instructions
   when(io.op_code(5, 4) === "b01".U) {
     operand_B := io.imm
-    carry_in := false.B
+    carry_in := 0.S
   } .otherwise {
     // Register instructions
     val sel_oper_B = io.rs2
     // Small modification to operand B when performing signed addition
-    when (io.imm(10) === true.B && io.op_code(5, 4) === "b01".U) {
+    when (io.imm(10) === true.B && io.op_code(5, 4) === "b11".U && io.op === "b000".U) {
       operand_B := ~sel_oper_B
-      carry_in := true.B
+      carry_in := 1.S
     } .otherwise {
       operand_B := sel_oper_B
-      carry_in := false.B
+      carry_in := 0.S
     }
   }
 
@@ -75,7 +69,7 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
 
   // Subtraction is derived from add, two's complement
-  val add_result                  = operand_A + operand_B + carry_in.asSInt
+  val add_result                  = operand_A + operand_B + carry_in
   val xor_result                  = operand_A ^ operand_B
   val or_result                   = operand_A | operand_B
   val and_result                  = operand_A & operand_B
