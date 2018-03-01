@@ -22,7 +22,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   ////////////////////////////////////////////////
 
   // ADDI
-  def ADDI(rs1: Int, imm: Int) {
+  private def ADDI(rs1: Int, imm: Int) {
     poke(c.io.rs1, rs1)
     poke(c.io.imm, imm)
     poke(c.io.op, 0) // b000
@@ -40,12 +40,71 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   ADDI(-5, 1)
   // Negative rs1 and Negative immediate -5 + (-1) = -6
   ADDI(-5, -1)
+
+  // XORI
+  private def XORI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 4) // b100
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 ^ imm)
+  }
+
+  // ORI
+  private def ORI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 6) // b110
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 | imm)
+  }
+
+  // ANDI
+  private def ANDI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 7) // b111
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 & imm)
+  }
+
+  // SLLI
+  private def SLLI(rs1: Int, imm: Int) {
+    val special_imm = 31 & imm // h_0000_001f
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, special_imm)
+    poke(c.io.op, 1) // b001
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 << special_imm)
+  }
+
+  // SRAI
+  private def SRAI(rs1: Int, imm: Int) {
+    val special_imm_2_shift =  31 & imm // h_0000_001f
+    val special_imm =  1024 | special_imm_2_shift // h_0000_0400
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, special_imm)
+    poke(c.io.op, 5) // b101
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 >> special_imm_2_shift)
+  }
+
   // Fuzz here
   // Generate a random rs1 value and a random immediate
   for (i <- 0 until 10000) {
     val rs1 = rnd.nextInt(2000000000)
     val imm = rnd.nextInt(2000000000)
     ADDI(rs1, imm)
+    XORI(rs1, imm)
+    ORI(rs1, imm)
+    ANDI(rs1, imm)
+    SLLI(rs1, imm)
+    SRAI(rs1, imm)
   }
 }
 
