@@ -35,7 +35,9 @@ class ALU(config: AdeptConfig) extends Module {
                 val result = Output(SInt(config.XLen.W))
               })
 
+  //////////////////////////////////////////////////////////////////////////////
   // Select operands
+  //////////////////////////////////////////////////////////////////////////////
   val operand_A = io.rs1
   val operand_B = Wire(SInt(config.XLen.W))
   val carry_in = Wire(Bool())
@@ -68,24 +70,31 @@ class ALU(config: AdeptConfig) extends Module {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // Execution Units
+  //////////////////////////////////////////////////////////////////////////////
+
   // Subtraction is derived from add, two's complement
   val add_result                  = operand_A + operand_B + carry_in.asSInt
   val xor_result                  = operand_A ^ operand_B
   val or_result                   = operand_A | operand_B
   val and_result                  = operand_A & operand_B
-  val shift_left_logic_result     = operand_A << operand_B(4, 0).asUInt
 
+  // Shifts
+  val shift_left_logic_result     = operand_A << operand_B(4, 0).asUInt
   val shift_right_result_signed   = operand_A >> operand_B(4, 0)
   val shift_right_result_unsigned = operand_A.asUInt >> operand_B(4, 0)
   val shift_right_result          = Mux(operand_A_shift_sel,
                                         shift_right_result_signed,
                                         shift_right_result_unsigned.asSInt)
-  // TODO
-  val set_less_result          = -1.S
-  val set_less_unsigned_result = -1.S
 
+  // Set Less Than
+  val set_less_result          = Cat(0.U, operand_A < operand_B).asSInt
+  val set_less_unsigned_result = Cat(0.U, operand_A.asUInt < operand_B.asUInt).asSInt
+
+  //////////////////////////////////////////////////////////////////////////////
   // Output MUX
+  //////////////////////////////////////////////////////////////////////////////
   io.result := MuxLookup(io.op, -1.S, Array(
                          0.U -> add_result,
                          1.U -> shift_left_logic_result,

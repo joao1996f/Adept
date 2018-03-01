@@ -31,36 +31,6 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     expect(c.io.result, rs1 + imm)
   }
 
-  // XORI
-  private def XORI(rs1: Int, imm: Int) {
-    poke(c.io.rs1, rs1)
-    poke(c.io.imm, imm)
-    poke(c.io.op, 4) // b100
-    poke(c.io.op_code, 19) // b0010011
-    step(1)
-    expect(c.io.result, rs1 ^ imm)
-  }
-
-  // ORI
-  private def ORI(rs1: Int, imm: Int) {
-    poke(c.io.rs1, rs1)
-    poke(c.io.imm, imm)
-    poke(c.io.op, 6) // b110
-    poke(c.io.op_code, 19) // b0010011
-    step(1)
-    expect(c.io.result, rs1 | imm)
-  }
-
-  // ANDI
-  private def ANDI(rs1: Int, imm: Int) {
-    poke(c.io.rs1, rs1)
-    poke(c.io.imm, imm)
-    poke(c.io.op, 7) // b111
-    poke(c.io.op_code, 19) // b0010011
-    step(1)
-    expect(c.io.result, rs1 & imm)
-  }
-
   // SLLI
   private def SLLI(rs1: Int, imm: Int) {
     val special_imm = 31 & imm // h_0000_001f
@@ -70,6 +40,39 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.op_code, 19) // b0010011
     step(1)
     expect(c.io.result, rs1 << special_imm)
+  }
+
+  // SLTI
+  private def SLTI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 2) // b010
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 < imm)
+  }
+
+  // SLTIU
+  private def SLTIU(rs1: Int, imm: Int) {
+    // Turns out Scala doesn't have unsigned types so we do this trickery
+    val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
+    val u_imm = imm.asInstanceOf[Long] & 0x00000000ffffffffL
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 3) // b011
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, u_rs1 < u_imm)
+  }
+
+  // XORI
+  private def XORI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 4) // b100
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 ^ imm)
   }
 
   // SRLI
@@ -96,6 +99,26 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     expect(c.io.result, rs1 >> special_imm_2_shift)
   }
 
+  // ORI
+  private def ORI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 6) // b110
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 | imm)
+  }
+
+  // ANDI
+  private def ANDI(rs1: Int, imm: Int) {
+    poke(c.io.rs1, rs1)
+    poke(c.io.imm, imm)
+    poke(c.io.op, 7) // b111
+    poke(c.io.op_code, 19) // b0010011
+    step(1)
+    expect(c.io.result, rs1 & imm)
+  }
+
   // Fuzz here
   // Generate a random rs1 value and a random immediate
   for (i <- 0 until 10000) {
@@ -110,6 +133,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     } else if (signedness % 3 == 0) {
       imm = imm * -1
     }
+    // Immediate Type instructions
     ADDI(rs1, imm)
     XORI(rs1, imm)
     ORI(rs1, imm)
@@ -117,6 +141,8 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     SLLI(rs1, imm)
     SRAI(rs1, imm)
     SRLI(rs1, imm)
+    SLTI(rs1, imm)
+    SLTIU(rs1, imm)
   }
 }
 
