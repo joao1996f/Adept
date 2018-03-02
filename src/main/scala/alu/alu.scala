@@ -55,8 +55,8 @@ class ALU(config: AdeptConfig) extends Module {
     // Register instructions
     val sel_oper_B = io.rs2
     // Small modification to operand B when performing signed addition
-    when (io.imm(10) === true.B && io.op_code(5, 4) === "b11".U && io.op === "b000".U) {
-      operand_B := ~sel_oper_B
+    when (io.imm(10) === true.B && io.op_code(5, 4) === "b11".U && io.op === "b000".U && io.op_code(2) === false.B) {
+      operand_B := (~(sel_oper_B).asUInt).asSInt
       carry_in := 1.S
     } .otherwise {
       operand_B := sel_oper_B

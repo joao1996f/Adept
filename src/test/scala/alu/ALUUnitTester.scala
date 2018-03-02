@@ -274,7 +274,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
 
     // Register Type instructions
     ADD(rs1, rs2, imm)
-    // SUB(rs1, rs2, imm)
+    SUB(rs1, rs2, imm)
     XOR(rs1, rs2, imm)
     OR(rs1, rs2, imm)
     AND(rs1, rs2, imm)
