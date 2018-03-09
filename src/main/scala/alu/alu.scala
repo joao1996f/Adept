@@ -15,24 +15,23 @@ import adept.config.AdeptConfig
  *  - B-Type
  *  - U-Type
  *  - J-Type
- *  - Add SLT and SLTU instructions
  */
 class ALU(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
                 // Input
                 // Registers
-                val rs1 = Input(SInt(config.XLen.W))
-                val rs2 = Input(SInt(config.XLen.W))
-                val rsd = Input(UInt(config.rs_len.W))
+                val rs1      = Input(SInt(config.XLen.W))
+                val rs2      = Input(SInt(config.XLen.W))
 
                 // Immediate, is sign extended
-                val imm = Input(SInt(config.XLen.W))
+                val imm      = Input(SInt(config.XLen.W))
                 // Operation
-                val op = Input(UInt(config.funct.W))
-                val op_code = Input(UInt(config.op_code.W))
+                val op       = Input(UInt(config.funct.W))
+                val op_code  = Input(UInt(config.op_code.W))
 
                 // Output
-                val result = Output(SInt(config.XLen.W))
+                val result   = Output(SInt(config.XLen.W))
+                val cmp_flag = Output(Bool())
               })
 
   //////////////////////////////////////////////////////////////////////////////
@@ -91,15 +90,23 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Output MUX
   //////////////////////////////////////////////////////////////////////////////
-  io.result := MuxLookup(io.op, -1.S, Array(
-                         0.U -> add_result,
-                         1.U -> shift_left_logic_result,
-                         2.U -> set_less_result,
-                         3.U -> set_less_unsigned_result,
-                         4.U -> xor_result,
-                         5.U -> shift_right_result,
-                         6.U -> or_result,
-                         7.U -> and_result))
+  val result = MuxLookup(io.op, -1.S, Array(
+                           0.U -> add_result,
+                           1.U -> shift_left_logic_result,
+                           2.U -> set_less_result,
+                           3.U -> set_less_unsigned_result,
+                           4.U -> xor_result,
+                           5.U -> shift_right_result,
+                           6.U -> or_result,
+                           7.U -> and_result))
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Output
+  //////////////////////////////////////////////////////////////////////////////
+  io.result := result
+
+  // This flag is only valid when evaluating control instructions
+  io.cmp_flag := result.asUInt.orR
 }
 
 // This is needed to generate the verilog just for this module. When generating
