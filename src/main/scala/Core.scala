@@ -6,6 +6,7 @@ import chisel3.util.log2Ceil
 import adept.config.AdeptConfig
 import adept.idecode.InstructionDecoder
 import adept.registerfile.RegisterFile
+import adept.memory.Memory
 
 class Adept(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{})
