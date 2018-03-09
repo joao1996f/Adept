@@ -1,4 +1,4 @@
-package chutils.registerfile
+package adept.registerfile
 
 import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
@@ -14,24 +14,24 @@ class RegisterFileUnitTester(c: RegisterFile) extends PeekPokeTester(c) {
 
     // Write A
     val a = rnd.nextInt(2^c.data_w)
-    poke(c.io.new_value, a)
-    poke(c.io.w_sel, sel)
+    poke(c.io.rd_value, a)
+    poke(c.io.rd_sel, sel)
     poke(c.io.we, 1)
     step(1)
 
     // Write B
     val b = rnd.nextInt(2^c.data_w)
-    poke(c.io.new_value, b)
-    poke(c.io.w_sel, sel + 1)
+    poke(c.io.rd_value, b)
+    poke(c.io.rd_sel, sel + 1)
     poke(c.io.we, 1)
     step(1)
 
     // Read results
-    poke(c.io.r_sel_A, sel)
-    poke(c.io.r_sel_B, sel + 1)
+    poke(c.io.rs1_sel, sel)
+    poke(c.io.rs2_sel, sel + 1)
     step(1)
-    expect(c.io.r_A, a)
-    expect(c.io.r_B, b)
+    expect(c.io.rs1, a)
+    expect(c.io.rs2, b)
   }
 }
 
