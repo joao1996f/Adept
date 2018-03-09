@@ -15,6 +15,6 @@ class Adept(config: AdeptConfig) extends Module {
   val idecode = Module(new InstructionDecoder(config))
 
   // Register File
-  // Creates a register file with 32 32-bit registers
-  val register_file = Module(new RegisterFile(config.XLen, config.XLen))
+  // Creates a register file with XLen XLen-bit registers
+  val register_file = Module(new RegisterFile(config))
 }

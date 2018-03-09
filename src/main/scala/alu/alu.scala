@@ -4,6 +4,8 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
+import adept.idecode.DecoderALUOut
+import adept.registerfile.RegisterFileOut
 
 /*
  *  This is an ALU used in a RISC-V processor. The main idea behind it is to be
@@ -16,18 +18,16 @@ import adept.config.AdeptConfig
  *  - U-Type
  *  - J-Type
  */
+
+class AluIO(config: AdeptConfig) extends Bundle {
+  val registers      = Flipped(new RegisterFileOut(config))
+  val decoder_params = Flipped(new DecoderALUOut(config))
+}
+
 class ALU(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
                 // Input
-                // Registers
-                val rs1      = Input(SInt(config.XLen.W))
-                val rs2      = Input(SInt(config.XLen.W))
-
-                // Immediate, is sign extended
-                val imm      = Input(SInt(config.XLen.W))
-                // Operation
-                val op       = Input(UInt(config.funct.W))
-                val op_code  = Input(UInt(config.op_code.W))
+                val in = new AluIO(config)
 
                 // Output
                 val result   = Output(SInt(config.XLen.W))
@@ -37,24 +37,24 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Select operands
   //////////////////////////////////////////////////////////////////////////////
-  val operand_A = io.rs1
+  val operand_A = io.in.registers.rs1.asSInt
   val operand_B = Wire(SInt(config.XLen.W))
   val carry_in = Wire(SInt(config.XLen.W))
   val operand_A_shift_sel = Wire(Bool())
 
   // Select Operand A for right shift
-  operand_A_shift_sel := io.imm(10)
+  operand_A_shift_sel := io.in.decoder_params.imm(10)
 
   // Select Operand B
   // Immediate instructions
-  when(io.op_code(5, 4) === "b01".U) {
-    operand_B := io.imm
+  when(io.in.decoder_params.op_code(5, 4) === "b01".U) {
+    operand_B := io.in.decoder_params.imm
     carry_in := 0.S
   } .otherwise {
     // Register instructions
-    val sel_oper_B = io.rs2
+    val sel_oper_B = io.in.registers.rs2.asSInt
     // Small modification to operand B when performing signed addition
-    when (io.imm(10) === true.B && io.op_code(5, 4) === "b11".U && io.op === "b000".U && io.op_code(2) === false.B) {
+    when (io.in.decoder_params.imm(10) === true.B && io.in.decoder_params.op_code(5, 4) === "b11".U && io.in.decoder_params.op === "b000".U && io.in.decoder_params.op_code(2) === false.B) {
       operand_B := (~(sel_oper_B.asUInt)).asSInt
       // Issue #122 firrt-interpreter
       // operand_B := ~sel_oper_B
@@ -90,7 +90,7 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Output MUX
   //////////////////////////////////////////////////////////////////////////////
-  val result = MuxLookup(io.op, -1.S, Array(
+  val result = MuxLookup(io.in.decoder_params.op, -1.S, Array(
                            0.U -> add_result,
                            1.U -> shift_left_logic_result,
                            2.U -> set_less_result,
