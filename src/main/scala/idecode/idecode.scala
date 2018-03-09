@@ -1,6 +1,7 @@
 package adept.idecode
 
 import chisel3._
+import chisel3.util._
 
 import adept.config.AdeptConfig
 
@@ -21,6 +22,7 @@ class DecoderRegisterOut(val config: AdeptConfig) extends Bundle {
   val rs1_sel = Output(UInt(config.rs_len.W))
   val rs2_sel = Output(UInt(config.rs_len.W))
   val rsd_sel = Output(UInt(config.rs_len.W))
+  val we      = Ouput(Bool())
 
   override def cloneType: this.type = {
     new DecoderRegisterOut(config).asInstanceOf[this.type];
@@ -39,19 +41,72 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // BTW this is a bad implementation, but its OK to start off.
   // Optimizations will be done down the line.
+  val op_code = io.instruction(6, 0)
+  val rsd_sel = io.instruction(11, 7)
+  val op      = io.instruction(14, 12)
+  val rs1_sel = io.instruction(19, 15)
+  val rs2_sel = io.instruction(24, 20)
+  val imm     = io.instruction(31, 20)
+  io.alu.op_code := op_code
 
-  // Only support ALU instructions with immediates right now
-  // OP Code: 0010011 (6 dw 0) of instruction
-  when (io.instruction(6, 0) === "b0010011".U) {
-    io.registers.rs1_sel := io.instruction(16, 20)
+  // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
+  // Load instructions
+  when (op_code === "b0010011".U || op_code === "b0000011".U || op_code === "b1100111".U) {
+    io.registers.rs1_sel := rs1_sel
     // Shift instructions don't have rs2. In that case rs2 contains the shift
     // amount.
-    io.registers.rs2_sel := io.instruction(12, 16)
-    io.registers.rsd_sel := io.instruction(24, 28)
+    io.registers.rs2_sel := rs2_sel
+    io.registers.rsd_sel := rsd_sel
     // Shift instructions have a special code in the immediate, in the ALU check
     // the two LSBs of the OP
-    io.alu.imm := io.instruction(0, 11)
-    io.alu.op := io.instruction(21, 23)
-    io.alu.op_code := io.instruction(26, 31)
+    io.alu.imm      := imm
+    io.alu.op       := op
+    io.registers.we := true.B
+  } .elsewhen (op_code === "b0110011".U) {
+    // R-Type Decode => OP Code: 0110011 of instruction
+    io.registers.rs1_sel := rs1_sel
+    io.registers.rs2_sel := rs2_sel
+    io.registers.rsd_sel := rsd_sel
+    // Shift instructions and Add/Sub have a special code in the immediate, in
+    // the ALU check the two LSBs of the OP
+    io.alu.imm      := imm
+    io.alu.op       := op
+    io.registers.we := true.B
+  } .elsewhen (op_code === "b0100011".U) {
+    // S-Type Decode => OP Code: 0100011 of instruction
+    io.registers.rs1_sel := rs1_sel
+    io.registers.rs2_sel := rs2_sel
+    io.registers.rsd_sel := 0.U
+    io.alu.imm           := Cat(imm(11, 5), rsd_sel)
+    io.alu.op            := op
+    io.registers.we      := false.B
+  } .elsewhen (op_code === "b1100011") {
+    // B-Type Decode => OP Code: 1100011 of instruction
+    io.registers.rs1_sel := rs1_sel
+    io.registers.rs2_sel := rs2_sel
+    io.registers.rsd_sel := 0.U
+    io.alu.imm           := Cat(imm(11), rsd_sel(0), imm(10, 5), rsd_sel(4, 1), 0.asUInt(1.W))
+    io.alu.op            := op
+    io.registers.we      := false.B
+  } .elsewhen (op_code === "b0010111".U || op_code === "b0110111".U) {
+    // U-Type Decode => OP Code: 0010111 or 0110111 of instruction
+    io.registers.rs1_sel := 0.U
+    io.registers.rs2_sel := 0.U
+    io.registers.rsd_sel := rsd_sel
+    io.alu.imm           := Cat(imm, rs1_sel, op)
+    io.alu.op            := 0.U
+    when (op_code(4) === false.B) {
+      io.registers.we := false.B
+    } .otherwise {
+      io.registers.we := true.B
+    }
+  } .otherwise {
+    // J-Type Decode => OP Code: 1101111 of instruction
+    io.registers.rs1_sel := 0.U
+    io.registers.rs2_sel := 0.U
+    io.registers.rsd_sel := rsd_sel
+    io.alu.imm           := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W))
+    io.alu.op            := 0.U
+    io.registers.we      := true.B
   }
 }
