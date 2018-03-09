@@ -33,7 +33,7 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   val registers = Reg(Vec(config.XLen, SInt(config.XLen.W)))
 
   // Perform write operation
-  when (io.we) {
+  when (io.we && io.decoder.rsd_sel =/= 0.U) {
     registers(io.decoder.rsd_sel) := io.rsd_value
   }
 
