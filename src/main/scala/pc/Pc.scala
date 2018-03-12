@@ -30,7 +30,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   })
 
   val branch_exe = (io.in_opcode(6, 4) === "b110".U) &&
-    (io.in_opcode(1,0) === "b11".U) // branch opecode verification
+    (io.in_opcode(1,0) === "b11".U) // branch opcode verification
 
   // Conditional Branch flags attribution
   val Cond_Br_Ver = MuxLookup (io.in_opcode (9,7), false.B,
