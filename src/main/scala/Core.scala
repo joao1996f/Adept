@@ -28,7 +28,6 @@ class Adept(config: AdeptConfig) extends Module {
   val idecode = Module(new InstructionDecoder(config))
 
   // Register File
-  // Creates a register file with XLen XLen-bit registers
   val register_file = Module(new RegisterFile(config))
 
   // ALU
@@ -65,7 +64,7 @@ class Adept(config: AdeptConfig) extends Module {
   mem.io.in.data_in := register_file.io.registers.rs2
   mem.io.in.addr_w  := alu.io.result.asUInt
   mem.io.in.addr_r  := alu.io.result.asUInt
-  mem.io.in.we      := idecode.io.mem_we
+  mem.io.decode     <> idecode.io.mem
 
   // MUX Selections to Register File
   register_file.io.rsd_value := MuxLookup(idecode.io.sel_rf_wb, 0.S,

@@ -47,7 +47,7 @@ class ALU(config: AdeptConfig) extends Module {
 
   // Select Operand B
   // Immediate instructions
-  when(io.in.decoder_params.op_code(5, 4) === "b01".U) {
+  when(io.in.decoder_params.switch_2_imm) {
     operand_B := io.in.decoder_params.imm
     carry_in := 0.S
   } .otherwise {

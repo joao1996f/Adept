@@ -10,17 +10,25 @@ class MemIO(val config: AdeptConfig) extends Bundle {
   val data_in = Input(SInt(config.XLen.W))
   val addr_w  = Input(UInt(config.XLen.W))
   val addr_r  = Input(UInt(config.XLen.W))
-  val we      = Input(Bool())
 
   override def cloneType: this.type = {
     new MemIO(config).asInstanceOf[this.type];
   }
 }
 
+class MemDecodeIO(val config: AdeptConfig) extends Bundle {
+  val op = Input(UInt(config.funct.W))
+  val we = Input(Bool())
+
+  override def cloneType: this.type = {
+    new MemDecodeIO(config).asInstanceOf[this.type];
+  }
+}
+
 class Memory(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
-                val in = new MemIO(config)
-                val op = Input(UInt(config.funct.W))
+                val in     = new MemIO(config)
+                val decode = new MemDecodeIO(config)
 
                 val data_out = Output(SInt(config.XLen.W))
               })
@@ -29,22 +37,22 @@ class Memory(config: AdeptConfig) extends Module {
   // result in the same clock cycle. The memory uses 8MB.
   val my_mem = Mem(Vec(4, UInt(8.W)), 1 << 21)
 
-  when (io.in.we) {
+  when (io.decode.we) {
     val addr_w = io.in.addr_w >> 2
     val new_data = WireInit(Vec(Seq.fill(4)(0.U(4.W))))
     // Store Byte (8 bits)
     new_data(io.in.addr_w(1, 0).asUInt) := io.in.data_in(7, 0)
     // Store Half (16 bits)
-    new_data(io.in.addr_w(1, 0).asUInt + 1.U) := Mux(io.op(0) === true.B || io.op(1) === true.B,
+    new_data(io.in.addr_w(1, 0).asUInt + 1.U) := Mux(io.decode.op(0) === true.B || io.decode.op(1) === true.B,
                                                       io.in.data_in(15, 8), 0.U)
     // Store Word (32 bits)
-    new_data(io.in.addr_w(1, 0).asUInt + 2.U) := Mux(io.op(1) === true.B, io.in.data_in(23, 16), 0.U)
-    new_data(io.in.addr_w(1, 0).asUInt + 3.U) := Mux(io.op(1) === true.B, io.in.data_in(31, 24), 0.U)
+    new_data(io.in.addr_w(1, 0).asUInt + 2.U) := Mux(io.decode.op(1) === true.B, io.in.data_in(23, 16), 0.U)
+    new_data(io.in.addr_w(1, 0).asUInt + 3.U) := Mux(io.decode.op(1) === true.B, io.in.data_in(31, 24), 0.U)
 
     // Build write mask
     val mask = Wire(UInt(4.W))
-    mask := Mux(io.op === 0.U, 1.U << io.in.addr_w(1, 0),
-                Mux(io.op === 1.U, 3.U << io.in.addr_w(1, 0), 15.U << io.in.addr_w(1, 0)))
+    mask := Mux(io.decode.op === 0.U, 1.U << io.in.addr_w(1, 0),
+                Mux(io.decode.op === 1.U, 3.U << io.in.addr_w(1, 0), 15.U << io.in.addr_w(1, 0)))
 
     // Write
     my_mem.write(addr_w, new_data, mask.toBools)
@@ -52,7 +60,7 @@ class Memory(config: AdeptConfig) extends Module {
   } .otherwise {
     val addr_r = io.in.addr_r >> 2
     val read_result = my_mem.read(addr_r)
-    io.data_out := MuxLookup(io.op, 0.S, Array(
+    io.data_out := MuxLookup(io.decode.op, 0.S, Array(
                                // Load Byte (8 bits)
                                0.U -> read_result(io.in.addr_r(1, 0)).asSInt,
                                // Load Half (16 bits)
