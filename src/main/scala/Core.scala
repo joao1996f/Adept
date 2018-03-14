@@ -77,14 +77,14 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug
   // Stole this from Sodor
   // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
-  printf("Op1=[0x%x] Op2=[0x%x] W[%c,%d= 0x%x] Mem[%d: R:0x%x W:0x%x] DASM(%x)\n"
+  printf("Op1=[0x%x] Op2=[0x%x] W[%d,%d= 0x%x] Mem[%d: R:0x%x W:0x%x] DASM(%x)\n"
            , alu.io.in.registers.rs1
            , alu.io.in.registers.rs2
-           , Mux(idecode.io.registers.we, Str("W"), Str("_"))
+           , idecode.io.registers.we
            , idecode.io.registers.rsd_sel
            , register_file.io.rsd_value
            , idecode.io.sel_rf_wb
-           , mem.io.in.data_out
+           , mem.io.data_out
            , mem.io.in.data_in
            , rom.io.instr
 )
