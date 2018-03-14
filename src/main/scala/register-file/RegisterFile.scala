@@ -22,7 +22,6 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
     // Inputs
     val rsd_value  = Input(SInt(config.XLen.W))
-    val we         = Input(Bool())
     val decoder    = Flipped(new DecoderRegisterOut(config))
 
     // Outputs
@@ -30,10 +29,10 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   })
 
   // Create a vector of registers
-  val registers = Reg(Vec(config.XLen, SInt(config.XLen.W)))
+  val registers = RegInit(Vec(Seq.fill(config.XLen)(0.S(config.XLen.W))))
 
   // Perform write operation
-  when (io.we && io.decoder.rsd_sel =/= 0.U) {
+  when (io.decoder.we && io.decoder.rsd_sel =/= 0.U) {
     registers(io.decoder.rsd_sel) := io.rsd_value
   }
 

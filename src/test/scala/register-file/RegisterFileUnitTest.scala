@@ -18,14 +18,14 @@ class RegisterFileUnitTester(c: RegisterFile) extends PeekPokeTester(c) {
     val a = rnd.nextInt(2^c.config.XLen)
     poke(c.io.rsd_value, a)
     poke(c.io.decoder.rsd_sel, sel)
-    poke(c.io.we, 1)
+    poke(c.io.decoder.we, 1)
     step(1)
 
     // Write B
     val b = rnd.nextInt(2^c.config.XLen)
     poke(c.io.rsd_value, b)
     poke(c.io.decoder.rsd_sel, sel + 1)
-    poke(c.io.we, 1)
+    poke(c.io.decoder.we, 1)
     step(1)
 
     // Read results
