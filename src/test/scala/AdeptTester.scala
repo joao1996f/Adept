@@ -6,7 +6,7 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import adept.config.AdeptConfig
 
 class AdeptUnitTester(e: Adept) extends PeekPokeTester(e) {
- step(10000)
+ step(100000)
 }
 
 /**

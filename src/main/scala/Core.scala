@@ -41,7 +41,7 @@ class Adept(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Instruction Fetch connections
   pc.io.br_flags  := alu.io.cmp_flag
-  pc.io.in_opcode := Cat(idecode.io.alu.op, idecode.io.alu.op_code)
+  pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
 

@@ -46,6 +46,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val sel_operand_a = Output(UInt(1.W))
                 val sel_rf_wb     = Output(UInt(1.W))
                 val imm_b_offset  = Output(SInt(config.XLen.W))
+                val br_op         = Output(UInt(3.W))
               })
 
   // BTW this is a bad implementation, but its OK to start off.
@@ -57,7 +58,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val rs2_sel = io.instruction(24, 20)
   val imm     = io.instruction(31, 20)
   io.alu.op_code := op_code
-
+  io.br_op       := op
   //////////////////////////////////////////////////////
   // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
   // Load instructions and 1100011 for JALR
@@ -183,9 +184,9 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U
     io.registers.rsd_sel := rsd_sel
-    io.imm_b_offset      := 0.S
+    io.imm_b_offset      := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
     io.alu.switch_2_imm  := true.B
-    io.alu.imm           := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
+    io.alu.imm           := 1.S
     io.alu.op            := 0.U
     io.registers.we      := true.B
     io.sel_operand_a     := 1.U

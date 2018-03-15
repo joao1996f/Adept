@@ -46,12 +46,12 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     ((io.in_opcode(3) & io.in_opcode(2)) |
        ((~(io.in_opcode(3) | io.in_opcode(2))) & Cond_Br_Ver))
 
-  // Auxiliar variable that contains either offset or 4
+  // Auxiliar variable that contains either offset or 1
   val add_to_pc_val = Mux(offset_sel,
-                          io.br_offset, 1.asSInt(config.XLen.W))
+                         Cat(Fill(2, io.br_offset(31)), io.br_offset(31,2)), 1.U)
 
   // next pc calculation
-  val next_pc = io.pc_out.asSInt + add_to_pc_val
+  val next_pc = io.pc_out.asSInt + add_to_pc_val.asSInt
   val jalrORpc_select = Mux(
     (branch_exe & (~io.in_opcode(3) & io.in_opcode(2))),
                             io.br_step, next_pc)

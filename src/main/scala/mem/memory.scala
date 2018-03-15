@@ -39,7 +39,7 @@ class Memory(config: AdeptConfig) extends Module {
 
   when (io.decode.we) {
     val addr_w = io.in.addr_w >> 2
-    val new_data = WireInit(Vec(Seq.fill(4)(0.U(4.W))))
+    val new_data = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
     // Store Byte (8 bits)
     new_data(io.in.addr_w(1, 0).asUInt) := io.in.data_in(7, 0)
     // Store Half (16 bits)
