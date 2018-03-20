@@ -1,4 +1,4 @@
-package adept.instructionMemoryRom
+package adept.instructionMemory
 
 import chisel3._
 import chisel3.util._
@@ -10,7 +10,7 @@ import adept.config.AdeptConfig
  * Needs to be filled with instructions.
 */
 
-class InstrMemRom (config: AdeptConfig) extends Module {
+class InstrMem (config: AdeptConfig) extends Module {
   val io = IO (new Bundle{
     // Inputs
     val in_pc   = Input(UInt(config.XLen.W))

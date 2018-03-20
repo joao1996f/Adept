@@ -1,5 +1,7 @@
 package adept.core
 
+import scala.io.Source
+
 import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
@@ -7,22 +9,28 @@ import adept.config.AdeptConfig
 
 class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
   // Load program while core is in reset
-  val program = Array()
+  var program = Array[BigInt]()
+  // Read from file the program and transform the hexadecimal string into BigInt
+  val ProgramFile = Source.fromFile("mult.hex")
+  for(lines <- ProgramFile.getLines){
+    program= program :+ BigInt(lines.substring(1, lines.length), 16)
+  }
+  ProgramFile.close
 
   for ((data, addr) <- program.zipWithIndex) {
-    poke(c.io.reset, true.B)
-    poke(c.io.we, true.B)
+    poke(c.io.we, true)
     poke(c.io.data_in, data)
     poke(c.io.addr_w, addr)
     step(1)
   }
 
   // Lower reset and write_enable. Core should start processing
-  poke(c.io.reset, false.B)
-  poke(c.io.we, false.B)
+  poke(c.io.we, false)
+
+  reset(4)
 
   // Wait for success
-  while(peek(c.io.success) === false.B) {
+  while(peek(c.io.success) == 0) {
     step(1)
   }
 
@@ -32,11 +40,11 @@ class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
 * This is a trivial example of how to run this Specification
 * From within sbt use:
 * {{{
-* testOnly adept.pc.PcTester -- -z Basic
+* testOnly adept.core.AdeptTester -- -z Basic
 * }}}
 * From a terminal shell use:
 * {{{
-* sbt 'testOnly adept.pc.PcTester -- -z Basic'
+* sbt 'testOnly adept.core.AdeptTester -- -z Basic'
 * }}}
 */
 class AdeptTester extends ChiselFlatSpec {
