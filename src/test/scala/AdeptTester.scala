@@ -5,8 +5,27 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.config.AdeptConfig
 
-class AdeptUnitTester(e: Adept) extends PeekPokeTester(e) {
- step(100000)
+class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
+  // Load program while core is in reset
+  val program = Array()
+
+  for ((data, addr) <- program.zipWithIndex) {
+    poke(c.io.reset, true.B)
+    poke(c.io.we, true.B)
+    poke(c.io.data_in, data)
+    poke(c.io.addr_w, addr)
+    step(1)
+  }
+
+  // Lower reset and write_enable. Core should start processing
+  poke(c.io.reset, false.B)
+  poke(c.io.we, false.B)
+
+  // Wait for success
+  while(peek(c.io.success) === false.B) {
+    step(1)
+  }
+
 }
 
 /**

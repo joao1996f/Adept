@@ -13,7 +13,15 @@ import adept.instructionMemoryRom.InstrMemRom
 import adept.alu.ALU
 
 class Adept(config: AdeptConfig) extends Module {
-  val io = IO(new Bundle{})
+  val io = IO(new Bundle{
+                // Inputs
+                val data_in = Input(UInt(config.XLen.W))
+                val addr_w = Input(UInt(config.XLen.W))
+                val we = Input(Bool())
+
+                // Outputs
+                val success = Output(Bool())
+              })
 
   //////////////////////////////////////////////////////////////////////////////
   // Create Modules
@@ -39,39 +47,86 @@ class Adept(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Connections
   //////////////////////////////////////////////////////////////////////////////
-  // Instruction Fetch connections
+
+  ///////////////////////////////////////////////////////////////////
+  // Instruction Fetch Stage
+  ///////////////////////////////////////////////////////////////////
   pc.io.br_flags  := alu.io.cmp_flag
   pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
 
+  ///////////////////////////////////////////////////////////////////
+  // Decode, Execute and Memory Stage
+  ///////////////////////////////////////////////////////////////////
   // Program ROM connections
   rom.io.in_pc           := pc.io.pc_out
+  rom.io.data_in         := io.data_in
+  rom.io.addr_w          := io.addr_w
+  rom.io.we              := io.we
   idecode.io.instruction := rom.io.instr
 
   // Register File
-  register_file.io.decoder <> idecode.io.registers
+  register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
+  register_file.io.decoder.rs2_sel := idecode.io.registers.rs2_sel
+
+  // Forwarding Path Control Logic
+  val sel_frw_path_rs1 = Wire(Bool())
+  val sel_frw_path_rs2 = Wire(Bool())
+  val write_back       = Wire(SInt(32.W))
 
   // MUX Selections to Operands in ALU
-  alu.io.in.registers.rs1 := MuxLookup(idecode.io.sel_operand_a, 0.S, Array(
-                                   0.U -> register_file.io.registers.rs1,
-                                   1.U -> pc.io.pc_out.asSInt))
+  val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
+  alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
+                                       Array(
+                                          0.U -> register_file.io.registers.rs1,
+                                          1.U -> pc.io.pc_out.asSInt,
+                                          2.U -> write_back
+                                       ))
 
-  alu.io.in.registers.rs2 := register_file.io.registers.rs2
+  alu.io.in.registers.rs2 := Mux(sel_frw_path_rs2,
+                                 write_back, register_file.io.registers.rs2)
   alu.io.in.decoder_params <> idecode.io.alu
 
   // Memory Connections
   mem.io.in.data_in := register_file.io.registers.rs2
-  mem.io.in.addr_w  := alu.io.result.asUInt
-  mem.io.in.addr_r  := alu.io.result.asUInt
+  mem.io.in.addr    := alu.io.result.asUInt
   mem.io.decode     <> idecode.io.mem
 
+  ///////////////////////////////////////////////////////////////////
+  // Write Back Stage
+  ///////////////////////////////////////////////////////////////////
+
+  val rsd_sel_wb = RegNext(idecode.io.registers.rsd_sel)
+  val we_wb      = RegNext(idecode.io.registers.we)
+
   // MUX Selections to Register File
-  register_file.io.rsd_value := MuxLookup(idecode.io.sel_rf_wb, 0.S,
-                                          Array(
-                                            0.U -> alu.io.result,
-                                            1.U -> mem.io.data_out
-                                          ))
+  write_back := MuxLookup(RegNext(idecode.io.sel_rf_wb), 0.S,
+                          Array(
+                            0.U -> RegNext(alu.io.result),
+                            // Already delayed by one cycle
+                            1.U -> mem.io.data_out
+                          ))
+  register_file.io.rsd_value       := write_back
+  register_file.io.decoder.rsd_sel := rsd_sel_wb
+  register_file.io.decoder.we      := we_wb
+
+  // Forwarding Path Control Logic
+  sel_frw_path_rs1 := rsd_sel_wb === idecode.io.registers.rs1_sel &&
+    rsd_sel_wb =/= 0.U && we_wb
+  sel_frw_path_rs2 := rsd_sel_wb === idecode.io.registers.rs2_sel &&
+    rsd_sel_wb =/= 0.U && we_wb
+
+  ///////////////////////////////////////////////////////////////////
+  // Debug Stuff
+  ///////////////////////////////////////////////////////////////////
+
+  // Condition for simulation termination is
+  // loop:
+  //   j loop
+  // This might change to an unaligned instruction access exception
+  val prev_instr = RegNext(rom.io.instr)
+  io.success := prev_instr === rom.io.instr
 
   // Debug
   // Stole this from Sodor

@@ -12,46 +12,37 @@ import adept.config.AdeptConfig
 
 class InstrMemRom (config: AdeptConfig) extends Module {
   val io = IO (new Bundle{
-    val in_pc = Input(UInt(config.XLen.W))
+    // Inputs
+    val in_pc   = Input(UInt(config.XLen.W))
+    val data_in = Input(UInt(config.XLen.W))
+    val addr_w  = Input(UInt(config.XLen.W))
+    val we      = Input(Bool())
+
+    // Outputs
     val instr = Output(UInt(config.XLen.W))
   })
-  val mem = Vec(Array(
-  "hf9010113".U,
- "h06812623".U,
- "h07010413".U,
- "hf8042e23".U,
- "h00100793".U,
- "hfaf42023".U,
- "h00200793".U,
- "hfef42623".U,
- "h0580006f".U,
- "hfec42783".U,
- "hffe78793".U,
- "h00279793".U,
- "hff040713".U,
- "h00f707b3".U,
- "hfac7a703".U,
- "hfec42783".U,
- "hfff78793".U,
- "h00279793".U,
- "hff040693".U,
- "h00f687b3".U,
- "hfac7a783".U,
- "h00f70733".U,
- "hfec42783".U,
- "h00279793".U,
- "hff040693".U,
- "h00f687b3".U,
- "hfae7a623".U,
- "hfec42783".U,
- "h00178793".U,
- "hfef42623".U,
- "hfec42703".U,
- "h01300793".U,
- "hfae7d2e3".U,
- "h00000013".U,
- "h06c12403".U,
- "h07010113".U,
- "h00008067".U))
- io.instr := mem(io.in_pc)
+
+  val mem = SyncReadMem(UInt(config.XLen.W), 1 << 10)
+  val count = RegInit(0.U(1.W))
+
+  when (io.we) {
+    mem.write(io.addr_w, io.data_in)
+    io.instr := 0.U
+  } .otherwise {
+    when (count === 0.U) {
+      val instr = mem(io.in_pc)
+      io.instr := instr
+      // Detect Branch or Jump instructions and send a Bubble next cycle
+      when (instr(6, 0) === "b1100011".U ||
+              instr(6, 0) === "b1100111".U ||
+              instr(6, 0) === "b1101111".U) {
+        count := 1.U
+      } .otherwise {
+        count := 0.U
+      }
+    } .otherwise {
+      io.instr := 0.U
+      count := 0.U
+    }
+  }
 }

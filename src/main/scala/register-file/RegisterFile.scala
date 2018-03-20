@@ -29,7 +29,7 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   })
 
   // Create a vector of registers
-  val registers = RegInit(Vec(Seq.fill(config.XLen)(0.S(config.XLen.W))))
+  val registers = Mem(SInt(32.W), 32)
 
   // Perform write operation
   when (io.decoder.we && io.decoder.rsd_sel =/= 0.U) {
