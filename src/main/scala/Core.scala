@@ -9,7 +9,7 @@ import adept.registerfile.RegisterFile
 import adept.mem.Memory
 import adept.pc.BranchOpConstants
 import adept.pc.Pc
-import adept.instructionMemoryRom.InstrMemRom
+import adept.instructionMemory.InstrMem
 import adept.alu.ALU
 
 class Adept(config: AdeptConfig) extends Module {
@@ -30,7 +30,7 @@ class Adept(config: AdeptConfig) extends Module {
   val pc = Module(new Pc(config, new BranchOpConstants))
 
   // Program ROM
-  val rom = Module(new InstrMemRom(config))
+  val mem_instr = Module(new InstrMem(config))
 
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))
@@ -42,7 +42,7 @@ class Adept(config: AdeptConfig) extends Module {
   val alu = Module(new ALU(config))
 
   // Memory
-  val mem = Module(new Memory(config))
+  val mem_data = Module(new Memory(config))
 
   //////////////////////////////////////////////////////////////////////////////
   // Connections
@@ -59,12 +59,12 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
   ///////////////////////////////////////////////////////////////////
-  // Program ROM connections
-  rom.io.in_pc           := pc.io.pc_out
-  rom.io.data_in         := io.data_in
-  rom.io.addr_w          := io.addr_w
-  rom.io.we              := io.we
-  idecode.io.instruction := rom.io.instr
+  // Program connections
+  mem_instr.io.in_pc           := pc.io.pc_out
+  mem_instr.io.data_in         := io.data_in
+  mem_instr.io.addr_w          := io.addr_w
+  mem_instr.io.we              := io.we
+  idecode.io.instruction := mem_instr.io.instr
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
@@ -92,9 +92,9 @@ class Adept(config: AdeptConfig) extends Module {
   alu.io.in.decoder_params <> idecode.io.alu
 
   // Memory Connections
-  mem.io.in.data_in := register_file.io.registers.rs2
-  mem.io.in.addr    := alu.io.result.asUInt
-  mem.io.decode     <> idecode.io.mem
+  mem_data.io.in.data_in := register_file.io.registers.rs2
+  mem_data.io.in.addr    := alu.io.result.asUInt
+  mem_data.io.decode     <> idecode.io.mem
 
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
@@ -108,7 +108,7 @@ class Adept(config: AdeptConfig) extends Module {
                           Array(
                             0.U -> RegNext(alu.io.result),
                             // Already delayed by one cycle
-                            1.U -> mem.io.data_out
+                            1.U -> mem_data.io.data_out
                           ))
   register_file.io.rsd_value       := write_back
   register_file.io.decoder.rsd_sel := rsd_sel_wb
@@ -128,11 +128,14 @@ class Adept(config: AdeptConfig) extends Module {
   // loop:
   //   j loop
   // This might change to an unaligned instruction access exception
-  val prev_instr = RegNext(rom.io.instr)
-  io.success := prev_instr === rom.io.instr
+  val prev_instr = RegInit(100.U)
+  val prev_instr2 = RegInit(100.U)
+  prev_instr := mem_instr.io.instr
+  prev_instr2 := prev_instr
+  io.success := prev_instr2 === mem_instr.io.instr
 
   // Debug
-  // Stole this from Sodor
+  // Stole this fmem_instr Sodor
   // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
   printf("Op1=[0x%x] Op2=[0x%x] W[%d,%d= 0x%x] Mem[%d: R:0x%x W:0x%x] DASM(%x)\n"
            , alu.io.in.registers.rs1
@@ -141,9 +144,9 @@ class Adept(config: AdeptConfig) extends Module {
            , idecode.io.registers.rsd_sel
            , register_file.io.rsd_value
            , idecode.io.sel_rf_wb
-           , mem.io.data_out
-           , mem.io.in.data_in
-           , rom.io.instr
+           , mem_data.io.data_out
+           , mem_data.io.in.data_in
+           , mem_instr.io.instr
 )
 }
 
