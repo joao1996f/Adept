@@ -75,12 +75,15 @@ class Adept(config: AdeptConfig) extends Module {
   val sel_frw_path_rs2 = Wire(Bool())
   val write_back       = Wire(SInt(32.W))
 
+  // Pipeline PC
+  val ex_pc = RegNext(pc.io.pc_out.asSInt)
+
   // MUX Selections to Operands in ALU
   val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
-                                          1.U -> pc.io.pc_out.asSInt,
+                                          1.U -> ex_pc,
                                           2.U -> write_back
                                        ))
 
