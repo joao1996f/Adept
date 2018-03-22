@@ -11,7 +11,7 @@ class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
   // Load program while core is in reset
   var program = Array[BigInt]()
   // Read from file the program and transform the hexadecimal string into BigInt
-  val ProgramFile = Source.fromFile("Fibonacci2.hex")
+  val ProgramFile = Source.fromFile("program_files/Fibonacci2.hex")
   for(lines <- ProgramFile.getLines){
     program= program :+ BigInt(lines.substring(1, lines.length), 16)
   }

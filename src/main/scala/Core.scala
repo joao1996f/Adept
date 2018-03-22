@@ -56,6 +56,7 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.stall     := idecode.io.stall
+  pc.io.stall_re  := idecode.io.stall_re
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -65,8 +66,9 @@ class Adept(config: AdeptConfig) extends Module {
   mem_instr.io.data_in         := io.data_in
   mem_instr.io.addr_w          := io.addr_w
   mem_instr.io.we              := io.we
-  val pc_0 = pc.io.pc_out === 0.U
-  idecode.io.instruction       := mem_instr.io.instr & Fill(32, ~pc_0)
+  /*val rst = WireInit(false.B)
+  rst := RegNext(true.B)*/
+  idecode.io.instruction       := mem_instr.io.instr
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
@@ -78,14 +80,14 @@ class Adept(config: AdeptConfig) extends Module {
   val write_back       = Wire(SInt(32.W))
 
   // Pipeline PC
-  val ex_pc = RegNext(pc.io.pc_out.asSInt)
-
+  val ex_pc = RegNext(pc.io.pc_out)
+  pc.io.pc_in     := ex_pc
   // MUX Selections to Operands in ALU
   val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
-                                          1.U -> ex_pc,
+                                          1.U -> ex_pc.asSInt,
                                           2.U -> write_back
                                        ))
 
