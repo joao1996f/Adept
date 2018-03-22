@@ -11,7 +11,7 @@ class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
   // Load program while core is in reset
   var program = Array[BigInt]()
   // Read from file the program and transform the hexadecimal string into BigInt
-  val ProgramFile = Source.fromFile("mult.hex")
+  val ProgramFile = Source.fromFile("Fibonacci2.hex")
   for(lines <- ProgramFile.getLines){
     program= program :+ BigInt(lines.substring(1, lines.length), 16)
   }
@@ -23,16 +23,15 @@ class AdeptUnitTester(c: Adept) extends PeekPokeTester(c) {
     poke(c.io.addr_w, addr)
     step(1)
   }
-
   // Lower reset and write_enable. Core should start processing
   poke(c.io.we, false)
-
+ 
   reset(4)
 
   // Wait for success
-  while(peek(c.io.success) == 0) {
-    step(1)
-  }
+  //while(peek(c.io.success) == 0) {
+    step(500)
+  //}
 
 }
 
