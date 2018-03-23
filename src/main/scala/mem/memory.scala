@@ -18,6 +18,7 @@ class MemIO(val config: AdeptConfig) extends Bundle {
 class MemDecodeIO(val config: AdeptConfig) extends Bundle {
   val op = Input(UInt(config.funct.W))
   val we = Input(Bool())
+  val en = Input(Bool())
 
   override def cloneType: this.type = {
     new MemDecodeIO(config).asInstanceOf[this.type];
@@ -30,18 +31,33 @@ class Memory(config: AdeptConfig) extends Module {
                 val decode = new MemDecodeIO(config)
 
                 val data_out = Output(SInt(config.XLen.W))
+                val stall    = Output(Bool())
               })
 
-  // Because the core is made up of one stage, the memory needs to return a
-  // result in the same clock cycle. The memory uses 8MB.
-  val my_mem = SyncReadMem(Vec(4, UInt(8.W)), 1 << 10)
+  // val my_mem = if (config.sim_mem) {
+    // The memory in simulation uses 131kB. You can also turn this option on
+    // when operating on an FPGA. Know that this will instantiate BRAMs, and
+    // these will only be available to the core. Feel free to increase the size
+    // of the memory.
+    val my_mem = Module(new CacheSim(config))
+  // } else {
+    // Create interface for ASIC external memory
+    // Module(new Cache(config))
+  // }
+
   val read_port = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
   val addr = io.in.addr >> 2
   val trash = RegNext(addr.asSInt)
   val byte_sel_write = WireInit(io.in.addr(1, 0).asUInt)
   val byte_sel_read = RegNext(io.in.addr(1, 0).asUInt)
 
-  when (io.decode.we) {
+  // Stall logic
+  // Handshake protocol
+  val ready = RegInit(false.B)
+  val valid = RegInit(false.B)
+  val stall = RegInit(false.B)
+
+  when (io.decode.we && io.decode.en) {
     val new_data = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
     // Store Byte (8 bits)
     new_data(byte_sel_write) := io.in.data_in(7, 0)
@@ -58,10 +74,35 @@ class Memory(config: AdeptConfig) extends Module {
                 Mux(io.decode.op === 1.U, 3.U << byte_sel_write, 15.U << byte_sel_write))
 
     // Write
-    my_mem.write(addr, new_data, mask.toBools)
+    my_mem.io.addr    := addr
+    my_mem.io.we      := io.decode.we
+    my_mem.io.re      := ~io.decode.we
+    my_mem.io.data_in := new_data
+    valid             := true.B
+    stall             := true.B
   } .otherwise {
-    read_port      := my_mem.read(addr)
+    my_mem.io.addr    := addr
+    my_mem.io.we      := io.decode.we
+    my_mem.io.re      := ~io.decode.we
+    my_mem.io.data_in := Vec(0.U, 0.U, 0.U, 0.U)
+    read_port         := my_mem.io.data_out
+    when (io.decode.en) {
+      valid             := true.B
+      stall             := true.B
+    }
   }
+
+  // Stall logic
+  // Handshake protocol
+  ready           := my_mem.io.ready
+  my_mem.io.valid := valid
+
+  when (ready && valid && io.decode.en) {
+    stall := false.B
+    valid := false.B
+  }
+
+  io.stall := stall
 
   io.data_out := MuxLookup(io.decode.op, trash, Array(
                              // Load Byte (8 bits)

@@ -17,6 +17,8 @@ class BranchOpConstants { // join this group with all the rest of the configurat
 
 class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   val io = IO(new Bundle {
+    // Stall PC
+    val stall  = Input(Bool())
     // flags for branch confirmation
     val br_flags = Input(Bool()) // branch verification flag
     // In from decoder
@@ -56,7 +58,11 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     (branch_exe & (~io.in_opcode(3) & io.in_opcode(2))),
                             io.br_step, next_pc)
   val progCount = RegInit(0.S(config.XLen.W))
+
+  when (!io.stall) {
     progCount := jalrORpc_select
-    io.pc_out := progCount.asUInt
+  }
+
+  io.pc_out := progCount.asUInt
 }
 

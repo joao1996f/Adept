@@ -80,13 +80,15 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     // Selects the ALU result to be written to the Register File when it is not
     // a load instruction
     when (op_code =/= "b0000011".U) {
-      io.sel_rf_wb     := 0.U
-      io.alu.op        := op
-      io.mem.op        := 0.U
+      io.sel_rf_wb := 0.U
+      io.alu.op    := op
+      io.mem.op    := 0.U
+      io.mem.en    := false.B
     } .otherwise {
-      io.sel_rf_wb     := 1.U // Select the Memory to write to the register file
-      io.alu.op        := 0.U // Always perform an ADD when it's a Load
-      io.mem.op        := op
+      io.sel_rf_wb := 1.U // Select the Memory to write to the register file
+      io.alu.op    := 0.U // Always perform an ADD when it's a Load
+      io.mem.op    := op
+      io.mem.en    := true.B
     }
   }
   //////////////////////////////////////////////////////
@@ -108,6 +110,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb     := 0.U
     io.mem.we        := false.B
     io.mem.op        := 0.U
+    io.mem.en        := false.B
   }
   //////////////////////////////////////////////////////
   // S-Type Decode => OP Code: 0100011 of instruction
@@ -126,6 +129,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := true.B
     io.mem.op            := op
+    io.mem.en            := false.B
   }
   //////////////////////////////////////////////////////
   // B-Type Decode => OP Code: 1100011 of instruction
@@ -146,12 +150,13 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
       io.alu.op := "b011".U
     }
 
-    io.registers.we      := false.B
-    io.sel_operand_a     := 0.U
+    io.registers.we  := false.B
+    io.sel_operand_a := 0.U
     // This is don't care. Register File write enable is set to false
-    io.sel_rf_wb         := 0.U
-    io.mem.we            := false.B
-    io.mem.op            := 0.U
+    io.sel_rf_wb     := 0.U
+    io.mem.we        := false.B
+    io.mem.op        := 0.U
+    io.mem.en        := false.B
   }
   //////////////////////////////////////////////////////
   // U-Type Decode => OP Code: 0010111 or 0110111 of instruction
@@ -171,11 +176,12 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
       io.registers.we := true.B
     }
 
-    io.sel_operand_a     := 1.U
+    io.sel_operand_a := 1.U
     // This is don't care. Register File write enable is set to false
-    io.sel_rf_wb         := 0.U
-    io.mem.we            := false.B
-    io.mem.op            := 0.U
+    io.sel_rf_wb     := 0.U
+    io.mem.we        := false.B
+    io.mem.op        := 0.U
+    io.mem.en        := false.B
   }
   //////////////////////////////////////////////////////
   // J-Type Decode => OP Code: 1101111 of instruction
@@ -193,5 +199,6 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := false.B
     io.mem.op            := 0.U
+    io.mem.en            := false.B
   }
 }
