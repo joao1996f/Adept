@@ -48,6 +48,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Connections
   //////////////////////////////////////////////////////////////////////////////
   val stall = WireInit(false.B)
+  stall := mem_data.io.stall | idecode.io.stall_reg
 
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
@@ -57,7 +58,7 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.stall     := idecode.io.stall
-  pc.io.stall_re  := idecode.io.stall_re
+  pc.io.stall_reg := stall
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -79,7 +80,7 @@ class Adept(config: AdeptConfig) extends Module {
   val write_back       = Wire(SInt(32.W))
 
   // Pipeline PC
-  val ex_pc = RegInit(0.U)
+  val ex_pc = RegInit(0.S)
   when (!stall) {
     ex_pc := pc.io.pc_out.asSInt
   }
@@ -101,14 +102,13 @@ class Adept(config: AdeptConfig) extends Module {
   mem_data.io.in.data_in := register_file.io.registers.rs2
   mem_data.io.in.addr    := alu.io.result.asUInt
   mem_data.io.decode     <> idecode.io.mem
-  stall := mem_data.io.stall
 
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
   ///////////////////////////////////////////////////////////////////
   val rsd_sel_wb = RegInit(0.U)
   val we_wb      = RegInit(false.B)
-  val alu_res_wb = RegInit(0.U)
+  val alu_res_wb = RegInit(0.S)
   val sel_rf_wb  = RegInit(0.U)
 
   when (!stall) {
