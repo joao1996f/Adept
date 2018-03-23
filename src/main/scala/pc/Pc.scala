@@ -27,8 +27,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     val br_offset  = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
     val pc_in      = Input(UInt(config.XLen.W))
-    // Stall flag in case of branch
-    val stall      = Input(Bool())
+    // Flag in case of brunch
+    val branch_exec= Input(Bool())
     // Stall delayed by 1 clock
     val stall_reg  = Input(Bool())
     // Program count to be sent for calc of new PC or for storage
@@ -45,7 +45,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
           br.BR_GEU -> ~io.br_flags))
 
   // Offset selection criteria: is it a jump? and (is it JAL? or is it Conditional with correct flags?)
-  val offset_sel      = io.stall &
+  val offset_sel      = io.branch_exec &
                           ((io.in_opcode(3) & io.in_opcode(2)) |
                              ((~(io.in_opcode(3) | io.in_opcode(2))) & Cond_Br_Ver))
 
@@ -54,10 +54,11 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
                          Cat(Fill(2, io.br_offset(31)), io.br_offset(31,2)), 1.U)
 
   // next pc calculation
-  val next_pc         = Mux(io.stall, io.pc_in, io.pc_out).asSInt + add_to_pc_val.asSInt
-  val jalrORpc_select = Mux( (io.stall & (~io.in_opcode(3) & io.in_opcode(2))),
+  val next_pc         = Mux(io.branch_exec, io.pc_in, io.pc_out).asSInt + add_to_pc_val.asSInt
+  val jalrORpc_select = Mux( (io.branch_exec & (~io.in_opcode(3) & io.in_opcode(2))),
                                io.br_step, next_pc)
   val progCount       = RegInit(0.S(config.XLen.W))
+
   when (!io.stall_reg){
     progCount := jalrORpc_select
   }

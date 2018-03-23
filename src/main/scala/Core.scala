@@ -57,18 +57,20 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
-  pc.io.stall     := idecode.io.stall
+  pc.io.branch_exec := idecode.io.branch_exec
   pc.io.stall_reg := stall
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
   ///////////////////////////////////////////////////////////////////
   // Program connections
-  mem_instr.io.in_pc     := pc.io.pc_out
-  mem_instr.io.data_in   := io.data_in
-  mem_instr.io.addr_w    := io.addr_w
-  mem_instr.io.we        := io.we
-  idecode.io.instruction := mem_instr.io.instr
+  mem_instr.io.in_pc           := pc.io.pc_out
+  mem_instr.io.data_in         := io.data_in
+  mem_instr.io.addr_w          := io.addr_w
+  mem_instr.io.we              := io.we
+  val rst                      = RegInit(false.B)
+  rst                          := true.B
+  idecode.io.instruction       := mem_instr.io.instr & Fill(32, rst)
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel

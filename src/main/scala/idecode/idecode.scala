@@ -52,20 +52,20 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 // Branch Execute
                 val imm_b_offset  = Output(SInt(config.XLen.W))
                 val br_op         = Output(UInt(3.W))
-                val stall         = Output(Bool())
+                val branch_exec   = Output(Bool())
                 val stall_reg     = Output(Bool())
               })
 
   // BTW this is a bad implementation, but its OK to start off.
   // Optimizations will be done down the line.
-  val op_code   = Wire(UInt(7.W))
-  val rsd_sel   = io.instruction(11, 7)
-  val op        = io.instruction(14, 12)
-  val rs1_sel   = io.instruction(19, 15)
-  val rs2_sel   = io.instruction(24, 20)
-  val imm       = io.instruction(31, 20)
-  val stall_reg = RegInit(false.B)
-  val stall_w   = Wire(Bool())
+  val op_code     = Wire(UInt(7.W))
+  val rsd_sel     = io.instruction(11, 7)
+  val op          = io.instruction(14, 12)
+  val rs1_sel     = io.instruction(19, 15)
+  val rs2_sel     = io.instruction(24, 20)
+  val imm         = io.instruction(31, 20)
+  val stall_reg   = RegInit(false.B)
+  val branch_exec = Wire(Bool())
 
   // Send OP to the branch execute module
   io.br_op       := op
@@ -76,8 +76,8 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // Stop PC when a branch or jump instruction is detected
   stall_w        := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
-  stall_reg      := stall_w
-  io.stall       := stall_w
+  stall          := branch_exec
+  io.branch_exec := branch_exec
   io.stall_reg   := stall_reg
 
   //////////////////////////////////////////////////////
