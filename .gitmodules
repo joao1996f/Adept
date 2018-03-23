@@ -1,0 +1,3 @@
+[submodule "Adept-TestFiles"]
+	path = Adept-TestFiles
+	url = https://github.com/ul-lar/Adept-TestFiles
