@@ -75,8 +75,8 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   io.alu.op_code := op_code
 
   // Stop PC when a branch or jump instruction is detected
-  stall_w        := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
-  stall          := branch_exec
+  branch_exec    := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
+  stall_reg      := branch_exec
   io.branch_exec := branch_exec
   io.stall_reg   := stall_reg
 
@@ -222,6 +222,9 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.mem.op            := 0.U
     io.mem.en            := false.B
   }
+  //////////////////////////////////////////////////////
+  // Invalid Instruction executes a NOP
+  //////////////////////////////////////////////////////
   .otherwise{
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U

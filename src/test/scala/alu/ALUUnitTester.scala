@@ -25,6 +25,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   private def ADDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.imm, imm)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.op, 0) // b000
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
     step(1)
@@ -35,6 +36,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   private def SLLI(rs1: Int, imm: Int) {
     val special_imm = 31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
     poke(c.io.in.decoder_params.op, 1) // b001
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -45,6 +47,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   // SLTI
   private def SLTI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.op, 2) // b010
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -58,6 +61,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
     val u_imm = imm.asInstanceOf[Long] & 0x00000000ffffffffL
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.op, 3) // b011
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -79,6 +83,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   private def SRLI(rs1: Int, imm: Int) {
     val special_imm =  31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
     poke(c.io.in.decoder_params.op, 5) // b101
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -92,6 +97,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     val special_imm_2_shift =  31 & imm // h_0000_001f
     val special_imm =  1024 | special_imm_2_shift // h_0000_0400
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
     poke(c.io.in.decoder_params.op, 5) // b101
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -102,6 +108,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   // ORI
   private def ORI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.op, 6) // b110
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -112,6 +119,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   // ANDI
   private def ANDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
+    poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.op, 7) // b111
     poke(c.io.in.decoder_params.op_code, 19) // b0010011
@@ -127,6 +135,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   private def ADD(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.op, 0) // b000
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
@@ -138,6 +147,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   private def SUB(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 1024)
     poke(c.io.in.decoder_params.op, 0) // b000
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
@@ -150,6 +160,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     val special_rs2 = 31 & rs2 // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, special_rs2)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.op, 1) // b001
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
@@ -162,6 +173,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 2) // b010
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -176,6 +188,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 3) // b011
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -187,6 +200,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 4) // b100
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -199,6 +213,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, special_rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 5) // b101
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -212,6 +227,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     val special_rs2 =  1024 | special_rs2_2_shift // h_0000_0400
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, special_rs2)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 1024)
     poke(c.io.in.decoder_params.op, 5) // b101
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
@@ -224,6 +240,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 6) // b110
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -235,6 +252,7 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
+    poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.op, 7) // b111
     poke(c.io.in.decoder_params.op_code, 51) // b0110011
     step(1)
@@ -286,64 +304,3 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-/**
-* This is a trivial example of how to run this Specification
-* From within sbt use:
-* {{{
-* testOnly chutils.test.RegisterFileTester
-* }}}
-* From a terminal shell use:
-* {{{
-* sbt 'testOnly chutils.test.RegisterFileTester'
-* }}}
-*/
-class ALUTester extends ChiselFlatSpec {
-  // Generate ALU configuration
-  val config = new AdeptConfig
-
-  private val backendNames = if(firrtl.FileUtils.isCommandAvailable("verilator")) {
-    Array("firrtl", "verilator")
-  }
-  else {
-    Array("firrtl")
-  }
-  for ( backendName <- backendNames ) {
-    "ALU" should s"store random data (with $backendName)" in {
-      Driver(() => new ALU(config), backendName) {
-        c => new ALUUnitTester(c)
-      } should be (true)
-    }
-  }
-
-  "Basic test using Driver.execute" should "be used as an alternative way to run specification" in {
-    iotesters.Driver.execute(Array(), () => new ALU(config)) {
-      c => new ALUUnitTester(c)
-    } should be (true)
-  }
-
-  "using --backend-name verilator" should "be an alternative way to run using verilator" in {
-    if(backendNames.contains("verilator")) {
-      iotesters.Driver.execute(Array("--backend-name", "verilator"), () => new ALU(config)) {
-        c => new ALUUnitTester(c)
-      } should be(true)
-    }
-  }
-
-  "running with --is-verbose" should "show more about what's going on in your tester" in {
-    iotesters.Driver.execute(Array("--is-verbose"), () => new ALU(config)) {
-      c => new ALUUnitTester(c)
-    } should be(true)
-  }
-
-  "running with --fint-write-vcd" should "create a vcd file from your test" in {
-    iotesters.Driver.execute(Array("--fint-write-vcd"), () => new ALU(config)) {
-      c => new ALUUnitTester(c)
-    } should be(true)
-  }
-
-  "using --help" should s"show the many options available" in {
-    iotesters.Driver.execute(Array("--help"), () => new ALU(config)) {
-      c => new ALUUnitTester(c)
-    } should be (true)
-  }
-}

@@ -46,7 +46,7 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
 
     val br_type = Integer.parseInt (aux3, 2) // transformation of the privious selected bits into integer
     val opcode = opcode_in & Integer.parseInt ("1111111", 2) // extraction of 7 bits opcode
-    
+
     if (opcode == JAL || opcode == JALR || opcode == Cond_Br){
       if (opcode == JALR){
         res = step_in
@@ -126,65 +126,3 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
   }
 }
 
-/**
-* This is a trivial example of how to run this Specification
-* From within sbt use:
-* {{{
-* testOnly adept.pc.PcTester -- -z Basic
-* }}}
-* From a terminal shell use:
-* {{{
-* sbt 'testOnly adept.pc.PcTester -- -z Basic'
-* }}}
-*/
-class PcTester extends ChiselFlatSpec {
-  // Generate Pc configuration
-  val config = new AdeptConfig
-  val branch = new BranchOpConstants
-
-  private val backendNames = if(firrtl.FileUtils.isCommandAvailable("verilator")) {
-    Array("firrtl", "verilator")
-  }
-  else {
-    Array("firrtl")
-  }
-  for ( backendName <- backendNames ) {
-    "Pc" should s"store random data (with $backendName)" in {
-      Driver(() => new Pc(config, branch), backendName) {
-        e => new PcUnitTester(e)
-      } should be (true)
-    }
-  }
-
-  "Basic test using Driver.execute" should "be used as an alternative way to run specification" in {
-    iotesters.Driver.execute(Array(), () => new Pc(config, branch)) {
-      e => new PcUnitTester(e)
-    } should be (true)
-  }
-
-  "using --backend-name verilator" should "be an alternative way to run using verilator" in {
-    if(backendNames.contains("verilator")) {
-      iotesters.Driver.execute(Array("--backend-name", "verilator"), () => new Pc(config, branch)) {
-        e => new PcUnitTester(e)
-      } should be(true)
-    }
-  }
-
-  "running with --is-verbose" should "show more about what's going on in your tester" in {
-    iotesters.Driver.execute(Array("--is-verbose"), () => new Pc(config, branch)) {
-      e => new PcUnitTester(e)
-    } should be(true)
-  }
-
-  "running with --fint-write-vcd" should "create a vcd file from your test" in {
-    iotesters.Driver.execute(Array("--fint-write-vcd"), () => new Pc(config, branch)) {
-      e => new PcUnitTester(e)
-    } should be(true)
-  }
-
-  "using --help" should s"show the many options available" in {
-    iotesters.Driver.execute(Array("--help"), () => new Pc(config, branch)) {
-      e => new PcUnitTester(e)
-    } should be (true)
-  }
-}
