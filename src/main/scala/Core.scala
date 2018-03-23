@@ -56,7 +56,8 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
-  pc.io.stall     := stall
+  pc.io.stall     := idecode.io.stall
+  pc.io.stall_re  := idecode.io.stall_re
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -88,7 +89,7 @@ class Adept(config: AdeptConfig) extends Module {
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
-                                          1.U -> ex_pc,
+                                          1.U -> ex_pc.asSInt,
                                           2.U -> write_back
                                        ))
 
@@ -105,18 +106,20 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
   ///////////////////////////////////////////////////////////////////
-
   val rsd_sel_wb = RegInit(0.U)
   val we_wb      = RegInit(false.B)
   val alu_res_wb = RegInit(0.U)
+  val sel_rf_wb  = RegInit(0.U)
+
   when (!stall) {
     rsd_sel_wb := idecode.io.registers.rsd_sel
     we_wb      := idecode.io.registers.we
     alu_res_wb := alu.io.result
+    sel_rf_wb  := idecode.io.sel_rf_wb
   }
 
   // MUX Selections to Register File
-  write_back := MuxLookup(RegNext(idecode.io.sel_rf_wb), 0.S,
+  write_back := MuxLookup(sel_rf_wb, 0.S,
                           Array(
                             0.U -> alu_res_wb,
                             // Already delayed by one cycle
