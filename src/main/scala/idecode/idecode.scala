@@ -47,27 +47,27 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val sel_rf_wb     = Output(UInt(1.W))
                 val imm_b_offset  = Output(SInt(config.XLen.W))
                 val br_op         = Output(UInt(3.W))
-                val stall         = Output(Bool())
-                val stall_re      = Output(Bool()) 
+                val branch_exec   = Output(Bool())
+                val stall         = Output(Bool()) 
               })
 
   // BTW this is a bad implementation, but its OK to start off.
   // Optimizations will be done down the line.
-  val op_code = Wire(UInt(7.W))
-  val rsd_sel = io.instruction(11, 7)
-  val op      = io.instruction(14, 12)
-  val rs1_sel = io.instruction(19, 15)
-  val rs2_sel = io.instruction(24, 20)
-  val imm     = io.instruction(31, 20)
-  val stall_re= RegInit(false.B)
-  val stall_w = Wire(Bool())
+  val op_code     = Wire(UInt(7.W))
+  val rsd_sel     = io.instruction(11, 7)
+  val op          = io.instruction(14, 12)
+  val rs1_sel     = io.instruction(19, 15)
+  val rs2_sel     = io.instruction(24, 20)
+  val imm         = io.instruction(31, 20)
+  val stall       = RegInit(false.B)
+  val branch_exec = Wire(Bool())
   io.br_op       := op
-  op_code        := Mux(stall_re, "b0000000".U, io.instruction(6, 0))
+  op_code        := Mux(stall, "b0000000".U, io.instruction(6, 0))
   io.alu.op_code := op_code
-  stall_w        := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
-  stall_re       := stall_w
-  io.stall       := stall_w
-  io.stall_re    := stall_re
+  branch_exec    := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
+  stall          := branch_exec
+  io.branch_exec := branch_exec
+  io.stall       := stall
   //////////////////////////////////////////////////////
   // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
   // Load instructions and 1100011 for JALR

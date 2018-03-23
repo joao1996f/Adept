@@ -51,12 +51,12 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
-  pc.io.br_flags  := alu.io.cmp_flag
-  pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
-  pc.io.br_step   := alu.io.result
-  pc.io.br_offset := idecode.io.imm_b_offset
-  pc.io.stall     := idecode.io.stall
-  pc.io.stall_re  := idecode.io.stall_re
+  pc.io.br_flags    := alu.io.cmp_flag
+  pc.io.in_opcode   := Cat(idecode.io.br_op, idecode.io.alu.op_code)
+  pc.io.br_step     := alu.io.result
+  pc.io.br_offset   := idecode.io.imm_b_offset
+  pc.io.branch_exec := idecode.io.branch_exec
+  pc.io.stall       := idecode.io.stall
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -66,9 +66,9 @@ class Adept(config: AdeptConfig) extends Module {
   mem_instr.io.data_in         := io.data_in
   mem_instr.io.addr_w          := io.addr_w
   mem_instr.io.we              := io.we
-  /*val rst = WireInit(false.B)
-  rst := RegNext(true.B)*/
-  idecode.io.instruction       := mem_instr.io.instr
+  val rst                       = RegInit(false.B)
+  rst                          := true.B
+  idecode.io.instruction       := mem_instr.io.instr & Fill(32, rst)
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
@@ -105,9 +105,9 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
 
   val rsd_sel_wb = RegInit(0.U(config.rs_len.W))
-  rsd_sel_wb := idecode.io.registers.rsd_sel
+  rsd_sel_wb    := idecode.io.registers.rsd_sel
   val we_wb      = RegInit(false.B)
-  we_wb := idecode.io.registers.we
+  we_wb         := idecode.io.registers.we
 
   // MUX Selections to Register File
   write_back := MuxLookup(RegNext(idecode.io.sel_rf_wb), 0.S,
