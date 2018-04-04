@@ -29,7 +29,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Instruction Fetch
   val pc = Module(new Pc(config, new BranchOpConstants))
 
-  // Program ROM
+  // Program Memory
   val mem_instr = Module(new InstrMem(config))
 
   // Instruction Decoder
@@ -47,16 +47,16 @@ class Adept(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Connections
   //////////////////////////////////////////////////////////////////////////////
+  val stall = WireInit(false.B)
+  stall := mem_data.io.stall | pc.io.stall_reg
 
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
-  pc.io.br_flags    := alu.io.cmp_flag
-  pc.io.in_opcode   := Cat(idecode.io.br_op, idecode.io.alu.op_code)
-  pc.io.br_step     := alu.io.result
-  pc.io.br_offset   := idecode.io.imm_b_offset
-  pc.io.branch_exec := idecode.io.branch_exec
-  pc.io.stall       := idecode.io.stall
+  pc.io.br_flags  := alu.io.cmp_flag
+  pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
+  pc.io.br_step   := alu.io.result
+  pc.io.br_offset := idecode.io.imm_b_offset
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -66,9 +66,10 @@ class Adept(config: AdeptConfig) extends Module {
   mem_instr.io.data_in         := io.data_in
   mem_instr.io.addr_w          := io.addr_w
   mem_instr.io.we              := io.we
-  val rst                       = RegInit(false.B)
+  val rst                      = RegInit(false.B)
   rst                          := true.B
   idecode.io.instruction       := mem_instr.io.instr & Fill(32, rst)
+  idecode.io.stall_reg         := pc.io.stall_reg
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
@@ -80,8 +81,12 @@ class Adept(config: AdeptConfig) extends Module {
   val write_back       = Wire(SInt(32.W))
 
   // Pipeline PC
-  val ex_pc = RegNext(pc.io.pc_out)
+  val ex_pc = RegInit(0.U)
+  when (!stall) {
+    ex_pc := pc.io.pc_out
+  }
   pc.io.pc_in     := ex_pc
+
   // MUX Selections to Operands in ALU
   val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
@@ -103,16 +108,22 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
   ///////////////////////////////////////////////////////////////////
-
-  val rsd_sel_wb = RegInit(0.U(config.rs_len.W))
-  rsd_sel_wb    := idecode.io.registers.rsd_sel
+  val rsd_sel_wb = RegInit(0.U)
   val we_wb      = RegInit(false.B)
-  we_wb         := idecode.io.registers.we
+  val alu_res_wb = RegInit(0.S)
+  val sel_rf_wb  = RegInit(0.U)
+
+  when (!stall) {
+    rsd_sel_wb := idecode.io.registers.rsd_sel
+    we_wb      := idecode.io.registers.we
+    alu_res_wb := alu.io.result
+    sel_rf_wb  := idecode.io.sel_rf_wb
+  }
 
   // MUX Selections to Register File
-  write_back := MuxLookup(RegNext(idecode.io.sel_rf_wb), 0.S,
+  write_back := MuxLookup(sel_rf_wb, 0.S,
                           Array(
-                            0.U -> RegNext(alu.io.result),
+                            0.U -> alu_res_wb,
                             // Already delayed by one cycle
                             1.U -> mem_data.io.data_out
                           ))
@@ -130,18 +141,11 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug Stuff
   ///////////////////////////////////////////////////////////////////
 
-  // Condition for simulation termination is
-  // loop:
-  //   j loop
-  // This might change to an unaligned instruction access exception
-  val prev_instr = RegInit(100.U)
-  val prev_instr2 = RegInit(100.U)
-  prev_instr := mem_instr.io.instr
-  prev_instr2 := prev_instr
-  io.success := prev_instr2 === mem_instr.io.instr
+  // TODO: Detect specific write to memory
+  io.success := false.B
 
   // Debug
-  // Stole this fmem_instr Sodor
+  // Stole this from Sodor
   // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
   printf("Op1=[0x%x] Op2=[0x%x] W[%d,%d= 0x%x] Mem[%d: R:0x%x W:0x%x] DASM(%x)\n"
            , alu.io.in.registers.rs1
