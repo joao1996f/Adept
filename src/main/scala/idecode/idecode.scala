@@ -53,11 +53,6 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 // Branch Execute
                 val imm_b_offset  = Output(SInt(config.XLen.W))
                 val br_op         = Output(UInt(3.W))
-<<<<<<< HEAD
-=======
-                val branch_exec   = Output(Bool())
-                val stall_reg     = Output(Bool())
->>>>>>> b9ad0beab21468631c99346743c8f41cd7a17e5f
               })
 
   // BTW this is a bad implementation, but its OK to start off.
@@ -68,31 +63,14 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val rs1_sel     = io.instruction(19, 15)
   val rs2_sel     = io.instruction(24, 20)
   val imm         = io.instruction(31, 20)
-<<<<<<< HEAD
-=======
-  val stall_reg   = RegInit(false.B)
-  val branch_exec = Wire(Bool())
->>>>>>> b9ad0beab21468631c99346743c8f41cd7a17e5f
 
   // Send OP to the branch execute module
   io.br_op       := op
 
   // Ignore current instruction when the previous was a control instruction
-<<<<<<< HEAD
   op_code        := Mux(io.stall_reg, "b0000000".U, io.instruction(6, 0))
   io.alu.op_code := op_code
 
-=======
-  op_code        := Mux(stall_reg, "b0000000".U, io.instruction(6, 0))
-  io.alu.op_code := op_code
-
-  // Stop PC when a branch or jump instruction is detected
-  stall_w        := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
-  stall          := branch_exec
-  io.branch_exec := branch_exec
-  io.stall_reg   := stall_reg
-
->>>>>>> b9ad0beab21468631c99346743c8f41cd7a17e5f
   //////////////////////////////////////////////////////
   // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
   // Load instructions and 1100011 for JALR
