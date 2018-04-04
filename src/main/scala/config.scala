@@ -5,6 +5,10 @@ import chisel3._
 /* Currently only supports the RV32I Base Instruction Set
  */
 class AdeptConfig {
+  // Should the memory be simulated? You can find more memory details at the
+  // memory.scala file.
+  val sim_mem = true
+
   // ISA length
   val XLen = 32
 
