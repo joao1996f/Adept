@@ -67,7 +67,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   stall              := offset_sel | jalr_exec
   io.stall_reg       := stall
   // PC actualization
-  when (!stall || io.mem_stall){
+  when (!stall && !io.mem_stall){
     progCount := jalrORpc_select
   }
    io.pc_out  := progCount.asUInt
