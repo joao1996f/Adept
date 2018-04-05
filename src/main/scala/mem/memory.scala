@@ -89,6 +89,9 @@ class Memory(config: AdeptConfig) extends Module {
     when (io.decode.en) {
       valid             := true.B
       stall             := true.B
+    } .otherwise {
+      valid := false.B
+      stall := false.B
     }
   }
 

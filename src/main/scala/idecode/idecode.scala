@@ -71,12 +71,6 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   op_code        := Mux(io.stall_reg, "b0000000".U, io.instruction(6, 0))
   io.alu.op_code := op_code
 
-  // Stop PC when a branch or jump instruction is detected
-  branch_exec    := op_code === "b1100011".U || op_code === "b1100111".U || op_code === "b1101111".U
-  stall_reg      := branch_exec
-  io.branch_exec := branch_exec
-  io.stall_reg   := stall_reg
-
   //////////////////////////////////////////////////////
   // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
   // Load instructions and 1100011 for JALR
@@ -147,7 +141,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := true.B
     io.mem.op            := op
-    io.mem.en            := false.B
+    io.mem.en            := true.B
   }
   //////////////////////////////////////////////////////
   // B-Type Decode => OP Code: 1100011 of instruction
