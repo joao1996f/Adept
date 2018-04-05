@@ -1,3 +1,4 @@
+
 package adept.pc
 
 import chisel3.iotesters
@@ -34,11 +35,12 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
     expect(e.io.pc_out, res)
   }
   var res =BigInt(0)
+  var st = false
   for (i <- 0 until 100){
     val opcode_in = rnd.nextInt ((pow (2, 10)).toInt)
     val flags = rnd.nextInt(2)==1 // random Boolean
-    val step_in = rnd.nextInt (pow (2, 32).toInt)
-    val offset = rnd.nextInt (pow (2, 32).toInt/1000) // the division is for the sake of not exceeding the range limit of int too quickly
+    val step_in = rnd.nextInt (pow (2, 10).toInt)
+    val offset = rnd.nextInt (pow (2,10).toInt) // the division is for the sake of not exceeding the range limit of int too quickly
 
     val aux1 = opcode_in | Integer.parseInt ("10000000000", 2) // extension to facilitate future operations
     val aux2 = aux1.toBinaryString // transformation to a string of bits
@@ -58,49 +60,49 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
             if (!flags){
               res += offset
             }else {
-              res += 4
+              res += 1
             }
           }
           case 1 => {
             if (flags ){
               res += offset
             }else {
-              res += 4
+              res += 1
             }
           }
           case 4 => {
             if (flags){
               res+= offset
             }else {
-              res += 4
+              res += 1
             }
           }
           case 5 => {
             if (!flags ){
               res+= offset
             }else {
-              res += 4
+              res += 1
             }
           }
           case 6 => {
             if (flags){
               res+= offset
             }else {
-              res += 4
+              res += 1
             }
           }
           case 7 => {
             if (!flags){
               res+= offset
             }else {
-              res += 4
+              res += 1
             }
           }
-          case _ => res += 4
+          case _ => res += 1
         }
       }
     } else {
-      res += 4
+      res += 1
     }
     // logic to detect unsigned integer wraparound
     val a = pow(2,31)

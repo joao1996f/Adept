@@ -14,8 +14,8 @@ class BranchOpConstants { // join this group with all the rest of the configurat
   val BR_LTU   = 6.asUInt(3.W)  // Branch on Less Than Unsigned
 
   val BR_Cond  = "b1100011".U
-  val BR_JAL   = "b1100111".U
-  val BR_JALR  = "b1101111".U
+  val BR_JAL   = "b1101111".U
+  val BR_JALR  = "b1100111".U
 }
 
 class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
