@@ -30,6 +30,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     val br_offset  = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
     val pc_in      = Input(UInt(config.XLen.W))
+    // Memory stall control signal
+    val mem_stall = Input(Bool())
     // Stall delayed by 1 clock
     val stall_reg  = Output(Bool())
     // Program count to be sent for calc of new PC or for storage
@@ -65,7 +67,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   stall              := offset_sel | jalr_exec
   io.stall_reg       := stall
   // PC actualization
-  when (!stall){
+  when (!stall || io.mem_stall){
     progCount := jalrORpc_select
   }
    io.pc_out  := progCount.asUInt

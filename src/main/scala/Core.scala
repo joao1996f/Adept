@@ -64,6 +64,7 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
+  pc.io.mem_stall := stall
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
