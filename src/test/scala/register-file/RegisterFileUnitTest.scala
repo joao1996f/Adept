@@ -32,69 +32,11 @@ class RegisterFileUnitTester(c: RegisterFile) extends PeekPokeTester(c) {
     poke(c.io.decoder.rs1_sel, sel)
     poke(c.io.decoder.rs2_sel, sel + 1)
     step(1)
-    expect(c.io.registers.rs1, a)
-    expect(c.io.registers.rs2, b)
-  }
-}
-
-/**
-  * This is a trivial example of how to run this Specification
-  * From within sbt use:
-  * {{{
-  * testOnly chutils.test.RegisterFileTester
-  * }}}
-  * From a terminal shell use:
-  * {{{
-  * sbt 'testOnly chutils.test.RegisterFileTester'
-  * }}}
-  */
-class RegisterFileTester extends ChiselFlatSpec {
-  // Can't use rnd here
-  val config = new AdeptConfig
-
-  private val backendNames = if(firrtl.FileUtils.isCommandAvailable("verilator")) {
-    Array("firrtl", "verilator")
-  }
-  else {
-    Array("firrtl")
-  }
-  for ( backendName <- backendNames ) {
-    "RegisterFile" should s"store random data (with $backendName)" in {
-      Driver(() => new RegisterFile(config), backendName) {
-        c => new RegisterFileUnitTester(c)
-      } should be (true)
+    if (sel != 0) {
+      expect(c.io.registers.rs1, a)
     }
-  }
-
-  "Basic test using Driver.execute" should "be used as an alternative way to run specification" in {
-    iotesters.Driver.execute(Array(), () => new RegisterFile(config)) {
-      c => new RegisterFileUnitTester(c)
-    } should be (true)
-  }
-
-  "using --backend-name verilator" should "be an alternative way to run using verilator" in {
-    if(backendNames.contains("verilator")) {
-      iotesters.Driver.execute(Array("--backend-name", "verilator"), () => new RegisterFile(config)) {
-        c => new RegisterFileUnitTester(c)
-      } should be(true)
+    if ((sel + 1) != 0) {
+      expect(c.io.registers.rs2, b)
     }
-  }
-
-  "running with --is-verbose" should "show more about what's going on in your tester" in {
-    iotesters.Driver.execute(Array("--is-verbose"), () => new RegisterFile(config)) {
-      c => new RegisterFileUnitTester(c)
-    } should be(true)
-  }
-
-  "running with --fint-write-vcd" should "create a vcd file from your test" in {
-    iotesters.Driver.execute(Array("--fint-write-vcd"), () => new RegisterFile(config)) {
-      c => new RegisterFileUnitTester(c)
-    } should be(true)
-  }
-
-  "using --help" should s"show the many options available" in {
-    iotesters.Driver.execute(Array("--help"), () => new RegisterFile(config)) {
-      c => new RegisterFileUnitTester(c)
-    } should be (true)
   }
 }

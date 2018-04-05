@@ -141,7 +141,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := true.B
     io.mem.op            := op
-    io.mem.en            := false.B
+    io.mem.en            := true.B
   }
   //////////////////////////////////////////////////////
   // B-Type Decode => OP Code: 1100011 of instruction
@@ -213,6 +213,9 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.mem.op            := 0.U
     io.mem.en            := false.B
   }
+  //////////////////////////////////////////////////////
+  // Invalid Instruction executes a NOP
+  //////////////////////////////////////////////////////
   .otherwise{
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U

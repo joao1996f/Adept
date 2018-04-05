@@ -50,6 +50,12 @@ class Adept(config: AdeptConfig) extends Module {
   val stall = WireInit(false.B)
   stall := mem_data.io.stall | pc.io.stall_reg
 
+  // Pipeline PC
+  val ex_pc = RegInit(0.S)
+  when (!stall) {
+    ex_pc := pc.io.pc_out.asSInt
+  }
+
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
@@ -57,6 +63,8 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
+  pc.io.pc_in     := ex_pc.asUInt
+  pc.io.mem_stall := stall
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -69,7 +77,6 @@ class Adept(config: AdeptConfig) extends Module {
   val rst                      = RegInit(false.B)
   rst                          := true.B
   idecode.io.instruction       := mem_instr.io.instr & Fill(32, rst)
-  idecode.io.stall_reg         := pc.io.stall_reg
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
@@ -79,13 +86,6 @@ class Adept(config: AdeptConfig) extends Module {
   val sel_frw_path_rs1 = Wire(Bool())
   val sel_frw_path_rs2 = Wire(Bool())
   val write_back       = Wire(SInt(32.W))
-
-  // Pipeline PC
-  val ex_pc = RegInit(0.U)
-  when (!stall) {
-    ex_pc := pc.io.pc_out
-  }
-  pc.io.pc_in     := ex_pc
 
   // MUX Selections to Operands in ALU
   val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
