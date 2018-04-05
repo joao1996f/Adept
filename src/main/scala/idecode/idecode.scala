@@ -38,6 +38,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{
                 // Input
                 val instruction = Input(UInt(config.XLen.W))
+                val stall_reg   = Input(Bool())
 
                 // Output
                 val registers     = new DecoderRegisterOut(config)
@@ -52,8 +53,6 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 // Branch Execute
                 val imm_b_offset  = Output(SInt(config.XLen.W))
                 val br_op         = Output(UInt(3.W))
-                val branch_exec   = Output(Bool())
-                val stall_reg     = Output(Bool())
               })
 
   // BTW this is a bad implementation, but its OK to start off.
@@ -64,14 +63,12 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val rs1_sel     = io.instruction(19, 15)
   val rs2_sel     = io.instruction(24, 20)
   val imm         = io.instruction(31, 20)
-  val stall_reg   = RegInit(false.B)
-  val branch_exec = Wire(Bool())
 
   // Send OP to the branch execute module
   io.br_op       := op
 
   // Ignore current instruction when the previous was a control instruction
-  op_code        := Mux(stall_reg, "b0000000".U, io.instruction(6, 0))
+  op_code        := Mux(io.stall_reg, "b0000000".U, io.instruction(6, 0))
   io.alu.op_code := op_code
 
   // Stop PC when a branch or jump instruction is detected
