@@ -5,11 +5,6 @@ import chisel3.util._
 
 import adept.config.AdeptConfig
 
-/*
- * ROM memory implemented using a vector.
- * Needs to be filled with instructions.
-*/
-
 class InstrMem (config: AdeptConfig) extends Module {
   val io = IO (new Bundle{
     // Inputs

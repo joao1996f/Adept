@@ -48,7 +48,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Connections
   //////////////////////////////////////////////////////////////////////////////
   val stall = WireInit(false.B)
-  stall := mem_data.io.stall | pc.io.stall_reg
+  stall := (mem_data.io.stall & idecode.io.mem.en) | pc.io.stall_reg
 
   // Pipeline PC
   val ex_pc = RegInit(0.S)
@@ -65,18 +65,31 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
   pc.io.mem_stall := stall
+  pc.io.mem_en    := idecode.io.mem.en
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
   ///////////////////////////////////////////////////////////////////
   // Program connections
-  mem_instr.io.in_pc           := pc.io.pc_out
-  mem_instr.io.data_in         := io.data_in
-  mem_instr.io.addr_w          := io.addr_w
-  mem_instr.io.we              := io.we
-  val rst                      = RegInit(false.B)
-  rst                          := true.B
-  idecode.io.instruction       := mem_instr.io.instr & Fill(32, rst)
+  mem_instr.io.in_pc   := pc.io.pc_out
+  mem_instr.io.data_in := io.data_in
+  mem_instr.io.addr_w  := io.addr_w
+  mem_instr.io.we      := io.we
+  val rst              = RegInit(false.B)
+  rst                  := true.B
+
+  // Store the previous instruction in the first rising edge the memory
+  // instruction is enabled. Ignore all others
+  val prev_instr               = RegInit(0.U)
+  val prev_instr_1delay_stall  = RegInit(false.B)
+  prev_instr_1delay_stall := idecode.io.mem.en
+  when ((idecode.io.mem.en && !prev_instr_1delay_stall) || !stall) {
+    prev_instr := mem_instr.io.instr
+  }
+
+  idecode.io.instruction := Mux(mem_data.io.stall, prev_instr, mem_instr.io.instr & Fill(32, rst))
+  idecode.io.stall_reg   := pc.io.stall_reg
+
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel

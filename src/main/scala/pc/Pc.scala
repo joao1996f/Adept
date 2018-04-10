@@ -31,7 +31,9 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     // Program count after 1st pipeline level
     val pc_in      = Input(UInt(config.XLen.W))
     // Memory stall control signal
-    val mem_stall = Input(Bool())
+    val mem_stall  = Input(Bool())
+    // Memory enable control signal
+    val mem_en     = Input(Bool())
     // Stall delayed by 1 clock
     val stall_reg  = Output(Bool())
     // Program count to be sent for calc of new PC or for storage
@@ -39,7 +41,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   })
 
   // Conditional Branch verification and flags attribution
-  val Cond_Br_Ver = MuxLookup (io.in_opcode (9,7), false.B,
+  val cond_br_ver = MuxLookup (io.in_opcode (9,7), false.B,
     Array(br.BR_EQ  -> ~io.br_flags,
           br.BR_NE  -> io.br_flags,
           br.BR_LT  -> io.br_flags,
@@ -47,10 +49,10 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
           br.BR_LTU -> io.br_flags,
           br.BR_GEU -> ~io.br_flags))
 
-  val Cond_Br_exe     = (io.in_opcode(6, 0) === br.BR_Cond) & Cond_Br_Ver
+  val cond_br_exe     = (io.in_opcode(6, 0) === br.BR_Cond) & cond_br_ver
 
   // Offset selection criteria: is it a JAL? or is it Conditional with correct flags?
-  val offset_sel      = (io.in_opcode(6, 0) === br.BR_JAL) | Cond_Br_exe
+  val offset_sel      = (io.in_opcode(6, 0) === br.BR_JAL) | cond_br_exe
 
   // Auxiliar variable that contains either offset or 1
   val add_to_pc_val   = Mux(offset_sel,
@@ -58,16 +60,21 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   // JALR condition verification
   val jalr_exec       = (io.in_opcode(6, 0) === br.BR_JALR)
   // next pc calculation
-  val next_pc         = Mux(offset_sel, io.pc_in, io.pc_out).asSInt + add_to_pc_val.asSInt
-  val jalrORpc_select = Mux(jalr_exec, io.br_step, next_pc)
   val progCount       = RegInit(0.S(config.XLen.W))
+  val next_pc         = Mux(offset_sel, io.pc_in, progCount.asUInt).asSInt + add_to_pc_val.asSInt
+  val jalrORpc_select = Mux(jalr_exec, io.br_step, next_pc)
 
   // Logic to stall the next PC
   val stall           = RegInit(false.B)
   stall              := offset_sel | jalr_exec
   io.stall_reg       := stall
-  // PC actualization
-  when (!stall && !io.mem_stall){
+
+  // Delay memory enable by one cycle
+  val mem_en_reg = RegInit(false.B)
+  mem_en_reg := io.mem_en
+
+  // PC update
+  when (!stall && !io.mem_stall && (mem_en_reg ^ !io.mem_en)) {
     progCount := jalrORpc_select
   }
    io.pc_out  := progCount.asUInt

@@ -57,19 +57,24 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // BTW this is a bad implementation, but its OK to start off.
   // Optimizations will be done down the line.
-  val op_code     = Wire(UInt(7.W))
-  val rsd_sel     = io.instruction(11, 7)
-  val op          = io.instruction(14, 12)
-  val rs1_sel     = io.instruction(19, 15)
-  val rs2_sel     = io.instruction(24, 20)
-  val imm         = io.instruction(31, 20)
+  val instruction = Wire(UInt(32.W))
+  instruction := io.instruction
+  val op_code    = Wire(UInt(7.W))
+  val rsd_sel    = instruction(11, 7)
+  val op         = instruction(14, 12)
+  val rs1_sel    = instruction(19, 15)
+  val rs2_sel    = instruction(24, 20)
+  val imm        = instruction(31, 20)
+  val mem_en     = Wire(Bool())
 
   // Send OP to the branch execute module
   io.br_op       := op
 
   // Ignore current instruction when the previous was a control instruction
-  op_code        := Mux(io.stall_reg, "b0000000".U, io.instruction(6, 0))
+  op_code        := Mux(io.stall_reg, 0.U, instruction(6, 0))
+
   io.alu.op_code := op_code
+  io.mem.en      := mem_en
 
   //////////////////////////////////////////////////////
   // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
@@ -95,12 +100,12 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
       io.sel_rf_wb := 0.U
       io.alu.op    := op
       io.mem.op    := 0.U
-      io.mem.en    := false.B
+      mem_en    := false.B
     } .otherwise {
       io.sel_rf_wb := 1.U // Select the Memory to write to the register file
       io.alu.op    := 0.U // Always perform an ADD when it's a Load
       io.mem.op    := op
-      io.mem.en    := true.B
+      mem_en       := true.B
     }
   }
   //////////////////////////////////////////////////////
@@ -122,7 +127,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb     := 0.U
     io.mem.we        := false.B
     io.mem.op        := 0.U
-    io.mem.en        := false.B
+    mem_en           := false.B
   }
   //////////////////////////////////////////////////////
   // S-Type Decode => OP Code: 0100011 of instruction
@@ -141,7 +146,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := true.B
     io.mem.op            := op
-    io.mem.en            := true.B
+    mem_en               := true.B
   }
   //////////////////////////////////////////////////////
   // B-Type Decode => OP Code: 1100011 of instruction
@@ -168,7 +173,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb     := 0.U
     io.mem.we        := false.B
     io.mem.op        := 0.U
-    io.mem.en        := false.B
+    mem_en           := false.B
   }
   //////////////////////////////////////////////////////
   // U-Type Decode => OP Code: 0010111 or 0110111 of instruction
@@ -193,7 +198,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb     := 0.U
     io.mem.we        := false.B
     io.mem.op        := 0.U
-    io.mem.en        := false.B
+    mem_en           := false.B
   }
   //////////////////////////////////////////////////////
   // J-Type Decode => OP Code: 1101111 of instruction
@@ -211,7 +216,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := false.B
     io.mem.op            := 0.U
-    io.mem.en            := false.B
+    mem_en               := false.B
   }
   //////////////////////////////////////////////////////
   // Invalid Instruction executes a NOP
@@ -229,6 +234,6 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.sel_rf_wb         := 0.U
     io.mem.we            := false.B
     io.mem.op            := 0.U
-    io.mem.en            := false.B
+    mem_en               := false.B
   }
 }
