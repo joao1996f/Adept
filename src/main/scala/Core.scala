@@ -82,7 +82,7 @@ class Adept(config: AdeptConfig) extends Module {
   // instruction is enabled. Ignore all others
   val prev_instr               = RegInit(0.U)
   val prev_instr_1delay_stall  = RegInit(false.B)
-  prev_instr_1delay_stall := idecode.io.mem.en
+  prev_instr_1delay_stall     := idecode.io.mem.en
   when ((idecode.io.mem.en && !prev_instr_1delay_stall) || !stall) {
     prev_instr := mem_instr.io.instr
   }
@@ -125,8 +125,12 @@ class Adept(config: AdeptConfig) extends Module {
   val we_wb      = RegInit(false.B)
   val alu_res_wb = RegInit(0.S)
   val sel_rf_wb  = RegInit(0.U)
+  // Control stall from PC in case of branch delayed by 1 more cycle
+  // to correspond with wb pipeline stage
+  val stall2_reg = RegInit(false.B)
+  stall2_reg    := stall//pc.io.stall_reg
 
-  when (!stall) {
+  when (!stall2_reg) {
     rsd_sel_wb := idecode.io.registers.rsd_sel
     we_wb      := idecode.io.registers.we
     alu_res_wb := alu.io.result
