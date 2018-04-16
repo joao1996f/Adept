@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
+import adept.core.MemLoadIO
 
 class MemIO(val config: AdeptConfig) extends Bundle {
   // Inputs
@@ -27,10 +28,18 @@ class MemDecodeIO(val config: AdeptConfig) extends Bundle {
 
 class Memory(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
+                // Program Load
+                val load = new MemLoadIO(config)
+
+                // Data R/W Ports
                 val in     = new MemIO(config)
                 val decode = new MemDecodeIO(config)
-
                 val data_out  = Output(SInt(config.XLen.W))
+
+                // Instruction Read Port
+                val pc_in     = Input(UInt(config.XLen.W))
+                val instr_out = Output(UInt(config.XLen.W))
+
                 val stall     = Output(Bool())
               })
 
@@ -88,20 +97,27 @@ class Memory(config: AdeptConfig) extends Module {
   val read_port = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
   val addr = io.in.addr >> 2
 
+  // Pass PC to memory
+  my_mem.io.cache.pc_in := io.pc_in
+  my_mem.io.cache.pc_en := true.B // TODO: Don't tie this to a constant
+
+  // Connect Program Loading interface
+  my_mem.io.load <> io.load
+
   // Pass address, read and write enable
-  my_mem.io.addr    := addr
-  my_mem.io.we      := io.decode.we
-  my_mem.io.re      := ~io.decode.we
+  my_mem.io.cache.addr := addr
+  my_mem.io.cache.we   := io.decode.we
+  my_mem.io.cache.re   := ~io.decode.we
 
   when (io.decode.we && io.decode.en) {
     // Write Port
-    my_mem.io.data_in := buildWriteData(io.in.data_in.asUInt, io.decode.op, io.in.addr(1, 0).asUInt)
-    my_mem.io.mask    := buildWriteMask(io.decode.op, io.in.addr(1, 0).asUInt).toBools
+    my_mem.io.cache.data_in := buildWriteData(io.in.data_in.asUInt, io.decode.op, io.in.addr(1, 0).asUInt)
+    my_mem.io.cache.mask    := buildWriteMask(io.decode.op, io.in.addr(1, 0).asUInt).toBools
   } .otherwise {
     // Read Port
-    my_mem.io.data_in := Vec(0.U, 0.U, 0.U, 0.U)
-    my_mem.io.mask    := Vec(false.B, false.B, false.B, false.B)
-    read_port         := my_mem.io.data_out
+    my_mem.io.cache.data_in := Vec(0.U, 0.U, 0.U, 0.U)
+    my_mem.io.cache.mask    := Vec(false.B, false.B, false.B, false.B)
+    read_port               := my_mem.io.cache.data_out
   }
 
   // Stall logic
@@ -110,12 +126,12 @@ class Memory(config: AdeptConfig) extends Module {
   val valid = RegInit(false.B)
   val stall = RegInit(false.B)
 
-  ready           := my_mem.io.ready
-  my_mem.io.valid := valid
+  ready                 := my_mem.io.cache.ready
+  my_mem.io.cache.valid := valid
 
   when (io.decode.en) {
-    valid             := true.B
-    stall             := true.B
+    valid := true.B
+    stall := true.B
   } .otherwise {
     valid := false.B
     stall := false.B
@@ -133,4 +149,7 @@ class Memory(config: AdeptConfig) extends Module {
 
   // Data Read Port
   io.data_out := buildReadData(io.decode.op, io.in.addr(1, 0).asUInt, read_port).asSInt
+
+  // Instruction Read Port
+  io.instr_out := my_mem.io.cache.pc_out
 }

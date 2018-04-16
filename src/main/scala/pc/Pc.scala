@@ -56,7 +56,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
 
   // Auxiliar variable that contains either offset or 1
   val add_to_pc_val   = Mux(offset_sel,
-                         Cat(Fill(2, io.br_offset(31)), io.br_offset(31,2)), 1.U)
+                         Cat(Fill(2, io.br_offset(31)), io.br_offset(31,2)), 4.U)
   // JALR condition verification
   val jalr_exec       = (io.in_opcode(6, 0) === br.BR_JALR)
   // next pc calculation
@@ -77,5 +77,6 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   when (!stall && !io.mem_stall && (mem_en_reg ^ !io.mem_en)) {
     progCount := jalrORpc_select
   }
-   io.pc_out  := progCount.asUInt
+
+  io.pc_out  := progCount.asUInt
 }

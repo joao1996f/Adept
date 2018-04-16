@@ -12,12 +12,21 @@ import adept.pc.Pc
 import adept.instructionMemory.InstrMem
 import adept.alu.ALU
 
+class MemLoadIO(config: AdeptConfig) extends Bundle {
+  // Inputs
+  val data_in = Input(Vec(4, UInt(8.W)))
+  val addr_w  = Input(UInt(config.XLen.W))
+  val we      = Input(Bool())
+
+  override def cloneType: this.type = {
+    new MemLoadIO(config).asInstanceOf[this.type];
+  }
+}
+
 class Adept(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{
-                // Inputs
-                val data_in = Input(UInt(config.XLen.W))
-                val addr_w = Input(UInt(config.XLen.W))
-                val we = Input(Bool())
+                // Load program interface
+                val load = new MemLoadIO(config)
 
                 // Outputs
                 val success = Output(Bool())
@@ -29,9 +38,6 @@ class Adept(config: AdeptConfig) extends Module {
   // Instruction Fetch
   val pc = Module(new Pc(config, new BranchOpConstants))
 
-  // Program Memory
-  val mem_instr = Module(new InstrMem(config))
-
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))
 
@@ -42,13 +48,13 @@ class Adept(config: AdeptConfig) extends Module {
   val alu = Module(new ALU(config))
 
   // Memory
-  val mem_data = Module(new Memory(config))
+  val mem = Module(new Memory(config))
 
   //////////////////////////////////////////////////////////////////////////////
   // Connections
   //////////////////////////////////////////////////////////////////////////////
   val stall = WireInit(false.B)
-  stall := (mem_data.io.stall & idecode.io.mem.en) | pc.io.stall_reg
+  stall := (mem.io.stall & idecode.io.mem.en) | pc.io.stall_reg
 
   // Pipeline PC
   val ex_pc = RegInit(0.S)
@@ -71,12 +77,10 @@ class Adept(config: AdeptConfig) extends Module {
   // Decode, Execute and Memory Stage
   ///////////////////////////////////////////////////////////////////
   // Program connections
-  mem_instr.io.in_pc   := pc.io.pc_out
-  mem_instr.io.data_in := io.data_in
-  mem_instr.io.addr_w  := io.addr_w
-  mem_instr.io.we      := io.we
-  val rst              = RegInit(false.B)
-  rst                  := true.B
+  mem.io.pc_in   := pc.io.pc_out
+  mem.io.load <> io.load
+  val rst        = RegInit(false.B)
+  rst            := true.B
 
   // Store the previous instruction in the first rising edge the memory
   // instruction is enabled. Ignore all others
@@ -84,10 +88,10 @@ class Adept(config: AdeptConfig) extends Module {
   val prev_instr_1delay_stall  = RegInit(false.B)
   prev_instr_1delay_stall     := idecode.io.mem.en
   when ((idecode.io.mem.en && !prev_instr_1delay_stall) || !stall) {
-    prev_instr := mem_instr.io.instr
+    prev_instr := mem.io.instr_out
   }
 
-  idecode.io.instruction := Mux(mem_data.io.stall, prev_instr, mem_instr.io.instr & Fill(32, rst))
+  idecode.io.instruction := Mux(mem.io.stall, prev_instr, mem.io.instr_out & Fill(32, rst))
   idecode.io.stall_reg   := pc.io.stall_reg
 
 
@@ -114,9 +118,9 @@ class Adept(config: AdeptConfig) extends Module {
   alu.io.in.decoder_params <> idecode.io.alu
 
   // Memory Connections
-  mem_data.io.in.data_in := register_file.io.registers.rs2
-  mem_data.io.in.addr    := alu.io.result.asUInt
-  mem_data.io.decode     <> idecode.io.mem
+  mem.io.in.data_in := register_file.io.registers.rs2
+  mem.io.in.addr    := alu.io.result.asUInt
+  mem.io.decode     <> idecode.io.mem
 
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
@@ -125,12 +129,11 @@ class Adept(config: AdeptConfig) extends Module {
   val we_wb      = RegInit(false.B)
   val alu_res_wb = RegInit(0.S)
   val sel_rf_wb  = RegInit(0.U)
-  // Control stall from PC in case of branch delayed by 1 more cycle
-  // to correspond with wb pipeline stage
-  val stall2_reg = RegInit(false.B)
-  stall2_reg    := stall//pc.io.stall_reg
 
-  when (!stall2_reg) {
+  val stall_wb_reg = RegInit(false.B)
+  stall_wb_reg    := stall
+
+  when (!stall_wb_reg) {
     rsd_sel_wb := idecode.io.registers.rsd_sel
     we_wb      := idecode.io.registers.we
     alu_res_wb := alu.io.result
@@ -142,7 +145,7 @@ class Adept(config: AdeptConfig) extends Module {
                           Array(
                             0.U -> alu_res_wb,
                             // Already delayed by one cycle
-                            1.U -> mem_data.io.data_out
+                            1.U -> mem.io.data_out
                           ))
   register_file.io.rsd_value       := write_back
   register_file.io.decoder.rsd_sel := rsd_sel_wb
@@ -171,9 +174,9 @@ class Adept(config: AdeptConfig) extends Module {
            , idecode.io.registers.rsd_sel
            , register_file.io.rsd_value
            , idecode.io.sel_rf_wb
-           , mem_data.io.data_out
-           , mem_data.io.in.data_in
-           , mem_instr.io.instr
+           , mem.io.data_out
+           , mem.io.in.data_in
+           , mem.io.instr_out
 )
 }
 
