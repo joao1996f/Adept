@@ -30,11 +30,11 @@ test-all-verilator:
 	sbt 'test:runMain $(PACKAGE).pc.PcMain --backend-name verilator'
 	sbt 'test:runMain $(PACKAGE).registerfile.RegisterFileMain --backend-name verilator'
 
-.PHONY: clean clean-verilog
+.PHONY: clean clean-verilog verilog
 
 clean:
 	rm -rf verilog
 	rm -rf test_run_dir
 
 clean-verilog:
-	rm -rf verilog/$(PACKAGE).$(MODULE)*
+	rm -rf verilog/$(MODULE)*

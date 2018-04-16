@@ -54,7 +54,8 @@ class ALU(config: AdeptConfig) extends Module {
     // Register instructions
     val sel_oper_B = io.in.registers.rs2.asSInt
     // Small modification to operand B when performing signed addition
-    when (io.in.decoder_params.imm(10) === true.B && io.in.decoder_params.op_code(5, 4) === "b11".U && io.in.decoder_params.op === "b000".U && io.in.decoder_params.op_code(2) === false.B) {
+    when (io.in.decoder_params.imm(10) === true.B && io.in.decoder_params.op_code(5, 4) === "b11".U
+            && io.in.decoder_params.op === "b000".U && io.in.decoder_params.op_code(2) === false.B) {
       operand_B := (~(sel_oper_B.asUInt)).asSInt
       // Issue #122 firrt-interpreter
       // operand_B := ~sel_oper_B
