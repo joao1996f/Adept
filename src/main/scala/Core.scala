@@ -159,8 +159,13 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug Stuff
   ///////////////////////////////////////////////////////////////////
 
-  // TODO: Detect specific write to memory
-  io.success := false.B
+  // Simulation ends when program detects a write of 0xdead0000 to address
+  // 0x00000000
+  if (config.sim) {
+    io.success := mem.io.instr_out === "h_dead_0737".U
+  } else {
+    io.success := false.B
+  }
 
   // Debug
   // Stole this from Sodor
@@ -174,12 +179,9 @@ class Adept(config: AdeptConfig) extends Module {
            , idecode.io.sel_rf_wb
            , mem.io.data_out
            , mem.io.in.data_in
-           , mem.io.instr_out
-)
+           , mem.io.instr_out)
 }
 
-// This is needed to generate the verilog just for this module. When generating
-// the verilog this object will only be needed in the top module.
 object Adept extends App {
   val config = new AdeptConfig
   chisel3.Driver.execute(args, () => new Adept(config))
