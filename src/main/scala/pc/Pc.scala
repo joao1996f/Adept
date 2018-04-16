@@ -55,14 +55,15 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   val offset_sel      = (io.in_opcode(6, 0) === br.BR_JAL) | cond_br_exe
 
   // Auxiliar variable that contains either offset or 1
-  val add_to_pc_val   = Mux(offset_sel,
-                         Cat(Fill(2, io.br_offset(31)), io.br_offset(31,2)), 4.U)
+  val add_to_pc_val   = Mux(offset_sel, io.br_offset.asUInt, 4.U)
   // JALR condition verification
   val jalr_exec       = (io.in_opcode(6, 0) === br.BR_JALR)
   // next pc calculation
   val progCount       = RegInit(0.S(config.XLen.W))
   val next_pc         = Mux(offset_sel, io.pc_in, progCount.asUInt).asSInt + add_to_pc_val.asSInt
-  val jalrORpc_select = Mux(jalr_exec, io.br_step, next_pc)
+  // Remove LSB for JALR
+  val jalr_value      = Cat(io.br_step(config.XLen - 1, 1), false.B).asSInt
+  val jalrORpc_select = Mux(jalr_exec, jalr_value, next_pc)
 
   // Logic to stall the next PC
   val stall           = RegInit(false.B)

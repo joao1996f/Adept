@@ -9,7 +9,6 @@ import adept.registerfile.RegisterFile
 import adept.mem.Memory
 import adept.pc.BranchOpConstants
 import adept.pc.Pc
-import adept.instructionMemory.InstrMem
 import adept.alu.ALU
 
 class MemLoadIO(config: AdeptConfig) extends Bundle {
@@ -93,7 +92,6 @@ class Adept(config: AdeptConfig) extends Module {
 
   idecode.io.instruction := Mux(mem.io.stall, prev_instr, mem.io.instr_out & Fill(32, rst))
   idecode.io.stall_reg   := pc.io.stall_reg
-
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel

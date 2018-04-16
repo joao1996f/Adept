@@ -40,12 +40,16 @@ class CacheSim(config: AdeptConfig) extends Module {
   val ready   = RegInit(false.B)
   val counter = Counter(55)
 
-  // Program loading write port
+  ////////////////////////////////////////////////////////////////////////////////
+  // Program loading write Port
+  ////////////////////////////////////////////////////////////////////////////////
   when (io.load.we) {
     my_mem.write(io.load.addr_w, io.load.data_in)
   }
 
-  // Data read and write ports
+  ////////////////////////////////////////////////////////////////////////////////
+  // Data read and write Ports
+  ////////////////////////////////////////////////////////////////////////////////
   when (io.cache.we && valid && ready) {
     my_mem.write(io.cache.addr, io.cache.data_in, io.cache.mask)
   }
@@ -56,8 +60,9 @@ class CacheSim(config: AdeptConfig) extends Module {
     io.cache.data_out := Vec(0.U, 0.U, 0.U, 0.U)
   }
 
-  // Ignore stalling when the PC is reading instructions from memory. This isn't
-  // realistic but it's ok for sim.
+  ////////////////////////////////////////////////////////////////////////////////
+  // Instruction Read Port
+  ////////////////////////////////////////////////////////////////////////////////
   when (io.cache.pc_en) {
     val read_pc = my_mem.read(io.cache.pc_in)
     io.cache.pc_out := Cat(read_pc(3), read_pc(2), read_pc(1), read_pc(0))
@@ -65,7 +70,9 @@ class CacheSim(config: AdeptConfig) extends Module {
     io.cache.pc_out := 0.U
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Handshake logic
+  ////////////////////////////////////////////////////////////////////////////////
   valid := io.cache.valid
   io.cache.ready := ready
 

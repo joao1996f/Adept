@@ -209,7 +209,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rsd_sel := rsd_sel
     io.imm_b_offset      := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
     io.alu.switch_2_imm  := true.B
-    io.alu.imm           := 1.S
+    io.alu.imm           := 4.S
     io.alu.op            := 0.U
     io.registers.we      := true.B
     io.sel_operand_a     := 1.U
