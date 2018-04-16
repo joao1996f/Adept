@@ -59,7 +59,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   // JALR condition verification
   val jalr_exec       = (io.in_opcode(6, 0) === br.BR_JALR)
   // next pc calculation
-  val progCount       = RegInit(0.S(config.XLen.W))
+  val progCount       = RegInit("h_1000_0000".asSInt)
   val next_pc         = Mux(offset_sel, io.pc_in, progCount.asUInt).asSInt + add_to_pc_val.asSInt
   // Remove LSB for JALR
   val jalr_value      = Cat(io.br_step(config.XLen - 1, 1), false.B).asSInt
