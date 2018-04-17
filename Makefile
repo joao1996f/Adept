@@ -1,37 +1,30 @@
 # Makefile to generate Adept's verilog and test certain modules. The default
 # verilog generation folder is 'verilog' in the root of the project. Test files
 # are in the 'test_run_dir'.
-MODULE?=core.Adept
-PACKAGE?=adept
-export SBT_OPTS=-Xss4M -Xmx2G
-PROG?=
-V_OUT=verilog
+include common.mk
 
 verilog: $(V_OUT)/$(MODULE).v
 
-$(V_OUT)/$(MODULE).v:
-	sbt 'runMain $(PACKAGE).$(MODULE) --target-dir $(V_OUT) --top-name $(MODULE)'
-
 test-verilator:
-	sbt 'test:runMain $(PACKAGE).$(MODULE)Main --backend-name verilator --program-file=$(PROG)'
+	sbt 'test:runMain $(PROJECT).$(PACKAGE).$(MODULE)Main --backend-name verilator --program-file=$(PROG)'
 
 test-basic:
-	sbt 'test:runMain $(PACKAGE).$(MODULE)Main --program-file=$(PROG)'
+	sbt 'test:runMain $(PROJECT).$(PACKAGE).$(MODULE)Main --program-file=$(PROG)'
 
 repl:
-	sbt 'test:runMain $(PACKAGE).$(MODULE)Repl'
+	sbt 'test:runMain $(PROJECT).$(PACKAGE).$(MODULE)Repl'
 
 test-all:
-	sbt 'test:runMain $(PACKAGE).alu.ALUMain'
-	sbt 'test:runMain $(PACKAGE).mem.MemoryMain'
-	sbt 'test:runMain $(PACKAGE).pc.PcMain'
-	sbt 'test:runMain $(PACKAGE).registerfile.RegisterFileMain'
+	sbt 'test:runMain $(PROJECT).alu.ALUMain'
+	sbt 'test:runMain $(PROJECT).mem.MemoryMain'
+	sbt 'test:runMain $(PROJECT).pc.PcMain'
+	sbt 'test:runMain $(PROJECT).registerfile.RegisterFileMain'
 
 test-all-verilator:
-	sbt 'test:runMain $(PACKAGE).alu.ALUMain --backend-name verilator'
-	sbt 'test:runMain $(PACKAGE).mem.MemoryMain --backend-name verilator'
-	sbt 'test:runMain $(PACKAGE).pc.PcMain --backend-name verilator'
-	sbt 'test:runMain $(PACKAGE).registerfile.RegisterFileMain --backend-name verilator'
+	sbt 'test:runMain $(PROJECT).alu.ALUMain --backend-name verilator'
+	sbt 'test:runMain $(PROJECT).mem.MemoryMain --backend-name verilator'
+	sbt 'test:runMain $(PROJECT).pc.PcMain --backend-name verilator'
+	sbt 'test:runMain $(PROJECT).registerfile.RegisterFileMain --backend-name verilator'
 
 .PHONY: clean clean-verilog verilog
 
