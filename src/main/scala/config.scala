@@ -7,7 +7,7 @@ import chisel3._
 class AdeptConfig {
   // Should the memory be simulated? You can find more memory details at the
   // memory.scala file.
-  val sim_mem = true
+  val sim = true
 
   // ISA length
   val XLen = 32
