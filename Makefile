@@ -5,9 +5,12 @@ MODULE?=core.Adept
 PACKAGE?=adept
 export SBT_OPTS=-Xss4M -Xmx2G
 PROG?=
+V_OUT=verilog
 
-verilog:
-	sbt 'runMain $(PACKAGE).$(MODULE) --target-dir verilog --top-name $(MODULE)'
+verilog: $(V_OUT)/$(MODULE).v
+
+$(V_OUT)/$(MODULE).v:
+	sbt 'runMain $(PACKAGE).$(MODULE) --target-dir $(V_OUT) --top-name $(MODULE)'
 
 test-verilator:
 	sbt 'test:runMain $(PACKAGE).$(MODULE)Main --backend-name verilator --program-file=$(PROG)'
@@ -33,8 +36,8 @@ test-all-verilator:
 .PHONY: clean clean-verilog verilog
 
 clean:
-	rm -rf verilog
+	rm -rf $(V_OUT)
 	rm -rf test_run_dir
 
 clean-verilog:
-	rm -rf verilog/$(MODULE)*
+	rm -rf $(V_OUT)/$(MODULE)*
