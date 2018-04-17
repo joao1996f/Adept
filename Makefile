@@ -3,6 +3,8 @@
 # are in the 'test_run_dir'.
 include common.mk
 
+PROG?=
+
 verilog: $(V_OUT)/$(MODULE).v
 
 test-verilator:
