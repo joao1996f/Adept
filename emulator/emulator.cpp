@@ -33,6 +33,10 @@ public:
     step();
   }
 
+  virtual inline bool is_done() {
+    return dut->io_success;
+  }
+
   virtual inline void step() {
     dut->clock = 0;
     dut->eval();
@@ -167,16 +171,16 @@ int main(int argc, char **argv, char **env) {
     memory[i] = rand();
   }
 
+  // Load previously initialized memory image into the verilated instance.
   api.load_memory(memory);
 
-  // We're done loading data into the memory. Lower write enable and reset
-  // processor.
+  // We're done loading data into the memory, reset processor.
   for (size_t i = 0; i < 5; i++) {
     api.reset();
   }
 
   // Processing Program
-  while (!top->io_success && sc_time_stamp() < max_cycles) {
+  while (!api.is_done() && sc_time_stamp() < max_cycles) {
     api.step();
   }
 
