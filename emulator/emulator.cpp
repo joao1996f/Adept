@@ -7,6 +7,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <time.h>
+#include <unistd.h>
+
+const unsigned long MEMORY_SIZE = 16777216;
 
 class Adept_api_t {
 public:
@@ -130,6 +134,14 @@ int main(int argc, char **argv, char **env) {
   // the memory in the processor. Load all addresses to memory. Unused addresses
   // will contain garbage data.
   std::map<size_t, size_t> memory;
+
+  // Create Random seed
+  srand(time(NULL) ^ getpid());
+
+  // Memory in simulation is 16MB. Initialize by dumping garbage.
+  for (size_t i = 0; i < MEMORY_SIZE; i++) {
+    memory[i] = rand();
+  }
 
   // Set memory write enable to high
   top->io_load_we = 1;

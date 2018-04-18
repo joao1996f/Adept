@@ -28,5 +28,5 @@ gen-harness: directories verilog
 	mv dump/$(TOP) .
 
 clean:
-	rm -rf dump
+	rm -rf dump $(TOP) $(MODULE).vcd
 
