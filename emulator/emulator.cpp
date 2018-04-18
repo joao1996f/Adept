@@ -18,7 +18,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <vector>
-#include <vector>
 
 enum SIM_CMD { RESET, STEP, UPDATE, POKE, PEEK, FORCE, GETID, GETCHK, FIN };
 const int SIM_CMD_MAX_BYTES = 1024;
@@ -32,6 +31,7 @@ template <class T> struct sim_data_t {
   std::vector<T> outputs;
   std::vector<T> signals;
   std::map<std::string, size_t> signal_map;
+
   // Calculate the size (in bytes) of data stored in a vector.
   size_t storage_size(const std::vector<T> vec) {
     int nitems = vec.size();
@@ -50,6 +50,7 @@ template <class T> struct sim_data_t {
 class channel_t {
 public:
 #define ROUND_UP(N, S) ((((N) + (S)-1) & (~((S)-1))))
+
   void init_map() {
     static std::string m_prefix("channel_t::init_map - ");
     // ensure the data is available (a full page worth).
@@ -73,6 +74,7 @@ public:
       exit(1);
     }
   }
+
   channel_t(std::string _file_name, size_t _data_size)
       : file_name(_file_name),
         fd(open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600)),
@@ -96,12 +98,14 @@ public:
     munmap((void *)channel, map_size);
     close(fd);
   }
+
   inline void aquire() {
     channel[1] = 1;
     channel[2] = 1;
     while (channel[0] == 1 && channel[2] == 1)
       ;
   }
+
   inline void release() { channel[1] = 0; }
   inline void produce() { channel[3] = 1; }
   inline void consume() { channel[3] = 0; }
@@ -138,46 +142,13 @@ public:
       gSystemPageSize = sysconf(_SC_PAGESIZE);
     }
   }
-  void init_channels() {
-    pid_t pid = getpid();
-    std::ostringstream in_ch_name, out_ch_name, cmd_ch_name;
-    in_ch_name << std::dec << std::setw(8) << std::setfill('0') << pid << ".in";
-    out_ch_name << std::dec << std::setw(8) << std::setfill('0') << pid
-                << ".out";
-    cmd_ch_name << std::dec << std::setw(8) << std::setfill('0') << pid
-                << ".cmd";
-    size_t input_size = this->sim_data.storage_size(this->sim_data.inputs);
-    in_channel = new channel_t(in_ch_name.str(), input_size);
-    size_t output_size = this->sim_data.storage_size(this->sim_data.outputs);
-    out_channel = new channel_t(out_ch_name.str(), output_size);
-    cmd_channel = new channel_t(cmd_ch_name.str(), SIM_CMD_MAX_BYTES);
 
-    // Init channels
-    out_channel->consume();
-    in_channel->release();
-    out_channel->release();
-    cmd_channel->release();
-    // Inform the tester that the simulation is ready
-    char hostName[256];
-    const char *hostNamep = NULL;
-    if (gethostname(hostName, sizeof(hostName) - 1) == 0) {
-      hostNamep = hostName;
-    } else {
-      hostNamep = "<unknown>";
-    }
-    time_t now;
-    time(&now);
-    // NOTE: ctime() generates a trailing '\n'.
-    std::cerr << "sim start on " << hostNamep << " at " << ctime(&now);
-    std::cerr << in_ch_name.str() << std::endl;
-    std::cerr << out_ch_name.str() << std::endl;
-    std::cerr << cmd_ch_name.str() << std::endl;
-  }
   virtual ~sim_api_t() {
     delete in_channel;
     delete out_channel;
     delete cmd_channel;
   }
+
   virtual void tick() {
     static bool is_reset;
     // First, Send output tokens
@@ -417,15 +388,18 @@ public:
 class VerilatorCData : public VerilatorDataWrapper {
 public:
   VerilatorCData(CData *_signal) { signal = _signal; }
+
   virtual size_t get_value(uint64_t *values) {
     values[0] = (uint64_t)(*signal);
     return 1;
   }
+
   virtual size_t put_value(uint64_t *values) {
     uint64_t mask = 0xff;
     *signal = (CData)(mask & values[0]);
     return 1;
   }
+
   virtual size_t get_num_words() { return 1; }
 
 private:
@@ -435,15 +409,18 @@ private:
 class VerilatorSData : public VerilatorDataWrapper {
 public:
   VerilatorSData(SData *_signal) { signal = _signal; }
+
   virtual size_t get_value(uint64_t *values) {
     values[0] = (uint64_t)(*signal);
     return 1;
   }
+
   virtual size_t put_value(uint64_t *values) {
     uint64_t mask = 0xffff;
     *signal = (SData)(mask & values[0]);
     return 1;
   }
+
   virtual size_t get_num_words() { return 1; }
 
 private:
@@ -453,15 +430,18 @@ private:
 class VerilatorIData : public VerilatorDataWrapper {
 public:
   VerilatorIData(IData *_signal) { signal = _signal; }
+
   virtual size_t get_value(uint64_t *values) {
     values[0] = (uint64_t)(*signal);
     return 1;
   }
+
   virtual size_t put_value(uint64_t *values) {
     uint64_t mask = 0xffffffff;
     *signal = (IData)(mask & values[0]);
     return 1;
   }
+
   virtual size_t get_num_words() { return 1; }
 
 private:
@@ -471,14 +451,17 @@ private:
 class VerilatorQData : public VerilatorDataWrapper {
 public:
   VerilatorQData(QData *_signal) { signal = _signal; }
+
   virtual size_t get_value(uint64_t *values) {
     values[0] = (uint64_t)(*signal);
     return 1;
   }
+
   virtual size_t put_value(uint64_t *values) {
     *signal = (QData)values[0];
     return 1;
   }
+
   virtual size_t get_num_words() { return 1; }
 
 private:
@@ -491,6 +474,7 @@ public:
     wdatas = _wdatas;
     numWdatas = _numWdatas;
   }
+
   virtual size_t get_value(uint64_t *values) {
     bool numWdatasEven = (numWdatas % 2) == 0;
     for (int i = 0; i < numWdatas / 2; i++) {
@@ -502,6 +486,7 @@ public:
     }
     return get_num_words();
   }
+
   virtual size_t put_value(uint64_t *values) {
     bool numWdatasEven = (numWdatas % 2) == 0;
     for (int i = 0; i < numWdatas / 2; i++) {
@@ -513,6 +498,7 @@ public:
     }
     return get_num_words();
   }
+
   virtual size_t get_num_words() {
     bool numWdatasEven = numWdatas % 2 == 0;
     if (numWdatasEven) {
@@ -537,6 +523,7 @@ public:
     tfp = NULL;
 #endif
   }
+
   void init_sim_data() {
     sim_data.inputs.clear();
     sim_data.outputs.clear();
@@ -551,38 +538,20 @@ public:
     sim_data.signals.push_back(new VerilatorCData(&(dut->reset)));
     sim_data.signal_map["Adept.reset"] = 0;
   }
+
 #if VM_TRACE
   void init_dump(VerilatedVcdC *_tfp) { tfp = _tfp; }
 #endif
+
   inline bool exit() { return is_exit; }
+
   virtual inline double get_time_stamp() { return main_time; }
 
-private:
-  VAdept *dut;
-  bool is_exit;
-  vluint64_t main_time;
-#if VM_TRACE
-  VerilatedVcdC *tfp;
-#endif
-  virtual inline size_t put_value(VerilatorDataWrapper *&sig, uint64_t *data,
-                                  bool force = false) {
-    return sig->put_value(data);
-  }
-  virtual inline size_t get_value(VerilatorDataWrapper *&sig, uint64_t *data) {
-    return sig->get_value(data);
-  }
-  virtual inline size_t get_chunk(VerilatorDataWrapper *&sig) {
-    return sig->get_num_words();
-  }
   virtual inline void reset() {
     dut->reset = 1;
     step();
   }
-  virtual inline void start() { dut->reset = 0; }
-  virtual inline void finish() {
-    dut->eval();
-    is_exit = true;
-  }
+
   virtual inline void step() {
     dut->clock = 0;
     dut->eval();
@@ -599,20 +568,62 @@ private:
 #endif
     main_time++;
   }
+
+private:
+  VAdept *dut;
+  bool is_exit;
+  vluint64_t main_time;
+#if VM_TRACE
+  VerilatedVcdC *tfp;
+#endif
+
+  virtual inline size_t put_value(VerilatorDataWrapper *&sig, uint64_t *data,
+                                  bool force = false) {
+    return sig->put_value(data);
+  }
+
+  virtual inline size_t get_value(VerilatorDataWrapper *&sig, uint64_t *data) {
+    return sig->get_value(data);
+  }
+
+  virtual inline size_t get_chunk(VerilatorDataWrapper *&sig) {
+    return sig->get_num_words();
+  }
+
+  virtual inline void start() { dut->reset = 0; }
+
+  virtual inline void finish() {
+    dut->eval();
+    is_exit = true;
+  }
+
   virtual inline void update() { dut->_eval_settle(dut->__VlSymsp); }
 };
+
 static Adept_api_t *_Top_api;
+
 double sc_time_stamp() { return _Top_api->get_time_stamp(); }
+
 int main(int argc, char **argv, char **env) {
+  // Separate emulator arguments from verilator arguments. For simplicity sake,
+  // emulator arguments always come first, and verilator arguments are the
+  // remaining non-identifiable arguments. TODO
+  // Supported flags:
+  // <PROG> --max-cycles=x
   Verilated::commandArgs(argc, argv);
   VAdept *top = new VAdept;
+
+  size_t max_cycles = -1;
+
   std::string vcdfile = "Adept.vcd";
+
   std::vector<std::string> args(argv + 1, argv + argc);
   std::vector<std::string>::const_iterator it;
   for (it = args.begin(); it != args.end(); it++) {
     if (it->find("+waveform=") == 0)
       vcdfile = it->c_str() + 10;
   }
+
 #if VM_TRACE
   Verilated::traceEverOn(true);
   VL_PRINTF("Enabling waves..");
@@ -620,20 +631,35 @@ int main(int argc, char **argv, char **env) {
   top->trace(tfp, 99);
   tfp->open(vcdfile.c_str());
 #endif
+
   Adept_api_t api(top);
   _Top_api = &api; /* required for sc_time_stamp() */
   api.init_sim_data();
-  api.init_channels();
+
 #if VM_TRACE
   api.init_dump(tfp);
 #endif
-  while (!api.exit())
-    api.tick();
+  // Initial Reset
+  for (size_t i = 0; i < 10; i++) {
+    api.reset();
+  }
+
+  // Load Program TODO
+  // Read external elf file and generate an hashmap which is an exact replica of
+  // the memory in the processor. Load all addresses to memory. Unused addresses
+  // will contain garbage data.
+
+  // Processing Program
+  while (!top->io_success && sc_time_stamp() < max_cycles) {
+    api.step();
+  }
+
 #if VM_TRACE
   if (tfp)
     tfp->close();
   delete tfp;
 #endif
+
   delete top;
   exit(0);
 }
