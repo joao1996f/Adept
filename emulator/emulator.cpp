@@ -50,12 +50,36 @@ public:
     main_time++;
   }
 
+  virtual inline void load_memory(std::map<size_t, size_t> memory) {
+    // Set memory write enable to high
+    dut->io_load_we = 1;
+    for (auto const &entry : memory) {
+      // Load data
+      load_data(entry.first, entry.second);
+
+      // Advance simulation
+      step();
+    }
+    dut->io_load_we = 0;
+  }
+
 private:
   VAdept *dut;
   vluint64_t main_time;
 #if VM_TRACE
   VerilatedVcdC *tfp;
 #endif
+
+  virtual inline void load_data(size_t addr, size_t data) {
+    // Set memory address to write to
+    dut->io_load_addr_w = addr;
+
+    // Load 32 bits at a time and then advance simulation
+    dut->io_load_data_in_0 = (data & 0x000000ff);
+    dut->io_load_data_in_1 = (data & 0x0000ff00) >> 8;
+    dut->io_load_data_in_2 = (data & 0x00ff0000) >> 16;
+    dut->io_load_data_in_3 = (data & 0xff000000) >> 24;
+  }
 };
 
 static Adept_api_t *_Top_api;
@@ -143,24 +167,10 @@ int main(int argc, char **argv, char **env) {
     memory[i] = rand();
   }
 
-  // Set memory write enable to high
-  top->io_load_we = 1;
-  for (auto const &entry : memory) {
-    // Set memory address to write to
-    top->io_load_addr_w = entry.first;
+  api.load_memory(memory);
 
-    // Load 32 bits at a time and then advance simulation
-    top->io_load_data_in_0 = (entry.second & 0x000000ff);
-    top->io_load_data_in_1 = (entry.second & 0x0000ff00) >> 8;
-    top->io_load_data_in_2 = (entry.second & 0x00ff0000) >> 16;
-    top->io_load_data_in_3 = (entry.second & 0xff000000) >> 24;
-
-    // Advance simulation
-    api.step();
-  }
   // We're done loading data into the memory. Lower write enable and reset
   // processor.
-  top->io_load_we = 0;
   for (size_t i = 0; i < 5; i++) {
     api.reset();
   }
