@@ -667,7 +667,7 @@ int main(int argc, char **argv, char **env) {
 #if VM_TRACE
   api.init_dump(tfp);
 #endif
-  // Initial Reset
+  // Initial Reset for 10 cycles
   for (size_t i = 0; i < 10; i++) {
     api.reset();
   }
@@ -676,6 +676,29 @@ int main(int argc, char **argv, char **env) {
   // Read external elf file and generate an hashmap which is an exact replica of
   // the memory in the processor. Load all addresses to memory. Unused addresses
   // will contain garbage data.
+  std::map<size_t, size_t> memory;
+
+  // Set memory write enable to high
+  top->io_load_we = 1;
+  for (auto const& entry : memory) {
+    // Set memory address to write to
+    top->io_load_addr_w = entry.first;
+
+    // Load 8 bits at a time and then advance simulation
+    top->io_load_data_in_0 = (entry.second & 0x000000ff);
+    top->io_load_data_in_1 = (entry.second & 0x0000ff00) >> 8;
+    top->io_load_data_in_2 = (entry.second & 0x00ff0000) >> 16;
+    top->io_load_data_in_3 = (entry.second & 0xff000000) >> 24;
+
+    // Advance simulation
+    api.step();
+  }
+  // We're done loading data into the memory. Lower write enable and reset
+  // processor.
+  top->io_load_we = 0;
+  for (size_t i = 0; i < 5; i++) {
+    api.reset();
+  }
 
   // Processing Program
   while (!top->io_success && sc_time_stamp() < max_cycles) {
