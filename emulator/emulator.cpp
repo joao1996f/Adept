@@ -14,6 +14,7 @@
 #include <map>
 #include <queue>
 #include <sstream>
+#include <string.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
@@ -604,22 +605,49 @@ static Adept_api_t *_Top_api;
 
 double sc_time_stamp() { return _Top_api->get_time_stamp(); }
 
+////////////////////////////////////////////////////////////////////////////////
+// Main Function
+////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv, char **env) {
   // Separate emulator arguments from verilator arguments. For simplicity sake,
   // emulator arguments always come first, and verilator arguments are the
-  // remaining non-identifiable arguments. TODO
+  // remaining non-identifiable arguments.
   // Supported flags:
   // <PROG> --max-cycles=x
+  size_t max_cycles = -1;
+  std::string program_name = "";
+  size_t emu_args = 0;
+
+  // Must provide arguments
+  if (argc == 1) {
+    std::cerr << "Usage:" << std::endl;
+    std::cerr << "\t <PROG> --max-cycles=<MAX_CYCLES> <VERILATOR_FLAGS>" << std::endl;
+    exit(1);
+  }
+
+  std::vector<std::string> args(argv + 1, argv + argc);
+  if (args[0][0] != '-' && args[0][0] != '+') {
+    program_name = args[0];
+    emu_args++;
+  } else {
+    std::cerr << "You must provide a program" << std::endl;
+    exit(1);
+  }
+
+  if (argc > 2 && args[1].find("--max-cycles=") == 0) {
+    max_cycles = std::stoi(args[1].c_str() + 13);
+    emu_args++;
+  }
+
+  std::vector<std::string> verilator_args(argv + 1, argv + argc);
+  std::vector<std::string>::const_iterator it;
+
   Verilated::commandArgs(argc, argv);
   VAdept *top = new VAdept;
 
-  size_t max_cycles = -1;
-
   std::string vcdfile = "Adept.vcd";
 
-  std::vector<std::string> args(argv + 1, argv + argc);
-  std::vector<std::string>::const_iterator it;
-  for (it = args.begin(); it != args.end(); it++) {
+  for (it = verilator_args.begin(); it != verilator_args.end(); it++) {
     if (it->find("+waveform=") == 0)
       vcdfile = it->c_str() + 10;
   }
