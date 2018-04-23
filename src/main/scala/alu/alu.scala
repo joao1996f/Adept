@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.alu
 
 import chisel3._
@@ -11,12 +12,6 @@ import adept.registerfile.RegisterFileOut
  *  This is an ALU used in a RISC-V processor. The main idea behind it is to be
  *  able to generate an ALU for any RISC-V ISA. Currently, it only supports the
  *  base instruction set for the R-Type and I-Type instructions.
- *
- *  TODO:
- *  - S-Type
- *  - B-Type
- *  - U-Type
- *  - J-Type
  */
 
 class AluIO(config: AdeptConfig) extends Bundle {
@@ -53,9 +48,10 @@ class ALU(config: AdeptConfig) extends Module {
   } .otherwise {
     // Register instructions
     val sel_oper_B = io.in.registers.rs2.asSInt
-    // Small modification to operand B when performing signed addition
-    when (io.in.decoder_params.imm(10) === true.B && io.in.decoder_params.op_code(5, 4) === "b11".U
-            && io.in.decoder_params.op === "b000".U && io.in.decoder_params.op_code(2) === false.B) {
+    // Small modification to operand B when performing signed addition. Only occurs on SUBs, BEQs and BNEs
+    when (io.in.decoder_params.imm(10) === true.B &&
+            (io.in.decoder_params.op_code === "b0110011".U || io.in.decoder_params.op_code === "b1100011".U)
+            && io.in.decoder_params.op === 0.U) {
       operand_B := (~(sel_oper_B.asUInt)).asSInt
       // Issue #122 firrt-interpreter
       // operand_B := ~sel_oper_B
