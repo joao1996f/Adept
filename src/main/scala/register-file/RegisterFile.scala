@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.registerfile
 
 import chisel3._
@@ -11,7 +12,7 @@ class RegisterFileOut(val config: AdeptConfig) extends Bundle {
   val rs2 = Output(SInt(config.XLen.W))
 
   override def cloneType: this.type = {
-    new RegisterFileOut(config).asInstanceOf[this.type];
+    new RegisterFileOut(config).asInstanceOf[this.type]
   }
 }
 
@@ -29,7 +30,7 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   })
 
   // Create a vector of registers
-  val registers = Mem(SInt(32.W), 32)
+  val registers = Mem(SInt(config.XLen.W), config.n_registers)
 
   // Perform write operation
   when (io.decoder.we && io.decoder.rsd_sel =/= 0.U) {

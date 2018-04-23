@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.config
 
 import chisel3._
@@ -11,6 +12,9 @@ class AdeptConfig {
 
   // ISA length
   val XLen = 32
+
+  // Number of registers
+  val n_registers = 32
 
   require(XLen == 32, "We only support 32-bit instructions")
 
