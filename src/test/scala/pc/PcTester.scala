@@ -21,156 +21,100 @@ import adept.config.AdeptConfig
  * randomly generated.
  *
  * The intent is to emulate the test as close to reality as possible
-*/
+ */
 class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
-  val JAL     = Integer.parseInt ("1101111", 2)
-  val JALR    = Integer.parseInt ("1100111", 2)
-  val Cond_Br = Integer.parseInt ("1100011", 2)
-  // Next define neded to syncronize test and component
-  private def JALr (){
-    poke(e.io.br_flags, false)
-    poke(e.io.in_opcode, Integer.parseInt ("0001100111", 2))
-    poke(e.io.br_step, 0)
-    poke(e.io.br_offset, 0)
-    poke(e.io.pc_in, 0)
-    poke(e.io.mem_en, false)
-    poke(e.io.mem_stall, false)
-    step(1)
-    expect(e.io.pc_out, 0)
-    expect(e.io.stall_reg, true)
-  }
-  var res, pc_in, res_reg                         = BigInt(0)
+  val JAL     = Integer.parseInt("1101111", 2)
+  val JALR    = Integer.parseInt("1100111", 2)
+  val Cond_Br = Integer.parseInt("1100011", 2)
+  val BR_EQ   = 0
+  val BR_NE   = 1
+  val BR_LT   = 4
+  val BR_LTU  = 6
+  val BR_GE   = 5
+  val BR_GEU  = 7
+  val BR      = Array(Cond_Br, JALR, JAL)
+  val MAX_Int_32B = 0x7FFFFFFF // in scala this is the maximum 32 bits positive integer
+  val MAX_Int_7B  = 0x7F  // max integer of 7 bits
+  val MAX_Int_12B = 0xFFF // max integer of 12 bits
+
+  var res_reg                                     = BigInt(0x10000000) // start memory address
+  var pc_in, res                                  = BigInt(0)
   var flags, mem_stall, mem_en, stall, mem_en_del = false
-  var opcode_in, step_in, offset, st              = 0
-  for (i <- 0 until 100){
-    opcode_in = rnd.nextInt (pow (2, 10).toInt) // random opcode not to be bigger than a power(2, 10) (10 bits)
-    flags     = rnd.nextInt (2)==1 // random Boolean
-    mem_en    = rnd.nextInt (2)==1 // random Boolean
-    mem_stall = rnd.nextInt (2)==1 // random Boolean
-    step_in   = rnd.nextInt (pow (2, 31).toInt)
-    offset    = rnd.nextInt (pow (2, 13).toInt) // random integer to a maximum of power(2,13) as used in Adept architecture
+  var opcode, offset, st, k, br_type, step_in     = 0
 
-    /* As scala language truncates the binary representation of a number to the first high most significant bit(MSB)
-     * the binary string manipulation of the variable turns more complicated so to facilitate, a '1' it is added
-     * to 11th position of a 10 bit number that "opcode_in" is supposed to be, then manipulate the string of bits
-     * so it is truncated and it doesn't influence the result.
-     */
+  for (i <- 0 until 100) {
+    // To increase the number of jumps the next "if" condition chooses between a random jump or a random integer
+    // for the opcode in every 5 iterations
+    k += 1
+    if (k==5){
+      opcode  = BR(rnd.nextInt(3))
+      k=0
+    }else {
+      opcode  = rnd.nextInt(MAX_Int_7B)
+    }
+    br_type   = rnd.nextInt(7)
+    flags     = rnd.nextInt(2)==1 // random Boolean
+    mem_en    = rnd.nextInt(2)==1 // random Boolean
+    mem_stall = rnd.nextInt(2)==1 // random Boolean
+    step_in   = rnd.nextInt(MAX_Int_32B) & 0xFFFFFFFE // logic to force LSB to '0'
+    offset    = rnd.nextInt(MAX_Int_12B) // random integer to a maximum of power(2,13)-1 (12 bits) as used in Adept architecture
 
-    val opcode_extend = opcode_in | Integer.parseInt ("10000000000", 2) // extension explained in comment above
-    val opcode_string = opcode_extend.toBinaryString // transformation to a string of bits
-    // selection from the privious string the bits needed
-    val br_fun_str    = opcode_string.slice (opcode_string.length-10, opcode_string.length-7)
 
-    val br_type = Integer.parseInt (br_fun_str, 2) // transformation of the privious selected bits into integer
-    val opcode  = opcode_in & Integer.parseInt ("1111111", 2) // extraction of 7 bits opcode
-
-    // In order to star form '0' and the Pc module to be in sync with the tester file
-    // a JALr branch is forced in the next condition with respective variables
-    if(i==0){
-      mem_en    = false
-      mem_stall = false
-      res       = 0
-      JALr ()
-      stall     = true
-      res_reg   = res
-    } else {
-
-      // Next condition is used to evaluate if the opcode is a branch
-      if (opcode == JAL || opcode == JALR || opcode == Cond_Br){
-        // Confirming it is a branch
-        // next is finding which specific branch it is
-        if (opcode == JALR){
-          res = step_in
+    // Opcode verification
+    opcode match {
+      case JALR => {
+        res = step_in
+        st  = 1
+      }
+      case JAL => {
+        res = pc_in + offset
+        st  = 1
+      }
+      case Cond_Br => {
+        // In cases of BR_NE, BR_LT and BR_LTU the flag needs to be 'true'
+        if ((br_type == BR_NE | br_type == BR_LT | br_type == BR_LTU) & flags){
+          res = pc_in + offset
           st  = 1
-        } else if (opcode == JAL){
-          res = pc_in+ (offset/4).toInt
+        // In cases of BR_EQ, BR_GE and BR_GEU the flag needs to be 'false'
+        } else if ((br_type == BR_EQ | br_type == BR_GE | br_type == BR_GEU) & !flags){
+          res = pc_in + offset
           st  = 1
         } else {
-          br_type match {
-            case 0 => {
-              if (!flags){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case 1 => {
-              if (flags ){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case 4 => {
-              if (flags){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case 5 => {
-              if (!flags ){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case 6 => {
-              if (flags){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case 7 => {
-              if (!flags){
-                res = pc_in+ (offset/4).toInt
-                st  = 1
-              }else {
-                res = res_reg +1
-              }
-            }
-            case _ => {
-              res = res_reg +1
-            }
-          }
+          res = res_reg +4
         }
-      } else {
-        res = res_reg +1
       }
-
-      // logic to detect unsigned integer wraparound
-      // in this case is not very useful because a limited offset is used and the test limit is not big
-      // but keeping in mind that offset is randomly generated, this can happen
-      val a = pow(2,31)
-      val b = BigInt(a.toInt) * 2 + 2
-      if (res > b){
-        res = res - b
+      case _ => {
+        res = res_reg +4
       }
-
-      poke(e.io.br_flags, flags)
-      poke(e.io.in_opcode, opcode_in)
-      poke(e.io.br_step, step_in)
-      poke(e.io.br_offset, offset)
-      poke(e.io.pc_in, pc_in)
-      poke(e.io.mem_stall, mem_stall)
-      poke(e.io.mem_en, mem_en)
-
-      step(1)
-      // Adept stall logic. Including memory stall
-      val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en) // it's "true" while there are no stalls; "false" otherwise
-      stall = st == 1 // branch stall variable
-      if (not_stall){
-        res_reg = res
-      }
-      expect(e.io.pc_out, res_reg)
-      expect(e.io.stall_reg, stall)
     }
+
+    // Logic to detect unsigned integer wraparound
+    // in this case is not very useful because a limited offset is used and the test limit is not big
+    // but keeping in mind that offset is randomly generated, this can happen
+    val UInt_limit = BigInt(MAX_Int_32B) * 2 + 2
+    if (res > UInt_limit){
+      res = res - UInt_limit
+    }
+
+    poke(e.io.br_flags, flags)
+    poke(e.io.in_opcode, opcode)
+    poke(e.io.br_func, br_type)
+    poke(e.io.br_step, step_in)
+    poke(e.io.br_offset, offset)
+    poke(e.io.pc_in, pc_in)
+    poke(e.io.mem_stall, mem_stall)
+    poke(e.io.mem_en, mem_en)
+
+    step(1)
+    // Adept stall logic. Including memory stall
+    val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en) // it's "true" while there are no stalls; "false" otherwise
+    stall = st == 1 // branch stall variable
+    if (not_stall){
+      res_reg = res
+    }
+    expect(e.io.pc_out, res_reg)
+    expect(e.io.stall_reg, stall)
+
     pc_in = res_reg
     st = 0
     mem_en_del = mem_en

@@ -24,9 +24,10 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     // flags for branch confirmation
     val br_flags   = Input(Bool()) // branch verification flag
     // In from decoder
-    val in_opcode  = Input(UInt((config.op_code + config.funct).W)) // opecode(7 bits) + function(3 bits) from word
+    val in_opcode  = Input(UInt(config.op_code.W)) // opecode(7 bits)
+    val br_func    = Input(UInt(config.funct.W))   // function(3 bits)
     // Jump Adress for JALR
-    val br_step    = Input(SInt(config.XLen.W)) // In case of JALR
+    val br_step    = Input(UInt(config.XLen.W)) // In case of JALR
     // Offset for JAL or Conditional Branch
     val br_offset  = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
@@ -42,7 +43,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   })
 
   // Conditional Branch verification and flags attribution
-  val cond_br_ver = MuxLookup (io.in_opcode (9,7), false.B,
+  val cond_br_ver = MuxLookup (io.br_func, false.B,
     Array(br.BR_EQ  -> ~io.br_flags,
           br.BR_NE  -> io.br_flags,
           br.BR_LT  -> io.br_flags,
@@ -50,21 +51,21 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
           br.BR_LTU -> io.br_flags,
           br.BR_GEU -> ~io.br_flags))
 
-  val cond_br_exe     = (io.in_opcode(6, 0) === br.BR_Cond) & cond_br_ver
+  val cond_br_exe     = (io.in_opcode === br.BR_Cond) & cond_br_ver
 
   // Offset selection criteria: is it a JAL? or is it Conditional with correct flags?
-  val offset_sel      = (io.in_opcode(6, 0) === br.BR_JAL) | cond_br_exe
+  val offset_sel      = (io.in_opcode === br.BR_JAL) | cond_br_exe
 
   // Auxiliar variable that contains either offset or 1
-  val add_to_pc_val   = Mux(offset_sel, io.br_offset.asUInt, 4.U)
+  val add_to_pc_val   = Mux(offset_sel, io.br_offset, 4.S)
   // JALR condition verification
-  val jalr_exec       = (io.in_opcode(6, 0) === br.BR_JALR)
+  val jalr_exec       = (io.in_opcode === br.BR_JALR)
   // next pc calculation
-  val progCount       = RegInit("h1000_0000".U.asSInt)
-  val next_pc         = Mux(offset_sel, io.pc_in, progCount.asUInt).asSInt + add_to_pc_val.asSInt
+  val progCount       = RegInit("h_1000_0000".asUInt(config.XLen.W))
+  val next_pc         = Mux(offset_sel, io.pc_in, progCount).asSInt + add_to_pc_val
   // Remove LSB for JALR
-  val jalr_value      = Cat(io.br_step(config.XLen - 1, 1), false.B).asSInt
-  val jalrORpc_select = Mux(jalr_exec, jalr_value, next_pc)
+  val jalr_value      = io.br_step & "hFFFFFFFE".U
+  val jalrORpc_select = Mux(jalr_exec, jalr_value.asSInt, next_pc)
 
   // Logic to stall the next PC
   val stall           = RegInit(false.B)
@@ -77,8 +78,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
 
   // PC update
   when (!stall && !io.mem_stall && (mem_en_reg ^ !io.mem_en)) {
-    progCount := jalrORpc_select
+    progCount := jalrORpc_select.asUInt
   }
 
-  io.pc_out  := progCount.asUInt
+  io.pc_out  := progCount
 }

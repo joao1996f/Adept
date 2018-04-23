@@ -66,8 +66,9 @@ class Adept(config: AdeptConfig) extends Module {
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
   pc.io.br_flags  := alu.io.cmp_flag
-  pc.io.in_opcode := Cat(idecode.io.br_op, idecode.io.alu.op_code)
-  pc.io.br_step   := alu.io.result
+  pc.io.in_opcode := idecode.io.alu.op_code
+  pc.io.br_func   := idecode.io.br_op
+  pc.io.br_step   := alu.io.result.asUInt
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
   pc.io.mem_stall := stall
@@ -162,7 +163,7 @@ class Adept(config: AdeptConfig) extends Module {
 
   // Simulation ends when program detects a write of 0xdead0000 to address
   // 0x00000000
-  if (config.sim) {
+  if (config.sim_mem) {
     io.success := mem.io.instr_out === "h_dead_0737".U
   } else {
     io.success := false.B
