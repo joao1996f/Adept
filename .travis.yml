@@ -1,6 +1,6 @@
 sudo: required
 
-install: ./install-deps.sh && make verilog && make test-all && make test-all-verilator
+install: sudo apt install verilator && make verilog && make test-all && make test-all-verilator
 
 notifications:
   email:
