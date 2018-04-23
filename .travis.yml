@@ -1,0 +1,8 @@
+install: ./install-deps.sh && make verilog && make test-all && make test-all-verilator
+
+notifications:
+  email:
+    recipients:
+      - lfiolhais@iobundle.com
+    on_success: never
+    on_failure: always
