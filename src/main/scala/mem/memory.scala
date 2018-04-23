@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.mem
 
 import chisel3._
@@ -12,7 +13,7 @@ class MemIO(val config: AdeptConfig) extends Bundle {
   val addr    = Input(UInt(config.XLen.W))
 
   override def cloneType: this.type = {
-    new MemIO(config).asInstanceOf[this.type];
+    new MemIO(config).asInstanceOf[this.type]
   }
 }
 
@@ -22,7 +23,7 @@ class MemDecodeIO(val config: AdeptConfig) extends Bundle {
   val en = Input(Bool())
 
   override def cloneType: this.type = {
-    new MemDecodeIO(config).asInstanceOf[this.type];
+    new MemDecodeIO(config).asInstanceOf[this.type]
   }
 }
 
@@ -44,7 +45,7 @@ class Memory(config: AdeptConfig) extends Module {
               })
 
   private def buildWriteData(data_in: UInt, op: UInt, byte_sel_write: UInt) : Vec[UInt] = {
-    val new_data = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
+    val new_data = WireInit(Vec(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
     // Store Byte (8 bits)
     new_data(byte_sel_write) := data_in(7, 0)
     // Store Half (16 bits)
@@ -94,7 +95,7 @@ class Memory(config: AdeptConfig) extends Module {
     // Module(new Cache(config))
   // }
 
-  val read_port = WireInit(Vec(Seq.fill(4)(0.U(8.W))))
+  val read_port = WireInit(Vec(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
   val addr = io.in.addr >> 2
 
   // Pass PC to memory
