@@ -35,10 +35,6 @@ class ALU(config: AdeptConfig) extends Module {
   val operand_A = io.in.registers.rs1.asSInt
   val operand_B = Wire(SInt(config.XLen.W))
   val carry_in = Wire(SInt(config.XLen.W))
-  val operand_A_shift_sel = Wire(Bool())
-
-  // Select Operand A for right shift
-  operand_A_shift_sel := io.in.decoder_params.imm(10)
 
   // Select Operand B
   // Immediate instructions
@@ -73,9 +69,11 @@ class ALU(config: AdeptConfig) extends Module {
   val and_result                  = operand_A & operand_B
 
   // Shifts
-  val shift_left_logic_result     = operand_A << operand_B(4, 0).asUInt
-  val shift_right_result_signed   = operand_A >> operand_B(4, 0)
-  val shift_right_result_unsigned = operand_A.asUInt >> operand_B(4, 0)
+  val shift_op                    = operand_B(4, 0).asUInt
+  val shift_left_logic_result     = operand_A << shift_op
+  val shift_right_result_signed   = operand_A >> shift_op
+  val shift_right_result_unsigned = operand_A.asUInt >> shift_op
+  val operand_A_shift_sel         = io.in.decoder_params.imm(10)
   val shift_right_result          = Mux(operand_A_shift_sel,
                                         shift_right_result_signed,
                                         shift_right_result_unsigned.asSInt)
