@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.core
 
 import chisel3._
@@ -18,7 +19,7 @@ class MemLoadIO(config: AdeptConfig) extends Bundle {
   val we      = Input(Bool())
 
   override def cloneType: this.type = {
-    new MemLoadIO(config).asInstanceOf[this.type];
+    new MemLoadIO(config).asInstanceOf[this.type]
   }
 }
 

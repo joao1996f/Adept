@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 package adept.idecode
 
 import chisel3._
@@ -15,7 +16,7 @@ class DecoderALUOut(val config: AdeptConfig) extends Bundle {
   val switch_2_imm = Output(Bool())
 
   override def cloneType: this.type = {
-    new DecoderALUOut(config).asInstanceOf[this.type];
+    new DecoderALUOut(config).asInstanceOf[this.type]
   }
 }
 
@@ -27,7 +28,7 @@ class DecoderRegisterOut(val config: AdeptConfig) extends Bundle {
   val we      = Output(Bool())
 
   override def cloneType: this.type = {
-    new DecoderRegisterOut(config).asInstanceOf[this.type];
+    new DecoderRegisterOut(config).asInstanceOf[this.type]
   }
 }
 
