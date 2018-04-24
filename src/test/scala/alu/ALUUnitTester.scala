@@ -304,3 +304,17 @@ class ALUUnitTester(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
+class ALUTester extends ChiselFlatSpec {
+  // Generate configuration
+  val config = new AdeptConfig
+
+  private val backendNames = Array("firrtl", "verilator")
+
+  for ( backendName <- backendNames ) {
+    "ALU" should s"do stuff (with $backendName)" in {
+      Driver(() => new ALU(config), backendName) {
+        e => new ALUUnitTester(e)
+      } should be (true)
+    }
+  }
+}

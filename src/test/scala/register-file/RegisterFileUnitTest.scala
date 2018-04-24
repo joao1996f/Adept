@@ -40,3 +40,18 @@ class RegisterFileUnitTester(c: RegisterFile) extends PeekPokeTester(c) {
     }
   }
 }
+
+class RegisterFileTester extends ChiselFlatSpec {
+  // Generate configuration
+  val config = new AdeptConfig
+
+  private val backendNames = Array("firrtl", "verilator")
+
+  for ( backendName <- backendNames ) {
+    "RegisterFile" should s"do stuff (with $backendName)" in {
+      Driver(() => new RegisterFile(config), backendName) {
+        e => new RegisterFileUnitTester(e)
+      } should be (true)
+    }
+  }
+}

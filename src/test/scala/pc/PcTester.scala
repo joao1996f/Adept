@@ -1,4 +1,3 @@
-
 package adept.pc
 
 import chisel3.iotesters
@@ -128,3 +127,18 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
   }
 }
 
+class PcTester extends ChiselFlatSpec {
+  // Generate configuration
+  val config = new AdeptConfig
+  val branch_config = new BranchOpConstants
+
+  private val backendNames = Array("firrtl", "verilator")
+
+  for ( backendName <- backendNames ) {
+    "PC" should s"do stuff (with $backendName)" in {
+      Driver(() => new Pc(config, branch_config), backendName) {
+        e => new PcUnitTester(e)
+      } should be (true)
+    }
+  }
+}
