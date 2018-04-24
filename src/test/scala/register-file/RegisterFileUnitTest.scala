@@ -41,6 +41,24 @@ class RegisterFileUnitTester(c: RegisterFile) extends PeekPokeTester(c) {
   }
 }
 
+class RegisterFileR0UnitTester(c: RegisterFile) extends PeekPokeTester(c) {
+  // Write A
+  poke(c.io.rsd_value, 0xdeadbeef)
+  poke(c.io.decoder.rsd_sel, 0)
+  poke(c.io.decoder.we, 1)
+  step(1)
+
+  // Write B
+  poke(c.io.rsd_value, 0xbabebabe)
+  poke(c.io.decoder.rsd_sel, 0)
+  poke(c.io.decoder.we, 1)
+  step(1)
+
+  // Read result
+  poke(c.io.decoder.rs1_sel, 0)
+  expect(c.io.registers.rs1, 0)
+}
+
 class RegisterFileTester extends ChiselFlatSpec {
   // Generate configuration
   val config = new AdeptConfig
@@ -48,7 +66,12 @@ class RegisterFileTester extends ChiselFlatSpec {
   private val backendNames = Array("firrtl", "verilator")
 
   for ( backendName <- backendNames ) {
-    "RegisterFile" should s"do stuff (with $backendName)" in {
+    "RegisterFile" should s"allow stores to register 0 (with $backendName)" in {
+      Driver(() => new RegisterFile(config), backendName) {
+        e => new RegisterFileR0UnitTester(e)
+      } should be (true)
+    }
+    "RegisterFile" should s"store and read random variables (with $backendName)" in {
       Driver(() => new RegisterFile(config), backendName) {
         e => new RegisterFileUnitTester(e)
       } should be (true)
