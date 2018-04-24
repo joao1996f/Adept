@@ -12,7 +12,7 @@ object ALUMain extends App {
   val parseArgs = Common(args)
 
   iotesters.Driver.execute(parseArgs.firrtlArgs, () => new ALU(config)) {
-    c => new ALUUnitTester(c)
+    c => new ALUUnitTesterAll(c)
   }
 }
 
