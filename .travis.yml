@@ -1,6 +1,14 @@
 language: scala
+sudo: required
 
-install: make verilog && make test-all
+before_install:
+  - sudo apt -qq update
+  - sudo apt install -y verilator
+
+script:
+  - make verilog
+  - make test-all
+  - make test-all-verilator
 
 notifications:
   email:
