@@ -6,7 +6,6 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 //import scala.math.pow
 import scala.math._
 import adept.config.AdeptConfig
-import adept.pc.BranchOpConstants
 /* Opcode          function
  * 1101111 JAL      XXXX
  * 1100111 JALR     000

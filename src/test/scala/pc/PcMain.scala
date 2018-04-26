@@ -3,7 +3,6 @@ package adept.pc
 import chisel3._
 
 import adept.config.AdeptConfig
-import adept.pc.BranchOpConstants
 import adept.test.common.Common
 
 object PcMain extends App {
