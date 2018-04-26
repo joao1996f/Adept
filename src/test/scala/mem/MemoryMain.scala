@@ -11,7 +11,7 @@ object MemoryMain extends App {
   val parseArgs = Common(args)
 
   iotesters.Driver.execute(parseArgs.firrtlArgs, () => new Memory(config)) {
-    c => new MemoryUnitTester(c)
+    c => new MemoryUnitTester(c, config)
   }
 }
 

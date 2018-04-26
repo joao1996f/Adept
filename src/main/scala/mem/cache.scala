@@ -55,11 +55,12 @@ class CacheSim(config: AdeptConfig) extends Module {
     my_mem.write(io.cache.addr, io.cache.data_in, io.cache.mask)
   }
 
+  val addr_r_reg = RegInit(0.U(config.XLen.W))
   when (io.cache.re && valid && ready) {
-    io.cache.data_out := my_mem.read(io.cache.addr)
-  } .otherwise {
-    io.cache.data_out := Vec(0.U, 0.U, 0.U, 0.U)
+    addr_r_reg := io.cache.addr
   }
+
+  io.cache.data_out := my_mem.read(addr_r_reg)
 
   ////////////////////////////////////////////////////////////////////////////////
   // Instruction Read Port

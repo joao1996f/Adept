@@ -68,13 +68,13 @@ class Memory(config: AdeptConfig) extends Module {
 
   private def buildReadData(op: UInt, byte_sel_read: UInt, read_port: Vec[UInt]) : UInt = {
     val byte_sel_read_reg = RegNext(byte_sel_read)
-    val op_reg = RegNext(op)
+    val op_reg = op
 
-    return MuxLookup(op_reg, op_reg, Array(
+    return MuxLookup(op, op, Array(
                 // Load Byte (8 bits)
-                0.U -> read_port(byte_sel_read_reg),
+                0.U -> Cat(Fill(config.XLen - 8, read_port(byte_sel_read_reg)(7)), read_port(byte_sel_read_reg)),
                 // Load Half (16 bits)
-                1.U -> Cat(read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg)),
+                1.U -> Cat(Fill(config.XLen - 16, read_port(byte_sel_read_reg + 1.U)(7)), read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg)),
                 // Load Word (32 bits)
                 2.U -> Cat(read_port(3), read_port(2), read_port(1), read_port(0)),
                 // Load Byte Unsigned (8 bits)
