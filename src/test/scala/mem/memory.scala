@@ -70,10 +70,52 @@ class BaseMemory(c: Memory, config: AdeptConfig) extends PeekPokeTester(c) {
 
     return mem_img
   }
+
+  // Initialize memory with garbage data
+  val mem_img = writeGarbage(c)
 }
 
-class Load(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
-  private def LB(addr: Int) = {
+class LoadHalf(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
+  private def LH(addr: Int, mem_img: HashMap[Int, Int]) = {
+    poke(c.io.decode.op, 1)
+    poke(c.io.in.addr, addr)
+    poke(c.io.decode.en, true)
+    poke(c.io.decode.we, false)
+
+    // Ignore output while stall is active and advance simulation
+    do {
+      step(1)
+    } while (peek(c.io.stall) == 1)
+
+    val lsbs = addr & 0x00000003
+    val masked_addr = addr >>> 2
+    val final_read = lsbs match {
+      case 0 => (mem_img(masked_addr) & 0x0000ffff, true)
+      case 1 => ((mem_img(masked_addr) & 0x00ffff00) >>> 8, true)
+      case 2 => ((mem_img(masked_addr) & 0xffff0000) >>> 16, true)
+      // TODO: Memory should throw a trap for an ilegal memory access
+      case _ => (0, false)
+    }
+
+    val sign_extend = if (((final_read._1 & 0x00008000) >>> 15) == 1) {
+      0xffff0000
+    } else {
+      0x00000000
+    }
+
+    if (final_read._2) {
+      expect(c.io.data_out, sign_extend | final_read._1)
+    }
+  }
+
+  for (i <- 0 until 100) {
+    val addr = rnd.nextInt(5000)
+    LH(addr, mem_img)
+  }
+}
+
+class LoadByte(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
+  private def LB(addr: Int, mem_img: HashMap[Int, Int]) = {
     poke(c.io.decode.op, 0)
     poke(c.io.in.addr, addr)
     poke(c.io.decode.en, true)
@@ -102,18 +144,16 @@ class Load(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
     expect(c.io.data_out, sign_extend | final_read)
   }
 
-  // Initialize memory with garbage data
-  val mem_img = writeGarbage(c)
-
   for (i <- 0 until 100) {
     val addr = rnd.nextInt(5000)
-    LB(addr)
+    LB(addr, mem_img)
   }
 }
 
 class MemoryUnitTester(c: Memory, config: AdeptConfig) extends PeekPokeTester(c) {
-  // new StallLogic(c)
-  new Load(c, config)
+  new StallLogic(c)
+  new LoadByte(c, config)
+  new LoadHalf(c, config)
 }
 
 class MemoryTester extends ChiselFlatSpec {
@@ -123,14 +163,19 @@ class MemoryTester extends ChiselFlatSpec {
   private val backendNames = Array("firrtl", "verilator")
 
   for ( backendName <- backendNames ) {
-    // "Memory" should s"tests stalling logic (with $backendName)" in {
-    //   Driver(() => new Memory(config), backendName) {
-    //     c => new StallLogic(c)
-    //   } should be (true)
-    // }
-    "Memory" should s"tests loads (with $backendName)" in {
+    "Memory" should s"tests stalling logic (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
-        c => new Load(c, config)
+        c => new StallLogic(c)
+      } should be (true)
+    }
+    "Memory" should s"tests byte loads (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new LoadByte(c, config)
+      } should be (true)
+    }
+    "Memory" should s"tests half loads (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new LoadHalf(c, config)
       } should be (true)
     }
   }
