@@ -75,6 +75,37 @@ class BaseMemory(c: Memory, config: AdeptConfig) extends PeekPokeTester(c) {
   val mem_img = writeGarbage(c)
 }
 
+class LoadWord(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
+  private def LW(addr: Int, mem_img: HashMap[Int, Int]) = {
+    poke(c.io.decode.op, 2)
+    poke(c.io.in.addr, addr)
+    poke(c.io.decode.en, true)
+    poke(c.io.decode.we, false)
+
+    // Ignore output while stall is active and advance simulation
+    do {
+      step(1)
+    } while (peek(c.io.stall) == 1)
+
+    val lsbs = addr & 0x00000003
+    val masked_addr = addr >>> 2
+    val final_read = lsbs match {
+      case 0 => (mem_img(masked_addr), true)
+      // TODO: Memory should throw a trap for an ilegal memory access
+      case _ => (0, false)
+    }
+
+    if (final_read._2) {
+      expect(c.io.data_out, final_read._1)
+    }
+  }
+
+  for (i <- 0 until 100) {
+    val addr = rnd.nextInt(5000)
+    LW(addr, mem_img)
+  }
+}
+
 class LoadHalf(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
   private def LH(addr: Int, mem_img: HashMap[Int, Int]) = {
     poke(c.io.decode.op, 1)
@@ -154,6 +185,7 @@ class MemoryUnitTester(c: Memory, config: AdeptConfig) extends PeekPokeTester(c)
   new StallLogic(c)
   new LoadByte(c, config)
   new LoadHalf(c, config)
+  new LoadWord(c, config)
 }
 
 class MemoryTester extends ChiselFlatSpec {
@@ -176,6 +208,11 @@ class MemoryTester extends ChiselFlatSpec {
     "Memory" should s"tests half loads (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
         c => new LoadHalf(c, config)
+      } should be (true)
+    }
+    "Memory" should s"tests word loads (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new LoadWord(c, config)
       } should be (true)
     }
   }
