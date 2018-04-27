@@ -130,3 +130,47 @@ class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
     LB(addr, mem_img)
   }
 }
+
+class LoadHalfUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
+  private def LHU(addr: Int, mem_img: HashMap[Int, Int]) = {
+    setSignals(LHU_OP_CODE, addr)
+
+    // Ignore output while stall is active and advance simulation
+    do {
+      step(1)
+    } while (peek(c.io.stall) == 1)
+
+    val finalRead = getFinalRead(addr, LHU_OP_CODE)
+
+    if (finalRead._2) {
+      expect(c.io.data_out, finalRead._1)
+    }
+  }
+
+  for (i <- 0 until 100) {
+    val addr = rnd.nextInt(5000)
+    LHU(addr, mem_img)
+  }
+}
+
+class LoadByteUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
+  private def LBU(addr: Int, mem_img: HashMap[Int, Int]) = {
+    setSignals(LBU_OP_CODE, addr)
+
+    // Ignore output while stall is active and advance simulation
+    do {
+      step(1)
+    } while (peek(c.io.stall) == 1)
+
+    val finalRead = getFinalRead(addr, LBU_OP_CODE)
+
+    if (finalRead._2) {
+      expect(c.io.data_out, finalRead._1)
+    }
+  }
+
+  for (i <- 0 until 100) {
+    val addr = rnd.nextInt(5000)
+    LBU(addr, mem_img)
+  }
+}

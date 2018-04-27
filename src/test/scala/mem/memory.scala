@@ -111,5 +111,15 @@ class MemoryTester extends ChiselFlatSpec {
         c => new LoadWord(c, config)
       } should be (true)
     }
+    "Memory" should s"tests byte unsigned loads (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new LoadByteUnsigned(c, config)
+      } should be (true)
+    }
+    "Memory" should s"tests half unsigned loads (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new LoadHalfUnsigned(c, config)
+      } should be (true)
+    }
   }
 }
