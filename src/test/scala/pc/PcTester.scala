@@ -3,8 +3,8 @@ package adept.pc
 import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
-import scala.math._
 import adept.config.AdeptConfig
+
 /* Opcode          function
  * 1101111 JAL      XXXX
  * 1100111 JALR     000
@@ -43,19 +43,21 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
   var opcode, offset, st, k, br_type, step_in     = 0
 
   for (i <- 0 until 100) {
-    // To increase the number of jumps the next "if" condition chooses between a random jump or a random integer
-    // for the opcode in every 5 iterations
+    // To increase the number of jumps the next "if" condition chooses
+    // between a random jump or a random integer for the opcode in
+    // every 5 iterations
     k += 1
-    if (k==5){
+    if (k == 5) {
       opcode  = BR(rnd.nextInt(3))
       k=0
-    }else {
+    } else {
       opcode  = rnd.nextInt(MAX_Int_7B)
     }
+
     br_type   = rnd.nextInt(7)
-    flags     = rnd.nextInt(2)==1 // random Boolean
-    mem_en    = rnd.nextInt(2)==1 // random Boolean
-    mem_stall = rnd.nextInt(2)==1 // random Boolean
+    flags     = rnd.nextInt(2) == 1
+    mem_en    = rnd.nextInt(2) == 1
+    mem_stall = rnd.nextInt(2) == 1
     step_in   = rnd.nextInt(MAX_Int_32B) & 0xFFFFFFFE // logic to force LSB to '0'
     offset    = rnd.nextInt(MAX_Int_12B) // random integer to a maximum of power(2,13)-1 (12 bits) as used in Adept architecture
 
@@ -71,20 +73,20 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
         st  = 1
       }
       case Cond_Br => {
-        // In cases of BR_NE, BR_LT and BR_LTU the flag needs to be 'true'
-        if ((br_type == BR_NE | br_type == BR_LT | br_type == BR_LTU) & flags){
-          res = pc_in + offset
-          st  = 1
-        // In cases of BR_EQ, BR_GE and BR_GEU the flag needs to be 'false'
-        } else if ((br_type == BR_EQ | br_type == BR_GE | br_type == BR_GEU) & !flags){
-          res = pc_in + offset
-          st  = 1
-        } else {
-          res = res_reg +4
+        br_type match {
+          case BR_NE | BR_LT | BR_LTU if flags => {
+            res = pc_in + offset
+            st  = 1
+          }
+          case BR_EQ | BR_GE | BR_GEU if !flags => {
+            res = pc_in + offset
+            st  = 1
+          }
+          case _ => res = res_reg + 4
         }
       }
       case _ => {
-        res = res_reg +4
+        res = res_reg + 4
       }
     }
 
@@ -106,12 +108,15 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
     poke(e.io.mem_en, mem_en)
 
     step(1)
-    // Adept stall logic. Including memory stall
-    val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en) // it's "true" while there are no stalls; "false" otherwise
+
+    val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en) // it's "true" while there are no stalls;
+                                                                 // "false" otherwise
     stall = st == 1 // branch stall variable
-    if (not_stall){
+
+    if (not_stall) {
       res_reg = res
     }
+
     expect(e.io.pc_out, res_reg)
     expect(e.io.stall_reg, stall)
 
