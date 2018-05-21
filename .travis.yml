@@ -8,7 +8,6 @@ before_install:
 script:
   - make verilog
   - make test-all
-  - make test-all-verilator
 
 notifications:
   email:
