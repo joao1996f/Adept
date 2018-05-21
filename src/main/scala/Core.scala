@@ -163,7 +163,7 @@ class Adept(config: AdeptConfig) extends Module {
 
   // Simulation ends when program detects a write of 0xdead0000 to address
   // 0x00000000
-  if (config.sim_mem) {
+  if (config.sim) {
     io.success := mem.io.instr_out === "h_dead_0737".U
   } else {
     io.success := false.B
