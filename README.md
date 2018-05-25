@@ -26,8 +26,7 @@ the `test-run-dir` folder in the root of the project.
 
 Running a specific program requires passing the `PROG` variable, *e.g.*, `make
 test-verilator PROG=Adept-TestFiles/mult.hex`. There is also a target which
-tests all components within Adept separately: `make test-all` or `make
-test-verilator`.
+tests all components within Adept separately: `make test-all`.
 
 ## License
 The hardware description provided herein can be licensed under the Apache 2.0
