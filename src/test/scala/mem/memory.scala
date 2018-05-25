@@ -85,6 +85,7 @@ class MemoryUnitTester(c: Memory, config: AdeptConfig) extends PeekPokeTester(c)
 
   new StoreByte(c, config)
   new StoreHalf(c, config)
+  new StoreWord(c, config)
 }
 
 class MemoryTester extends ChiselFlatSpec {
