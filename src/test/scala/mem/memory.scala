@@ -94,11 +94,13 @@ class MemoryTester extends ChiselFlatSpec {
   private val backendNames = Array("firrtl", "verilator")
 
   for ( backendName <- backendNames ) {
+
     "Memory" should s"tests stalling logic (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
         c => new StallLogic(c)
       } should be (true)
     }
+
     ///////////////////////////////////////////////////////////
     // Loads
     ///////////////////////////////////////////////////////////
@@ -127,6 +129,7 @@ class MemoryTester extends ChiselFlatSpec {
         c => new LoadHalfUnsigned(c, config)
       } should be (true)
     }
+
     ///////////////////////////////////////////////////////////
     // Stores
     ///////////////////////////////////////////////////////////
@@ -140,5 +143,11 @@ class MemoryTester extends ChiselFlatSpec {
         c => new StoreHalf(c, config)
       } should be (true)
     }
+    "Memory" should s"tests word stores (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new StoreWord(c, config)
+      } should be (true)
+    }
+
   }
 }
