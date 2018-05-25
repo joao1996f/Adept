@@ -85,3 +85,38 @@ class StoreByte(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
     SB(addr, mem_img, data_in)
   }
 }
+
+class StoreHalf(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
+  private def SH(addr: Int, mem_img: HashMap[Int, Int], data_in: BigInt) = {
+    setWriteSignals(SH_OP_CODE, addr, data_in)
+
+    // Ignore output while stall is active and advance simulation
+    do {
+      step(1)
+    } while (peek(c.io.stall) == 1)
+
+    val finalWrite = getFinalWrite(addr, SH_OP_CODE, data_in)
+
+    if (finalWrite._2) {
+      // Read data from Adept memory, always read the entire word to ensure the
+      // bit mask is working properly
+      setLoadSignals(LW_OP_CODE, addr)
+
+      // Ignore output while stall is active and advance simulation
+      do {
+        step(1)
+      } while (peek(c.io.stall) == 1)
+
+      expect(c.io.data_out, finalWrite._1)
+    }
+  }
+
+  for (i <- 0 until 100) {
+    val addr = rnd.nextInt(5000)
+    val data_in = rnd.nextInt(65536)
+    // TODO: expect a trap when LSBs == 3
+    if ((addr & 0x3) < 3) {
+      SH(addr, mem_img, data_in)
+    }
+  }
+}

@@ -84,6 +84,7 @@ class MemoryUnitTester(c: Memory, config: AdeptConfig) extends PeekPokeTester(c)
   new LoadWord(c, config)
 
   new StoreByte(c, config)
+  new StoreHalf(c, config)
 }
 
 class MemoryTester extends ChiselFlatSpec {
@@ -132,6 +133,11 @@ class MemoryTester extends ChiselFlatSpec {
     "Memory" should s"tests byte stores (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
         c => new StoreByte(c, config)
+      } should be (true)
+    }
+    "Memory" should s"tests half stores (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new StoreHalf(c, config)
       } should be (true)
     }
   }
