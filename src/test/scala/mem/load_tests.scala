@@ -16,7 +16,7 @@ class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
   final val LBU_OP_CODE = 4;
   final val LHU_OP_CODE = 5;
 
-  def setSignals(op: Int, addr: Int) {
+  def setLoadSignals(op: Int, addr: Int) {
     poke(c.io.decode.op, op)
     poke(c.io.in.addr, addr)
     poke(c.io.decode.en, true)
@@ -35,10 +35,11 @@ class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
       case _ => 0x00000000
     }
 
-    val result = lsbs match {
-      case 0 if bitMask != 0 => (mem_img(masked_addr) & bitMask, true)
+    val result = if (lsbs < 4 && bitMask != 0) {
+      ((mem_img(masked_addr) & bitMask) >>> (8 * lsbs), true)
+    } else {
       // TODO: Memory should throw a trap for an ilegal memory access
-      case _ => (0, false)
+      (0, false)
     }
 
     return result
@@ -65,7 +66,7 @@ class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
 
 class LoadWord(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LW(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setSignals(LW_OP_CODE, addr)
+    setLoadSignals(LW_OP_CODE, addr)
 
     // Ignore output while stall is active and advance simulation
     do {
@@ -87,7 +88,7 @@ class LoadWord(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadHalf(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LH(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setSignals(LH_OP_CODE, addr)
+    setLoadSignals(LH_OP_CODE, addr)
 
     // Ignore output while stall is active and advance simulation
     do {
@@ -110,7 +111,7 @@ class LoadHalf(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LB(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setSignals(LB_OP_CODE, addr)
+    setLoadSignals(LB_OP_CODE, addr)
 
     // Ignore output while stall is active and advance simulation
     do {
@@ -133,7 +134,7 @@ class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadHalfUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LHU(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setSignals(LHU_OP_CODE, addr)
+    setLoadSignals(LHU_OP_CODE, addr)
 
     // Ignore output while stall is active and advance simulation
     do {
@@ -155,7 +156,7 @@ class LoadHalfUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, confi
 
 class LoadByteUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LBU(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setSignals(LBU_OP_CODE, addr)
+    setLoadSignals(LBU_OP_CODE, addr)
 
     // Ignore output while stall is active and advance simulation
     do {
