@@ -82,6 +82,8 @@ class MemoryUnitTester(c: Memory, config: AdeptConfig) extends PeekPokeTester(c)
   new LoadByte(c, config)
   new LoadHalf(c, config)
   new LoadWord(c, config)
+
+  new StoreByte(c, config)
 }
 
 class MemoryTester extends ChiselFlatSpec {
@@ -96,6 +98,9 @@ class MemoryTester extends ChiselFlatSpec {
         c => new StallLogic(c)
       } should be (true)
     }
+    ///////////////////////////////////////////////////////////
+    // Loads
+    ///////////////////////////////////////////////////////////
     "Memory" should s"tests byte loads (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
         c => new LoadByte(c, config)
@@ -119,6 +124,14 @@ class MemoryTester extends ChiselFlatSpec {
     "Memory" should s"tests half unsigned loads (with $backendName)" in {
       Driver(() => new Memory(config), backendName) {
         c => new LoadHalfUnsigned(c, config)
+      } should be (true)
+    }
+    ///////////////////////////////////////////////////////////
+    // Stores
+    ///////////////////////////////////////////////////////////
+    "Memory" should s"tests byte stores (with $backendName)" in {
+      Driver(() => new Memory(config), backendName) {
+        c => new StoreByte(c, config)
       } should be (true)
     }
   }
