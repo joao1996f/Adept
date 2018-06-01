@@ -129,12 +129,17 @@ class OldPcTester(e: Pc) extends PeekPokeTester(e) {
 }
 
 class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
-  // new BR_EQ(c)
-  // new BR_NE(c)
-  // new BR_LT(c)
-  // new BR_GE(c)
-  // new BR_LTU(c)
-  new BR_GEU(c)
+  new BEQ(c)
+  reset(2)
+  new BNE(c)
+  reset(2)
+  new BLT(c)
+  reset(2)
+  new BGE(c)
+  reset(2)
+  new BLTU(c)
+  reset(2)
+  new BGEU(c)
 }
 
 class PcTester extends ChiselFlatSpec {
@@ -147,32 +152,32 @@ class PcTester extends ChiselFlatSpec {
   for ( backendName <- backendNames ) {
     "PC" should s"test BEQ operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_EQ(c)
+        c => new BEQ(c)
       } should be (true)
     }
     "PC" should s"test BNE operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_NE(c)
+        c => new BNE(c)
       } should be (true)
     }
     "PC" should s"test BLT operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_LT(c)
+        c => new BLT(c)
       } should be (true)
     }
     "PC" should s"test BGE operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_GE(c)
+        c => new BGE(c)
       } should be (true)
     }
     "PC" should s"test BLTU operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_LTU(c)
+        c => new BLTU(c)
       } should be (true)
     }
     "PC" should s"test BGEU operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        c => new BR_GEU(c)
+        c => new BGEU(c)
       } should be (true)
     }
   }

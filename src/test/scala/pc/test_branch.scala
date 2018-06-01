@@ -11,12 +11,12 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   val pc_base = BigInt(0x10000000)
 
   // Branch Functions
-  val BR_EQ_FUNC  = Integer.parseInt("000", 2)
-  val BR_NE_FUNC  = Integer.parseInt("001", 2)
-  val BR_LT_FUNC  = Integer.parseInt("100", 2)
-  val BR_LTU_FUNC = Integer.parseInt("110", 2)
-  val BR_GE_FUNC  = Integer.parseInt("101", 2)
-  val BR_GEU_FUNC = Integer.parseInt("111", 2)
+  val BEQ_FUNC  = Integer.parseInt("000", 2)
+  val BNE_FUNC  = Integer.parseInt("001", 2)
+  val BLT_FUNC  = Integer.parseInt("100", 2)
+  val BLTU_FUNC = Integer.parseInt("110", 2)
+  val BGE_FUNC  = Integer.parseInt("101", 2)
+  val BGEU_FUNC = Integer.parseInt("111", 2)
 
   def setBranchSignals(flags: Boolean, func: Int, offset: Int, pc_in: BigInt) = {
     // Decoder result
@@ -45,8 +45,8 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
 
   def evalBranch(flags: Boolean, func: Int, offset: Int, pc: BigInt) : BigInt = {
     func match {
-      case BR_NE_FUNC | BR_LT_FUNC | BR_LTU_FUNC if flags => return pc + offset
-      case BR_EQ_FUNC | BR_GE_FUNC | BR_GEU_FUNC if !flags =>  return pc + offset
+      case BNE_FUNC | BLT_FUNC | BLTU_FUNC if flags => return pc + offset
+      case BEQ_FUNC | BGE_FUNC | BGEU_FUNC if !flags =>  return pc + offset
       case _ => return pc + 4
     }
   }
@@ -54,7 +54,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   def getSignExtend(imm: Int) : Int = {
     val bitMask = 0x1000
 
-    val signExtend = if (((imm & bitMask) >>> 11) == 1) {
+    val signExtend = if (((imm & bitMask) >>> 12) == 1) {
       0xFFFFE000
     } else {
       0x00000000
@@ -64,15 +64,15 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   }
 }
 
-class BR_EQ(c: Pc) extends BranchBase(c) {
+class BEQ(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_EQ(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BEQ(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = rs1 == rs2
 
-    setBranchSignals(!flags, BR_EQ_FUNC, offset, my_pc)
-    my_pc = evalBranch(!flags, BR_EQ_FUNC, offset, my_pc)
+    setBranchSignals(!flags, BEQ_FUNC, offset, my_pc)
+    my_pc = evalBranch(!flags, BEQ_FUNC, offset, my_pc)
 
     step(1)
 
@@ -99,19 +99,19 @@ class BR_EQ(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & 0x1FFE
     val offset = imm | getSignExtend(imm)
 
-    BR_EQ(offset, rs1, rs2)
+    BEQ(offset, rs1, rs2)
   }
 }
 
-class BR_NE(c: Pc) extends BranchBase(c) {
+class BNE(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_NE(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BNE(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = rs1 != rs2
 
-    setBranchSignals(flags, BR_NE_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BR_NE_FUNC, offset, my_pc)
+    setBranchSignals(flags, BNE_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BNE_FUNC, offset, my_pc)
 
     step(1)
 
@@ -138,19 +138,19 @@ class BR_NE(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & 0x1FFE
     val offset = imm | getSignExtend(imm)
 
-    BR_NE(offset, rs1, rs2)
+    BNE(offset, rs1, rs2)
   }
 }
 
-class BR_LT(c: Pc) extends BranchBase(c) {
+class BLT(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_LT(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BLT(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = rs1 < rs2
 
-    setBranchSignals(flags, BR_LT_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BR_LT_FUNC, offset, my_pc)
+    setBranchSignals(flags, BLT_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BLT_FUNC, offset, my_pc)
 
     step(1)
 
@@ -174,22 +174,22 @@ class BR_LT(c: Pc) extends BranchBase(c) {
       rs1
     }
 
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
+    val imm = rnd.nextInt(max_offset) & (max_offset - 1)
     val offset = imm | getSignExtend(imm)
 
-    BR_LT(offset, rs1, rs2)
+    BLT(offset, rs1, rs2)
   }
 }
 
-class BR_GE(c: Pc) extends BranchBase(c) {
+class BGE(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_GE(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BGE(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = rs1 < rs2
 
-    setBranchSignals(flags, BR_GE_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BR_GE_FUNC, offset, my_pc)
+    setBranchSignals(flags, BGE_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BGE_FUNC, offset, my_pc)
 
     step(1)
 
@@ -216,19 +216,19 @@ class BR_GE(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & 0x1FFE
     val offset = imm | getSignExtend(imm)
 
-    BR_GE(offset, rs1, rs2)
+    BGE(offset, rs1, rs2)
   }
 }
 
-class BR_LTU(c: Pc) extends BranchBase(c) {
+class BLTU(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_LTU(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BLTU(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16))
 
-    setBranchSignals(flags, BR_LTU_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BR_LTU_FUNC, offset, my_pc)
+    setBranchSignals(flags, BLTU_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BLTU_FUNC, offset, my_pc)
 
     step(1)
 
@@ -255,19 +255,19 @@ class BR_LTU(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & 0x1FFE
     val offset = imm | getSignExtend(imm)
 
-    BR_LTU(offset, rs1, rs2)
+    BLTU(offset, rs1, rs2)
   }
 }
 
-class BR_GEU(c: Pc) extends BranchBase(c) {
+class BGEU(c: Pc) extends BranchBase(c) {
   val max_offset = 0x1FFF
   var my_pc = pc_base
 
-  private def BR_GEU(offset: Int, rs1: BigInt, rs2: BigInt) = {
+  private def BGEU(offset: Int, rs1: BigInt, rs2: BigInt) = {
     val flags = (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16))
 
-    setBranchSignals(flags, BR_GEU_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BR_GEU_FUNC, offset, my_pc)
+    setBranchSignals(flags, BGEU_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BGEU_FUNC, offset, my_pc)
 
     step(1)
 
@@ -294,6 +294,6 @@ class BR_GEU(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & 0x1FFE
     val offset = imm | getSignExtend(imm)
 
-    BR_GEU(offset, rs1, rs2)
+    BGEU(offset, rs1, rs2)
   }
 }

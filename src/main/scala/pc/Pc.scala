@@ -7,12 +7,12 @@ import chisel3.util._
 import adept.config.AdeptConfig
 class BranchOpConstants { // join this group with all the rest of the configurations
   // Branch Type
-  val BR_NE    = 1.asUInt(3.W)  // Branch on NotEqual
-  val BR_EQ    = 0.asUInt(3.W)  // Branch on Equal
-  val BR_GE    = 5.asUInt(3.W)  // Branch on Greater/Equal
-  val BR_GEU   = 7.asUInt(3.W)  // Branch on Greater/Equal Unsigned
-  val BR_LT    = 4.asUInt(3.W)  // Branch on Less Than
-  val BR_LTU   = 6.asUInt(3.W)  // Branch on Less Than Unsigned
+  val BNE    = 1.asUInt(3.W)  // Branch on NotEqual
+  val BEQ    = 0.asUInt(3.W)  // Branch on Equal
+  val BGE    = 5.asUInt(3.W)  // Branch on Greater/Equal
+  val BGEU   = 7.asUInt(3.W)  // Branch on Greater/Equal Unsigned
+  val BLT    = 4.asUInt(3.W)  // Branch on Less Than
+  val BLTU   = 6.asUInt(3.W)  // Branch on Less Than Unsigned
 
   val BR_Cond  = "b1100011".U
   val JAL   = "b1101111".U
@@ -44,12 +44,12 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
 
   // Conditional Branch verification and flags attribution
   val cond_br_ver = MuxLookup (io.br_func, false.B,
-    Array(br.BR_EQ  -> ~io.br_flags,
-          br.BR_NE  -> io.br_flags,
-          br.BR_LT  -> io.br_flags,
-          br.BR_GE  -> ~io.br_flags,
-          br.BR_LTU -> io.br_flags,
-          br.BR_GEU -> ~io.br_flags))
+    Array(br.BEQ  -> ~io.br_flags,
+          br.BNE  -> io.br_flags,
+          br.BLT  -> io.br_flags,
+          br.BGE  -> ~io.br_flags,
+          br.BLTU -> io.br_flags,
+          br.BGEU -> ~io.br_flags))
 
   val cond_br_exe   = (io.in_opcode === br.BR_Cond) & cond_br_ver
   val offset_sel    = (io.in_opcode === br.JAL) | cond_br_exe
@@ -63,7 +63,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   val next_pc   = Mux(offset_sel, io.pc_in, progCount).asSInt + add_to_pc_val
 
   // Remove LSB for JALR
-  val jalr_value      = io.br_step & "hFFFFFFFE".U
+  val jalr_value      = io.br_step & "h_FFFF_FFFE".U
   val jalrORpc_select = Mux(jalr_exec, jalr_value.asSInt, next_pc)
 
   // Logic to stall the next PC.
@@ -84,4 +84,6 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   }
 
   io.pc_out  := progCount
+
+  // printf("Taken=[0x%x] progCount=[0x%x] offset=[0x%x] pc_in=[0x%x]\n", offset_sel, progCount, add_to_pc_val, io.pc_in)
 }
