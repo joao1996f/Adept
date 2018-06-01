@@ -130,6 +130,9 @@ class OldPcTester(e: Pc) extends PeekPokeTester(e) {
 
 class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
   new BR_EQ(c)
+  new BR_NE(c)
+  new BR_LT(c)
+  new BR_GE(c)
 }
 
 class PcTester extends ChiselFlatSpec {
@@ -153,6 +156,11 @@ class PcTester extends ChiselFlatSpec {
     "PC" should s"test BLT operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
         c => new BR_LT(c)
+      } should be (true)
+    }
+    "PC" should s"test BGE operations (with $backendName)" in {
+      Driver(() => new Pc(config, branch_config), backendName) {
+        c => new BR_GE(c)
       } should be (true)
     }
   }
