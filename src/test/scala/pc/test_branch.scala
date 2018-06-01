@@ -34,7 +34,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
     poke(c.io.pc_in, pc_in)
 
     // TODO: Don't ignore stalls
-    poke(c.io.mem_stall, 0)
+    poke(c.io.stall, 0)
     poke(c.io.mem_en, 0)
   }
 

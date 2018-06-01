@@ -106,7 +106,7 @@ class OldPcTester(e: Pc) extends PeekPokeTester(e) {
     poke(e.io.br_step, step_in)
     poke(e.io.br_offset, offset)
     poke(e.io.pc_in, pc_in)
-    poke(e.io.mem_stall, mem_stall)
+    poke(e.io.stall, mem_stall)
     poke(e.io.mem_en, mem_en)
 
     step(1)

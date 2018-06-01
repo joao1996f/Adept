@@ -15,25 +15,25 @@ class BranchOpConstants { // join this group with all the rest of the configurat
   val BR_LTU   = 6.asUInt(3.W)  // Branch on Less Than Unsigned
 
   val BR_Cond  = "b1100011".U
-  val BR_JAL   = "b1101111".U
-  val BR_JALR  = "b1100111".U
+  val JAL   = "b1101111".U
+  val JALR  = "b1100111".U
 }
 
 class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   val io = IO(new Bundle {
     // flags for branch confirmation
-    val br_flags   = Input(Bool()) // branch verification flag
+    val br_flags   = Input(Bool())
     // In from decoder
-    val in_opcode  = Input(UInt(config.op_code.W)) // opecode(7 bits)
+    val in_opcode  = Input(UInt(config.op_code.W)) // opcode(7 bits)
     val br_func    = Input(UInt(config.funct.W))   // function(3 bits)
-    // Jump Adress for JALR
-    val br_step    = Input(UInt(config.XLen.W)) // In case of JALR
+    // Jump Address for JALR
+    val br_step    = Input(UInt(config.XLen.W))
     // Offset for JAL or Conditional Branch
     val br_offset  = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
     val pc_in      = Input(UInt(config.XLen.W))
-    // Memory stall control signal
-    val mem_stall  = Input(Bool())
+    // Stall control signal
+    val stall      = Input(Bool())
     // Memory enable control signal
     val mem_en     = Input(Bool())
     // Stall delayed by 1 clock
@@ -51,33 +51,35 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
           br.BR_LTU -> io.br_flags,
           br.BR_GEU -> ~io.br_flags))
 
-  val cond_br_exe     = (io.in_opcode === br.BR_Cond) & cond_br_ver
+  val cond_br_exe   = (io.in_opcode === br.BR_Cond) & cond_br_ver
+  val offset_sel    = (io.in_opcode === br.JAL) | cond_br_exe
+  val add_to_pc_val = Mux(offset_sel, io.br_offset, 4.S)
 
-  // Offset selection criteria: is it a JAL? or is it Conditional with correct flags?
-  val offset_sel      = (io.in_opcode === br.BR_JAL) | cond_br_exe
-
-  // Auxiliar variable that contains either offset or 1
-  val add_to_pc_val   = Mux(offset_sel, io.br_offset, 4.S)
   // JALR condition verification
-  val jalr_exec       = (io.in_opcode === br.BR_JALR)
-  // next pc calculation
-  val progCount       = RegInit("h_1000_0000".asUInt(config.XLen.W))
-  val next_pc         = Mux(offset_sel, io.pc_in, progCount).asSInt + add_to_pc_val
+  val jalr_exec = (io.in_opcode === br.JALR)
+
+  // Next PC
+  val progCount = RegInit("h_1000_0000".asUInt(config.XLen.W))
+  val next_pc   = Mux(offset_sel, io.pc_in, progCount).asSInt + add_to_pc_val
+
   // Remove LSB for JALR
   val jalr_value      = io.br_step & "hFFFFFFFE".U
   val jalrORpc_select = Mux(jalr_exec, jalr_value.asSInt, next_pc)
 
-  // Logic to stall the next PC
-  val stall           = RegInit(false.B)
-  stall              := offset_sel | jalr_exec
-  io.stall_reg       := stall
+  // Logic to stall the next PC.
+  // When a control instruction is detected in the decoder and ALU stage, store the new PC
+  // (if branch is taken) and then invalidate the next instruction in the decoder in the next
+  // clock cycle.
+  val stall_reg  = RegInit(false.B)
+  stall_reg     := offset_sel | jalr_exec
+  io.stall_reg  := stall_reg
 
   // Delay memory enable by one cycle
   val mem_en_reg = RegInit(false.B)
-  mem_en_reg := io.mem_en
+  mem_en_reg    := io.mem_en
 
   // PC update
-  when (!stall && !io.mem_stall && (mem_en_reg ^ !io.mem_en)) {
+  when (!stall_reg && !io.stall && (mem_en_reg ^ !io.mem_en)) {
     progCount := jalrORpc_select.asUInt
   }
 

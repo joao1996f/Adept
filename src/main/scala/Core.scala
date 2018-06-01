@@ -71,7 +71,7 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_step   := alu.io.result.asUInt
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
-  pc.io.mem_stall := stall
+  pc.io.stall := stall
   pc.io.mem_en    := idecode.io.mem.en
 
   ///////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ class Adept(config: AdeptConfig) extends Module {
     prev_instr := mem.io.instr_out
   }
 
-  idecode.io.instruction := Mux(mem.io.stall, prev_instr, mem.io.instr_out & Fill(32, rst))
+  idecode.io.instruction := Mux(mem.io.stall, prev_instr, mem.io.instr_out & Fill(config.XLen, rst))
   idecode.io.stall_reg   := pc.io.stall_reg
 
   // Register File
