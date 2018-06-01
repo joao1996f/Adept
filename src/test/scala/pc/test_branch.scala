@@ -219,3 +219,42 @@ class BR_GE(c: Pc) extends BranchBase(c) {
     BR_GE(offset, rs1, rs2)
   }
 }
+
+class BR_LTU(c: Pc) extends BranchBase(c) {
+  val max_offset = 0x1FFF
+  var my_pc = pc_base
+
+  private def BR_LTU(offset: Int, rs1: BigInt, rs2: BigInt) = {
+    val flags = (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16))
+
+    setBranchSignals(flags, BR_LTU_FUNC, offset, my_pc)
+    my_pc = evalBranch(flags, BR_LTU_FUNC, offset, my_pc)
+
+    step(1)
+
+    if (flags) {
+      // Because I'm forcing the branch to be taken,
+      // I need to insert a non control instruction opcode
+      // in the next instruction
+      poke(c.io.in_opcode, 0)
+
+      step(1)
+    }
+
+    expectBranchSignals(my_pc, false)
+  }
+
+  for (i <- 0 until 100) {
+    val rs1 = BigInt(32, rnd)
+    val rs2 = if (i % 2 == 0) {
+      BigInt(32, rnd)
+    } else {
+      rs1
+    }
+
+    val imm = rnd.nextInt(max_offset) & 0x1FFE
+    val offset = imm | getSignExtend(imm)
+
+    BR_LTU(offset, rs1, rs2)
+  }
+}
