@@ -150,5 +150,10 @@ class PcTester extends ChiselFlatSpec {
         c => new BR_NE(c)
       } should be (true)
     }
+    "PC" should s"test BLT operations (with $backendName)" in {
+      Driver(() => new Pc(config, branch_config), backendName) {
+        c => new BR_LT(c)
+      } should be (true)
+    }
   }
 }
