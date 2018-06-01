@@ -4,6 +4,7 @@ import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.config.AdeptConfig
+import adept.pc.tests._
 
 /* Opcode          function
  * 1101111 JAL      XXXX
@@ -15,6 +16,7 @@ import adept.config.AdeptConfig
  * 1100011 BLTU     110  6
  * 1100011 BGEU     111  7
 */
+
 /*********************************************
  * The test avaluates the detection of a jump from the opcode
  * generated randomly with addition of other input variables also
@@ -22,7 +24,7 @@ import adept.config.AdeptConfig
  *
  * The intent is to emulate the test as close to reality as possible
  */
-class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
+class OldPcTester(e: Pc) extends PeekPokeTester(e) {
   val JAL     = Integer.parseInt("1101111", 2)
   val JALR    = Integer.parseInt("1100111", 2)
   val Cond_Br = Integer.parseInt("1100011", 2)
@@ -44,14 +46,14 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
 
   for (i <- 0 until 100) {
     // To increase the number of jumps the next "if" condition chooses
-    // between a random jump or a random integer for the opcode in
+    // between a random jump or a random integer for the opcode
     // every 5 iterations
     k += 1
     if (k == 5) {
-      opcode  = BR(rnd.nextInt(3))
-      k=0
+      opcode = BR(rnd.nextInt(3))
+      k = 0
     } else {
-      opcode  = rnd.nextInt(MAX_Int_7B)
+      opcode = rnd.nextInt(MAX_Int_7B)
     }
 
     br_type   = rnd.nextInt(7)
@@ -109,8 +111,8 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
 
     step(1)
 
-    val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en) // it's "true" while there are no stalls;
-                                                                 // "false" otherwise
+    val not_stall = !stall & !mem_stall & (mem_en_del ^ !mem_en)
+
     stall = st == 1 // branch stall variable
 
     if (not_stall) {
@@ -126,6 +128,10 @@ class PcUnitTester(e: Pc) extends PeekPokeTester(e) {
   }
 }
 
+class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
+  new BR_EQ(c)
+}
+
 class PcTester extends ChiselFlatSpec {
   // Generate configuration
   val config = new AdeptConfig
@@ -134,9 +140,9 @@ class PcTester extends ChiselFlatSpec {
   private val backendNames = Array("firrtl", "verilator")
 
   for ( backendName <- backendNames ) {
-    "PC" should s"do stuff (with $backendName)" in {
+    "PC" should s"test BEQ operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
-        e => new PcUnitTester(e)
+        c => new BR_EQ(c)
       } should be (true)
     }
   }
