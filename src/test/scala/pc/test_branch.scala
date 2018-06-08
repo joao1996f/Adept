@@ -62,6 +62,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
 
     return signExtend
   }
+
 }
 
 class BEQ(c: Pc) extends BranchBase(c) {

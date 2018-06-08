@@ -140,6 +140,8 @@ class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
   new BLTU(c)
   reset(2)
   new BGEU(c)
+  reset(2)
+  new JAL(c)
 }
 
 class PcTester extends ChiselFlatSpec {
@@ -150,6 +152,9 @@ class PcTester extends ChiselFlatSpec {
   private val backendNames = Array("firrtl", "verilator")
 
   for ( backendName <- backendNames ) {
+    ///////////////////////////////////////////
+    // Branches
+    ///////////////////////////////////////////
     "PC" should s"test BEQ operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
         c => new BEQ(c)
@@ -178,6 +183,15 @@ class PcTester extends ChiselFlatSpec {
     "PC" should s"test BGEU operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
         c => new BGEU(c)
+      } should be (true)
+    }
+
+    ///////////////////////////////////////////
+    // Jumps
+    ///////////////////////////////////////////
+    "PC" should s"test JAL operations (with $backendName)" in {
+      Driver(() => new Pc(config, branch_config), backendName) {
+        c => new JAL(c)
       } should be (true)
     }
   }
