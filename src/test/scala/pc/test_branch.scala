@@ -6,12 +6,14 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import adept.config.AdeptConfig
 import adept.pc.Pc
 
-class BranchBase(c: Pc) extends PeekPokeTester(c) {
+class Branch(c: Pc) extends ControlCommon(c) {
   val opcode = Integer.parseInt("1100011", 2)
-  val pc_base = BigInt(0x10000000)
+  val max_offset = 0x1FFF
+  val bitMask = 0x1000
 
   // Branch Functions
   object Func extends Enumeration {
+    type Func = Value
     val BEQ  = Value(Integer.parseInt("000", 2))
     val BNE  = Value(Integer.parseInt("001", 2))
     val BLT  = Value(Integer.parseInt("100", 2))
@@ -22,34 +24,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   }
   import Func._
 
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
   var func = Func.Empty
-
-  def setBranchSignals(flags: Boolean, offset: Int) = {
-    // Decoder result
-    poke(c.io.in_opcode, opcode)
-    poke(c.io.br_func, func.id)
-    // PC offset for JAL or Branch
-    poke(c.io.br_offset, offset)
-
-    // ALU comparison result
-    poke(c.io.br_flags, flags)
-
-    // Jump address for JALR, this is a don't care in this section
-    poke(c.io.br_step, 0)
-    // PC delayed one clock cycle
-    poke(c.io.pc_in, my_pc)
-
-    // TODO: Don't ignore stalls
-    poke(c.io.stall, 0)
-    poke(c.io.mem_en, 0)
-  }
-
-  def expectBranchSignals(stall: Boolean) = {
-    expect(c.io.pc_out, my_pc)
-    expect(c.io.stall_reg, stall)
-  }
 
   def evalBranch(flag: Boolean, offset: Int) : BigInt = {
     func match {
@@ -57,18 +32,6 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
       case BEQ | BGE | BGEU if !flag =>  return my_pc + offset
       case _ => return my_pc + 4
     }
-  }
-
-  def getSignExtend(imm: Int) : Int = {
-    val bitMask = 0x1000
-
-    val signExtend = if (((imm & bitMask) >>> 12) == 1) {
-      0xFFFFE000
-    } else {
-      0x00000000
-    }
-
-    return signExtend
   }
 
   def genData(i: Int) : (Int, BigInt, BigInt) = {
@@ -80,24 +43,13 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
     }
 
     val imm = rnd.nextInt(max_offset) & (max_offset - 1)
-    val offset = imm | getSignExtend(imm)
+    val offset = imm | getSignExtend(imm, bitMask)
 
     return (offset, rs1, rs2)
   }
 
-  def branchHazardStall(n_cycles: Int, flag: Boolean) = {
-    if (flag) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(n_cycles)
-    }
-  }
-
   def testBranch(offset: Int, flag: Boolean, hw_flag: (Boolean) => Boolean) = {
-    setBranchSignals(hw_flag(flag), offset)
+    setBranchSignals(opcode, offset, func.id, hw_flag(flag))
     my_pc = evalBranch(hw_flag(flag), offset)
 
     step(1)
@@ -107,7 +59,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   }
 }
 
-class BEQ(c: Pc) extends BranchBase(c) {
+class BEQ(c: Pc) extends Branch(c) {
   func = Func.BEQ
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
@@ -115,7 +67,7 @@ class BEQ(c: Pc) extends BranchBase(c) {
   }
 }
 
-class BNE(c: Pc) extends BranchBase(c) {
+class BNE(c: Pc) extends Branch(c) {
   func = Func.BNE
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
@@ -123,7 +75,7 @@ class BNE(c: Pc) extends BranchBase(c) {
   }
 }
 
-class BLT(c: Pc) extends BranchBase(c) {
+class BLT(c: Pc) extends Branch(c) {
   func = Func.BLT
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
@@ -131,7 +83,7 @@ class BLT(c: Pc) extends BranchBase(c) {
   }
 }
 
-class BGE(c: Pc) extends BranchBase(c) {
+class BGE(c: Pc) extends Branch(c) {
   func = Func.BGE
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
@@ -139,7 +91,7 @@ class BGE(c: Pc) extends BranchBase(c) {
   }
 }
 
-class BLTU(c: Pc) extends BranchBase(c) {
+class BLTU(c: Pc) extends Branch(c) {
   func = Func.BLTU
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
@@ -149,7 +101,7 @@ class BLTU(c: Pc) extends BranchBase(c) {
   }
 }
 
-class BGEU(c: Pc) extends BranchBase(c) {
+class BGEU(c: Pc) extends Branch(c) {
   func = Func.BGEU
   for (i <- 0 until 100) {
     val (offset, rs1, rs2) = genData(i)
