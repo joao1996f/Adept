@@ -142,6 +142,8 @@ class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
   new BGEU(c)
   reset(2)
   new JAL(c)
+  reset(2)
+  new JALR(c)
 }
 
 class PcTester extends ChiselFlatSpec {
@@ -192,6 +194,11 @@ class PcTester extends ChiselFlatSpec {
     "PC" should s"test JAL operations (with $backendName)" in {
       Driver(() => new Pc(config, branch_config), backendName) {
         c => new JAL(c)
+      } should be (true)
+    }
+    "PC" should s"test JALR operations (with $backendName)" in {
+      Driver(() => new Pc(config, branch_config), backendName) {
+        c => new JALR(c)
       } should be (true)
     }
   }

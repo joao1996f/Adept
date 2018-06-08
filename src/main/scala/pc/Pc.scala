@@ -27,7 +27,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
     val in_opcode  = Input(UInt(config.op_code.W)) // opcode(7 bits)
     val br_func    = Input(UInt(config.funct.W))   // function(3 bits)
     // Jump Address for JALR
-    val br_step    = Input(UInt(config.XLen.W))
+    val br_step    = Input(SInt(config.XLen.W))
     // Offset for JAL or Conditional Branch
     val br_offset  = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
@@ -63,8 +63,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   val next_pc   = Mux(offset_sel, io.pc_in, progCount).asSInt + add_to_pc_val
 
   // Remove LSB for JALR
-  val jalr_value      = io.br_step & "h_FFFF_FFFE".U
-  val jalrORpc_select = Mux(jalr_exec, jalr_value.asSInt, next_pc)
+  val jalr_value      = io.br_step & "h_FFFF_FFFE".U.asSInt
+  val jalrORpc_select = Mux(jalr_exec, jalr_value, next_pc)
 
   // Logic to stall the next PC.
   // When a control instruction is detected in the decoder and ALU stage, store the new PC
@@ -84,6 +84,4 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module{
   }
 
   io.pc_out  := progCount
-
-  // printf("Taken=[0x%x] progCount=[0x%x] offset=[0x%x] pc_in=[0x%x]\n", offset_sel, progCount, add_to_pc_val, io.pc_in)
 }
