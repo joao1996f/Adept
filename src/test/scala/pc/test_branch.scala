@@ -11,17 +11,25 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
   val pc_base = BigInt(0x10000000)
 
   // Branch Functions
-  val BEQ_FUNC  = Integer.parseInt("000", 2)
-  val BNE_FUNC  = Integer.parseInt("001", 2)
-  val BLT_FUNC  = Integer.parseInt("100", 2)
-  val BLTU_FUNC = Integer.parseInt("110", 2)
-  val BGE_FUNC  = Integer.parseInt("101", 2)
-  val BGEU_FUNC = Integer.parseInt("111", 2)
+  object Func extends Enumeration {
+    val BEQ  = Value(Integer.parseInt("000", 2))
+    val BNE  = Value(Integer.parseInt("001", 2))
+    val BLT  = Value(Integer.parseInt("100", 2))
+    val BLTU = Value(Integer.parseInt("110", 2))
+    val BGE  = Value(Integer.parseInt("101", 2))
+    val BGEU = Value(Integer.parseInt("111", 2))
+    val Empty = Value(Integer.parseInt("010", 2))
+  }
+  import Func._
 
-  def setBranchSignals(flags: Boolean, func: Int, offset: Int, pc_in: BigInt) = {
+  val max_offset = 0x1FFF
+  var my_pc = pc_base
+  var func = Func.Empty
+
+  def setBranchSignals(flags: Boolean, offset: Int) = {
     // Decoder result
     poke(c.io.in_opcode, opcode)
-    poke(c.io.br_func, func)
+    poke(c.io.br_func, func.id)
     // PC offset for JAL or Branch
     poke(c.io.br_offset, offset)
 
@@ -31,23 +39,23 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
     // Jump address for JALR, this is a don't care in this section
     poke(c.io.br_step, 0)
     // PC delayed one clock cycle
-    poke(c.io.pc_in, pc_in)
+    poke(c.io.pc_in, my_pc)
 
     // TODO: Don't ignore stalls
     poke(c.io.stall, 0)
     poke(c.io.mem_en, 0)
   }
 
-  def expectBranchSignals(my_pc: BigInt, stall: Boolean) = {
+  def expectBranchSignals(stall: Boolean) = {
     expect(c.io.pc_out, my_pc)
     expect(c.io.stall_reg, stall)
   }
 
-  def evalBranch(flags: Boolean, func: Int, offset: Int, pc: BigInt) : BigInt = {
+  def evalBranch(flag: Boolean, offset: Int) : BigInt = {
     func match {
-      case BNE_FUNC | BLT_FUNC | BLTU_FUNC if flags => return pc + offset
-      case BEQ_FUNC | BGE_FUNC | BGEU_FUNC if !flags =>  return pc + offset
-      case _ => return pc + 4
+      case BNE | BLT | BLTU if flag => return my_pc + offset
+      case BEQ | BGE | BGEU if !flag =>  return my_pc + offset
+      case _ => return my_pc + 4
     }
   }
 
@@ -63,111 +71,7 @@ class BranchBase(c: Pc) extends PeekPokeTester(c) {
     return signExtend
   }
 
-}
-
-class BEQ(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BEQ(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = rs1 == rs2
-
-    setBranchSignals(!flags, BEQ_FUNC, offset, my_pc)
-    my_pc = evalBranch(!flags, BEQ_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
-  for (i <- 0 until 100) {
-    val rs1 = BigInt(32, rnd)
-    val rs2 = if (i % 2 == 0) {
-      BigInt(32, rnd)
-    } else {
-      rs1
-    }
-
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
-    val offset = imm | getSignExtend(imm)
-
-    BEQ(offset, rs1, rs2)
-  }
-}
-
-class BNE(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BNE(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = rs1 != rs2
-
-    setBranchSignals(flags, BNE_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BNE_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
-  for (i <- 0 until 100) {
-    val rs1 = BigInt(32, rnd)
-    val rs2 = if (i % 2 == 0) {
-      BigInt(32, rnd)
-    } else {
-      rs1
-    }
-
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
-    val offset = imm | getSignExtend(imm)
-
-    BNE(offset, rs1, rs2)
-  }
-}
-
-class BLT(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BLT(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = rs1 < rs2
-
-    setBranchSignals(flags, BLT_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BLT_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
-  for (i <- 0 until 100) {
+  def genData(i: Int) : (Int, BigInt, BigInt) = {
     val rs1 = BigInt(32, rnd)
     val rs2 = if (i % 2 == 0) {
       BigInt(32, rnd)
@@ -178,123 +82,79 @@ class BLT(c: Pc) extends BranchBase(c) {
     val imm = rnd.nextInt(max_offset) & (max_offset - 1)
     val offset = imm | getSignExtend(imm)
 
-    BLT(offset, rs1, rs2)
+    return (offset, rs1, rs2)
+  }
+
+  def branchHazardStall(n_cycles: Int, flag: Boolean) = {
+    if (flag) {
+      // Because I'm forcing the branch to be taken,
+      // I need to insert a non control instruction opcode
+      // in the next instruction
+      poke(c.io.in_opcode, 0)
+
+      step(n_cycles)
+    }
+  }
+
+  def testBranch(offset: Int, flag: Boolean, hw_flag: (Boolean) => Boolean) = {
+    setBranchSignals(hw_flag(flag), offset)
+    my_pc = evalBranch(hw_flag(flag), offset)
+
+    step(1)
+    branchHazardStall(1, flag)
+
+    expectBranchSignals(false)
+  }
+}
+
+class BEQ(c: Pc) extends BranchBase(c) {
+  func = Func.BEQ
+  for (i <- 0 until 100) {
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset, rs1 == rs2, (flag: Boolean) => !flag)
+  }
+}
+
+class BNE(c: Pc) extends BranchBase(c) {
+  func = Func.BNE
+  for (i <- 0 until 100) {
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset, rs1 != rs2, (flag: Boolean) => flag)
+  }
+}
+
+class BLT(c: Pc) extends BranchBase(c) {
+  func = Func.BLT
+  for (i <- 0 until 100) {
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset, rs1 < rs2, (flag: Boolean) => flag)
   }
 }
 
 class BGE(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BGE(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = rs1 < rs2
-
-    setBranchSignals(flags, BGE_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BGE_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (!flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
+  func = Func.BGE
   for (i <- 0 until 100) {
-    val rs1 = BigInt(32, rnd)
-    val rs2 = if (i % 2 == 0) {
-      BigInt(32, rnd)
-    } else {
-      rs1
-    }
-
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
-    val offset = imm | getSignExtend(imm)
-
-    BGE(offset, rs1, rs2)
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset, rs1 >= rs2, (flag: Boolean) => !flag)
   }
 }
 
 class BLTU(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BLTU(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16))
-
-    setBranchSignals(flags, BLTU_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BLTU_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
+  func = Func.BLTU
   for (i <- 0 until 100) {
-    val rs1 = BigInt(32, rnd)
-    val rs2 = if (i % 2 == 0) {
-      BigInt(32, rnd)
-    } else {
-      rs1
-    }
-
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
-    val offset = imm | getSignExtend(imm)
-
-    BLTU(offset, rs1, rs2)
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset,
+         (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16)),
+         (flag: Boolean) => flag)
   }
 }
 
 class BGEU(c: Pc) extends BranchBase(c) {
-  val max_offset = 0x1FFF
-  var my_pc = pc_base
-
-  private def BGEU(offset: Int, rs1: BigInt, rs2: BigInt) = {
-    val flags = (rs1 | BigInt("0000000000000000", 16)) < (rs2 | BigInt("0000000000000000", 16))
-
-    setBranchSignals(flags, BGEU_FUNC, offset, my_pc)
-    my_pc = evalBranch(flags, BGEU_FUNC, offset, my_pc)
-
-    step(1)
-
-    if (!flags) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.in_opcode, 0)
-
-      step(1)
-    }
-
-    expectBranchSignals(my_pc, false)
-  }
-
+  func = Func.BGEU
   for (i <- 0 until 100) {
-    val rs1 = BigInt(32, rnd)
-    val rs2 = if (i % 2 == 0) {
-      BigInt(32, rnd)
-    } else {
-      rs1
-    }
-
-    val imm = rnd.nextInt(max_offset) & 0x1FFE
-    val offset = imm | getSignExtend(imm)
-
-    BGEU(offset, rs1, rs2)
+    val (offset, rs1, rs2) = genData(i)
+    testBranch(offset,
+         (rs1 | BigInt("0000000000000000", 16)) >= (rs2 | BigInt("0000000000000000", 16)),
+         (flag: Boolean) => !flag)
   }
 }

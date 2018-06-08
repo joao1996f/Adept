@@ -6,6 +6,7 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import adept.config.AdeptConfig
 import adept.pc.tests._
 
+// TODO: Add tests which take into account the stalls coming from the memory.
 class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
   new BEQ(c)
   reset(2)
