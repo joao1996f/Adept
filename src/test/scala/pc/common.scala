@@ -18,7 +18,7 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
     poke(c.io.br_offset, offset)
 
     // ALU comparison result
-    poke(c.io.br_flags, flag)
+    poke(c.io.br_flag, flag)
 
     // Jump address for JALR
     poke(c.io.br_step, offset)

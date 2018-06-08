@@ -65,13 +65,13 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
-  pc.io.br_flags  := alu.io.cmp_flag
+  pc.io.br_flag   := alu.io.cmp_flag
   pc.io.in_opcode := idecode.io.alu.op_code
   pc.io.br_func   := idecode.io.br_op
   pc.io.br_step   := alu.io.result
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
-  pc.io.stall := stall
+  pc.io.stall     := stall
   pc.io.mem_en    := idecode.io.mem.en
 
   ///////////////////////////////////////////////////////////////////
