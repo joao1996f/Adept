@@ -3,7 +3,16 @@ sudo: required
 
 before_install:
   - sudo apt -qq update
-  - sudo apt install -y verilator
+  - sudo apt install -y make git autoconf g++ flex bison
+  - git clone http://git.veripool.org/git/verilator
+  - cd verilator
+  - git pull
+  - git checkout verilator_3_904
+  - autoconf
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
 
 script:
   - make verilog
