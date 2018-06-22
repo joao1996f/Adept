@@ -16,18 +16,31 @@ class RegisterFileOut(val config: AdeptConfig) extends Bundle {
   }
 }
 
+class RegisterFileIO(val config: AdeptConfig) extends Bundle {
+  // Inputs
+  val rsd_value  = Input(SInt(config.XLen.W))
+  val decoder    = Flipped(new DecoderRegisterOut(config))
+
+  // Used in simulation only to print the registers at the end
+  val success = if (config.sim) {
+    Some(Input(Bool()))
+  } else {
+    None
+  }
+
+  // Outputs
+  val registers = new RegisterFileOut(config)
+
+  override def cloneType: this.type = {
+    new RegisterFileIO(config).asInstanceOf[this.type]
+  }
+}
+
 /**
   A 3-port Register File with a configurable data width and number of registers.
   */
 class RegisterFile(val config: AdeptConfig) extends Module {
-  val io = IO(new Bundle {
-    // Inputs
-    val rsd_value  = Input(SInt(config.XLen.W))
-    val decoder    = Flipped(new DecoderRegisterOut(config))
-
-    // Outputs
-    val registers = new RegisterFileOut(config)
-  })
+  val io = IO(new RegisterFileIO(config))
 
   // Create a vector of registers
   val registers = Mem(SInt(config.XLen.W), config.n_registers)
@@ -40,4 +53,13 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   // Perform read operation
   io.registers.rs1 := registers(io.decoder.rs1_sel)
   io.registers.rs2 := registers(io.decoder.rs2_sel)
+
+  // Debug
+  if (config.sim) {
+    when (io.success.getOrElse(false.B)) {
+      for (i <- 0 until 32) {
+        printf("R%d = 0x%x\n", i.U, registers(i))
+      }
+    }
+  }
 }

@@ -20,12 +20,14 @@ repl:
 
 test-all:
 	sbt testOnly
+	./run_instr_tests.sh
 
 .PHONY: clean clean-verilog verilog
 
 clean:
 	rm -rf verilog
 	rm -rf test_run_dir
+	rm -rf logs
 
 clean-verilog:
 	rm -rf verilog/$(MODULE)*

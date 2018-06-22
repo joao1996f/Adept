@@ -165,29 +165,35 @@ class Adept(config: AdeptConfig) extends Module {
   // Simulation ends when program detects a write of 0xdead0000 to address
   // 0x00000000
   if (config.sim) {
-    io.success := mem.io.instr_out === "h_dead_0737".U
+    val success = mem.io.instr_out === "h_dead_0737".U
+
+    register_file.io.success.getOrElse(false.B) := success
+    pc.io.success.getOrElse(false.B)            := success
+    io.success                                  := RegNext(success)
   } else {
     io.success := false.B
   }
 
-  // Debug
-  // Stole this from Sodor
-  // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
-  printf("ALU, RF and Mem\n")
-  printf("EX PC=[0x%x], Op1=[0x%x] Op2=[0x%x] W[%b, %d = 0x%x] Mem[%b: R:0x%x W:0x%x] DASM(0x%x)\n"
-           , ex_pc
-           , alu.io.in.registers.rs1
-           , alu.io.in.registers.rs2
-           , idecode.io.registers.we
-           , idecode.io.registers.rsd_sel
-           , register_file.io.rsd_value
-           , idecode.io.sel_rf_wb
-           , mem.io.data_out
-           , mem.io.in.data_in
-           , mem.io.instr_out)
+  if (config.DEBUG) {
+    // Debug
+    // Stole this from Sodor
+    // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
+    printf("ALU, RF and Mem\n")
+    printf("EX PC=[0x%x], Op1=[0x%x] Op2=[0x%x] W[%b, %d = 0x%x] Mem[%b: R:0x%x W:0x%x] DASM(0x%x)\n"
+            , ex_pc
+            , alu.io.in.registers.rs1
+            , alu.io.in.registers.rs2
+            , idecode.io.registers.we
+            , idecode.io.registers.rsd_sel
+            , register_file.io.rsd_value
+            , idecode.io.sel_rf_wb
+            , mem.io.data_out
+            , mem.io.in.data_in
+            , mem.io.instr_out)
 
-  printf("Forwarding Paths\n")
-  printf("FRW Path RS1=[%b], FRW Path RS2=[%b]\n", sel_frw_path_rs1, sel_frw_path_rs2)
+    printf("Forwarding Paths\n")
+    printf("FRW Path RS1=[%b], FRW Path RS2=[%b]\n", sel_frw_path_rs1, sel_frw_path_rs2)
+  }
 }
 
 object Adept extends App {

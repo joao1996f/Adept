@@ -41,6 +41,13 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
     val stall_reg = Output(Bool())
     // Program count to be sent for calc of new PC or for storage
     val pc_out    = Output(UInt(config.XLen.W))
+
+    // Used in simulation only to print the PC at the end
+    val success = if (config.sim) {
+      Some(Input(Bool()))
+    } else {
+      None
+    }
   })
 
   // Conditional Branch verification and flags attribution
@@ -93,6 +100,12 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
             , Mux(io.in_opcode === br.JALR, io.rs1, select_pc)
             , add_to_pc_val
             , !stall_reg && !io.stall && (mem_en_reg ^ !io.mem_en))
+  }
+
+  if (config.sim) {
+    when (io.success.getOrElse(false.B)) {
+      printf("PC = 0x%x\n", program_counter)
+    }
   }
 
 }
