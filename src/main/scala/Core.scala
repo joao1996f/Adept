@@ -62,13 +62,18 @@ class Adept(config: AdeptConfig) extends Module {
     ex_pc := pc.io.pc_out.asSInt
   }
 
+  // Forwarding Path Control Logic
+  val sel_frw_path_rs1 = Wire(Bool())
+  val sel_frw_path_rs2 = Wire(Bool())
+  val write_back       = Wire(SInt(32.W))
+
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
   pc.io.br_flag   := alu.io.cmp_flag
   pc.io.in_opcode := idecode.io.alu.op_code
   pc.io.br_func   := idecode.io.br_op
-  pc.io.br_step   := alu.io.result
+  pc.io.rs1       := Mux(sel_frw_path_rs1, write_back, register_file.io.registers.rs1)
   pc.io.br_offset := idecode.io.imm_b_offset
   pc.io.pc_in     := ex_pc.asUInt
   pc.io.stall     := stall
@@ -99,13 +104,9 @@ class Adept(config: AdeptConfig) extends Module {
   register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
   register_file.io.decoder.rs2_sel := idecode.io.registers.rs2_sel
 
-  // Forwarding Path Control Logic
-  val sel_frw_path_rs1 = Wire(Bool())
-  val sel_frw_path_rs2 = Wire(Bool())
-  val write_back       = Wire(SInt(32.W))
-
   // MUX Selections to Operands in ALU
-  val sel_rs1 = Mux(sel_frw_path_rs1, 2.U, idecode.io.sel_operand_a)
+  // Don't read from the forwarding path when operating on PC
+  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.sel_operand_a =/= 1.U, 2.U, idecode.io.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
@@ -172,7 +173,9 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug
   // Stole this from Sodor
   // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
-  printf("Op1=[0x%x] Op2=[0x%x] W[%d,%d= 0x%x] Mem[%d: R:0x%x W:0x%x] DASM(%x)\n"
+  printf("ALU, RF and Mem\n")
+  printf("EX PC=[0x%x], Op1=[0x%x] Op2=[0x%x] W[%b, %d = 0x%x] Mem[%b: R:0x%x W:0x%x] DASM(0x%x)\n"
+           , ex_pc
            , alu.io.in.registers.rs1
            , alu.io.in.registers.rs2
            , idecode.io.registers.we
@@ -182,6 +185,9 @@ class Adept(config: AdeptConfig) extends Module {
            , mem.io.data_out
            , mem.io.in.data_in
            , mem.io.instr_out)
+
+  printf("Forwarding Paths\n")
+  printf("FRW Path RS1=[%b], FRW Path RS2=[%b]\n", sel_frw_path_rs1, sel_frw_path_rs2)
 }
 
 object Adept extends App {

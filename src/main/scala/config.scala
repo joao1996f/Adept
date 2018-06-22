@@ -28,4 +28,6 @@ class AdeptConfig {
   val funct = 3
 
   val op_code = 7
+
+  final val DEBUG = false
 }

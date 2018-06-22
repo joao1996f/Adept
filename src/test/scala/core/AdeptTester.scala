@@ -35,7 +35,7 @@ class AdeptUnitTester(c: Adept, programFileName: String) extends PeekPokeTester(
       poke(c.io.load.data_in(i), newData(i))
     }
 
-    poke(c.io.load.addr_w, addr * 4)
+    poke(c.io.load.addr_w, (addr * 4) + 0x10000000)
     step(1)
   }
   // Lower reset and write_enable. Core should start processing

@@ -7,21 +7,21 @@ import adept.config.AdeptConfig
 import adept.pc.Pc
 
 class ControlCommon(c: Pc) extends PeekPokeTester(c) {
-  val pc_base = BigInt(0x10000000)
+  val pc_base = BigInt("10000000", 16)
   var my_pc = pc_base
 
-  def setBranchSignals(opcode: Int, offset: BigInt, func: Int = 0, flag: Boolean = false) = {
+  def setBranchSignals(opcode: Int, offset: BigInt, func: Int = 0, flag: Boolean = false, rs1: BigInt = 0) = {
     // Decoder result
     poke(c.io.in_opcode, opcode)
     poke(c.io.br_func, func)
-    // PC offset for JAL or Branch
+    // RS1 Value
     poke(c.io.br_offset, offset)
 
     // ALU comparison result
     poke(c.io.br_flag, flag)
 
-    // Jump address for JALR
-    poke(c.io.br_step, offset)
+    // RS1 Value
+    poke(c.io.rs1, rs1)
     // PC delayed one clock cycle
     poke(c.io.pc_in, my_pc)
 

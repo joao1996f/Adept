@@ -27,9 +27,9 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
     // In from decoder
     val in_opcode = Input(UInt(config.op_code.W)) // opcode(7 bits)
     val br_func   = Input(UInt(config.funct.W))   // function(3 bits)
-    // Jump Address for JALR
-    val br_step   = Input(SInt(config.XLen.W))
-    // Offset for JAL or Conditional Branch
+    // Value of RS1 used in JALR
+    val rs1       = Input(SInt(config.XLen.W))
+    // Offsets
     val br_offset = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
     val pc_in     = Input(UInt(config.XLen.W))
@@ -53,17 +53,18 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
           br.BGEU -> ~io.br_flag))
 
   val cond_br_exe   = (io.in_opcode === br.BR) & cond_br_ver
-  val offset_sel    = (io.in_opcode === br.JAL) | cond_br_exe
+  val offset_sel    = (io.in_opcode === br.JAL) | (io.in_opcode === br.JALR) | cond_br_exe
   val add_to_pc_val = Mux(offset_sel, io.br_offset, 4.S)
 
   val program_counter = RegInit("h_1000_0000".asUInt(config.XLen.W))
 
+  val select_pc  = Mux(offset_sel, io.pc_in, program_counter).asSInt
+  val pc_result  = Mux(io.in_opcode === br.JALR, io.rs1, select_pc) + add_to_pc_val
   // Remove LSB for JALR
-  val jalr_value = io.br_step & "h_FFFF_FFFE".U.asSInt
-  val add_to_pc_res   = Mux(offset_sel, io.pc_in, program_counter).asSInt + add_to_pc_val
-  // Next PC
+  val jalr_value = pc_result & "h_FFFF_FFFE".U.asSInt
   val jalr_flag  = io.in_opcode === br.JALR
-  val next_pc    = Mux(jalr_flag, jalr_value, add_to_pc_res)
+  // Next PC
+  val next_pc    = Mux(jalr_flag, jalr_value, pc_result)
 
   // Logic to stall the next PC.
   // When a control instruction is detected in the decoder and ALU stage, store the new PC
@@ -83,4 +84,15 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
   }
 
   io.pc_out := program_counter
+
+  if (config.DEBUG) {
+    printf("PC\n")
+    printf("Current PC=[0x%x], New PC=[0x%x, A=0x%x, B=0x%x], PC En=[%b]\n"
+            , program_counter
+            , next_pc
+            , Mux(io.in_opcode === br.JALR, io.rs1, select_pc)
+            , add_to_pc_val
+            , !stall_reg && !io.stall && (mem_en_reg ^ !io.mem_en))
+  }
+
 }
