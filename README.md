@@ -13,11 +13,15 @@ technology.
 
 3. In the project root run
 
-```git submodule update --init```
+```
+git submodule update --init
+```
 
 4. To create an Adept Verilog model, from the project root run
 
-```make verilog```
+```
+make verilog
+```
 
 5. Import the Verilog model into your favorite FPGA/ASIC tools
 
@@ -29,7 +33,9 @@ verilog for a specific module run the previous command with the environment
 variable `MODULE` with the package name of the specific module. For example, to
 generate verilog just for the ALU run 
 
-```MODULE=alu.ALU make verilog```
+```
+MODULE=alu.ALU make verilog
+```
 
 The generated verilog will be in a verilog folder in the root of the project.
 
@@ -39,24 +45,32 @@ The generated verilog will be in a verilog folder in the root of the project.
 There are two testing backends the FIRRTL interpreter and Verilator. To test the
 core using FIRRTL run 
 
-```make test-basic PROG=path/to/your/program.hex``` 
+```
+make test-basic PROG=path/to/your/program.hex
+``` 
 
 and to test in Verilator run 
 
-```make test-verilator PROG=Adept-TestFiles/path/to/your/program.hex```
+```
+make test-verilator PROG=path/to/your/program.hex
+```
 
 
 Similarly to the verilog generation you can specify which
 module to test with the `MODULE` environment variable. For example, to test the
 ALU run 
 
-```MODULE=alu.ALU make test-verilator```
+```
+MODULE=alu.ALU make test-verilator
+```
 
 The generated waveforms will be in the `test-run-dir` folder in the root of the project.
 
 There is also a target which tests all components within Adept separately: 
 
-```make test-all```
+```
+make test-all
+```
 
 
 ## License
