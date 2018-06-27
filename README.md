@@ -23,6 +23,8 @@ git submodule update --init
 make verilog
 ```
 
+The generated verilog will be in a verilog folder at the root of the project.
+
 5. Import the Verilog model into your favorite FPGA/ASIC tools
 
 
@@ -37,7 +39,7 @@ generate verilog just for the ALU run
 MODULE=alu.ALU make verilog
 ```
 
-The generated verilog will be in a verilog folder in the root of the project.
+The generated verilog will be in the verilog folder.
 
 
 ## Testing Framework
