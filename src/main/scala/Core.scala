@@ -162,8 +162,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug Stuff
   ///////////////////////////////////////////////////////////////////
 
-  // Simulation ends when program detects a write of 0xdead0000 to address
-  // 0x00000000
+  // Simulation ends when program detects a write of 0xdead0000 to R13
   if (config.sim) {
     val success = mem.io.instr_out === "h_dead_0737".U
 
