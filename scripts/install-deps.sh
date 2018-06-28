@@ -99,5 +99,5 @@ install_dependencies() {
 ################################################################################
 
 # Get OS name and install all dependencies. Exit script if it fails
-os_name=$(get_os) || exit
-install_dependencies "${os_name}" || exit
+os_name=$(get_os) || exit 1
+install_dependencies "${os_name}" || exit 1
