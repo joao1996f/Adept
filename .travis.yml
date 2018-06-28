@@ -4,7 +4,7 @@ sudo: required
 before_install:
   - sudo apt -qq update
   - sudo apt install -y sshpass
-  - travis_wait 60 ./scripts/install-deps.sh
+  - ./scripts/install-deps.sh
   - export RISCV=$HOME/riscv-tools
 
 script:
