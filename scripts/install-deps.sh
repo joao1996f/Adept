@@ -93,7 +93,13 @@ install_dependencies() {
         if [ -z ${TRAVIS+x} ]; then
             git submodule update --init --recursive
         else
-            travis_wait 60 git submodule update --init --recursive
+            git submodule update --init --recursive &
+            # Output to the screen every 9 minutes to prevent a travis timeout
+            export PID=$!
+            while [[ `ps -p $PID | tail -n +2` ]]; do
+                echo 'Getting Submodules Waiting...'
+                sleep 540
+            done
         fi
         export RISCV=$PWD
         ./build-rv32ima.sh
