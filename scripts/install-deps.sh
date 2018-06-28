@@ -74,6 +74,7 @@ install_dependencies() {
         # (18.04) its version 3.916
         sudo apt install -y default-jdk sbt
 
+        # Install verilator
         sudo apt install -y make git autoconf g++ flex bison
         git clone http://git.veripool.org/git/verilator
         cd verilator
@@ -83,6 +84,15 @@ install_dependencies() {
         ./configure
         make
         sudo make install
+        cd ..
+
+        # Install RISC-V Toolchain
+        sudo apt install -y autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
+        git clone https://github.com/riscv/riscv-tools
+        cd riscv-tools
+        git submodule update --init --recursive
+        export RISCV=$PWD
+        ./build-rv32ima.sh
         cd ..
 
         retval=$?

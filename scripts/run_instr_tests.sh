@@ -3,6 +3,11 @@
 # Turn echo on
 set -x
 
+if [ -z ${RISCV+x} ]; then
+    echo "The RISCV environment variable is not set. Please set it and rerun script."
+    exit 1
+fi
+
 # Create log folder
 mkdir -p logs
 

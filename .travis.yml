@@ -4,6 +4,7 @@ sudo: required
 before_install:
   - sudo apt -qq update
   - ./scripts/install-deps.sh
+  - export RISCV=$HOME/riscv-tools
 
 script:
   - make verilog
