@@ -86,24 +86,16 @@ install_dependencies() {
         sudo make install
         cd ..
 
-        # Install RISC-V Toolchain
-        sudo apt install -y autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
-        git clone https://github.com/riscv/riscv-tools
-        cd riscv-tools
+        # Install RISC-V Toolchain when not in Travis
         if [ -z ${TRAVIS+x} ]; then
+            sudo apt install -y autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
+            git clone https://github.com/riscv/riscv-tools
+            cd riscv-tools
             git submodule update --init --recursive
-        else
-            git submodule update --init --recursive &
-            # Output to the screen every 9 minutes to prevent a travis timeout
-            export PID=$!
-            while [[ `ps -p $PID | tail -n +2` ]]; do
-                echo 'Getting Submodules Waiting...'
-                sleep 540
-            done
+            export RISCV=$PWD
+            ./build-rv32ima.sh
+            cd ..
         fi
-        export RISCV=$PWD
-        ./build-rv32ima.sh
-        cd ..
 
         retval=$?
     else
