@@ -68,11 +68,22 @@ install_dependencies() {
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
         fi
 
-        sudo apt update
+        sudo apt -qq update
 
         # In latest Debian (Stretch) verilator is version 3.9 and in Ubuntu
         # (18.04) its version 3.916
-        sudo apt install verilator default-jdk sbt
+        sudo apt install -y default-jdk sbt
+
+        sudo apt install -y make git autoconf g++ flex bison
+        git clone http://git.veripool.org/git/verilator
+        cd verilator
+        git pull
+        git checkout verilator_3_904
+        autoconf
+        ./configure
+        make
+        sudo make install
+        cd ..
 
         retval=$?
     else

@@ -20,7 +20,7 @@ repl:
 
 test-all:
 	sbt testOnly
-	./run_instr_tests.sh
+	./scripts/run_instr_tests.sh
 
 .PHONY: clean clean-verilog verilog
 
