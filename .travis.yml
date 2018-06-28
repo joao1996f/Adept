@@ -12,10 +12,10 @@ script:
   - make test-all
 
 after_success:
-  - ./scripts/artifacts.sh
+  - $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
 
 after_failure:
-  - ./scripts/artifacts.sh
+  - $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
 
 notifications:
   email:
