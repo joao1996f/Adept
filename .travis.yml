@@ -12,6 +12,7 @@ before_install:
   - tar -xvzf toolchain.tar.gz
   - cd ..
   - ./scripts/install-deps.sh
+  - export PATH=$RISCV:$PATH
 
 script:
   - make verilog
