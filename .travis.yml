@@ -5,9 +5,6 @@ before_install:
   - ./scripts/travis.sh
   - export RISCV=$PWD/riscv-tools/toolchain
   - export PATH=$RISCV:$PATH
-  - echo "RISCV: $RISCV"
-  - echo "PATH: $PATH"
-  - echo "PWD: $PWD"
 
 script:
   - make verilog
