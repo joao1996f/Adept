@@ -8,7 +8,8 @@ before_install:
   - export SSHPASS=$DEPLOY_PASS2
   - sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEPLOY_PORT2 $DEPLOY_USER2@$DEPLOY_HOST:$DEPLOY_PATH2/../buntu-home/toolchain.tar.gz riscv-tools/
   - export RISCV=$HOME/riscv-tools/toolchain
-  - cd riscv-tools/ && tar -xzf toolchain.tar.gz
+  - cd riscv-tools/
+  - tar -xvzf toolchain.tar.gz
   - cd ..
   - ./scripts/install-deps.sh
 
@@ -17,10 +18,10 @@ script:
   - make test-all
 
 after_success:
-  - $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
 
 after_failure:
-  - $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
 
 notifications:
   email:
