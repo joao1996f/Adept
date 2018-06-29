@@ -9,6 +9,7 @@ before_install:
   - sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEPLOY_PORT2 $DEPLOY_USER2@$DEPLOY_HOST:$DEPLOY_PATH2/../buntu-home/toolchain.tar.gz riscv-tools/
   - export RISCV=$HOME/riscv-tools/toolchain
   - cd riscv-tools/ && tar -xzf toolchain.tar.gz
+  - cd ..
   - ./scripts/install-deps.sh
 
 script:
