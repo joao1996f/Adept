@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
+# Echo On
+set -x
+
 # Group artifacts and send them to our servers
 mkdir artifacts
-mv logs/ test_run_dir/ verilog/ artifacts/
-export ARTIFACT_NAME=$(date +%d-%m-%Y--%H-%M-%S)
+mv logs/ verilog/ artifacts/
+export ARTIFACT_NAME=Adept-Travis-$(date +%d-%m-%Y--%H-%M-%S)
 tar -czf $ARTIFACT_NAME.tgz artifacts
+
+stat $ARTIFACT_NAME.tgz
 
 export SSHPASS=$DEPLOY_PASS1
 sshpass -e scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEPLOY_PORT1 $ARTIFACT_NAME.tgz $DEPLOY_USER1@$DEPLOY_HOST:$DEPLOY_PATH1 &
