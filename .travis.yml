@@ -4,12 +4,12 @@ sudo: required
 before_install:
   - sudo apt -qq update
   - sudo apt install -y sshpass
-  - ./scripts/install-deps.sh
   - mkdir riscv-tools
   - export SSHPASS=$DEPLOY_PASS2
-  - sshpass -e scp -p $DEPLOY_PORT2 $DEPLOY_USER2@$DEPLOY_HOST:$DEPLOY_PATH2/../buntu-home/toolchain.tar.gz riscv-tools/
+  - sshpass -e scp -P $DEPLOY_PORT2 $DEPLOY_USER2@$DEPLOY_HOST:$DEPLOY_PATH2/../buntu-home/toolchain.tar.gz riscv-tools/
   - export RISCV=$HOME/riscv-tools/toolchain
   - cd riscv-tools/ && tar -xzf toolchain.tar.gz
+  - ./scripts/install-deps.sh
 
 script:
   - make verilog
