@@ -5,12 +5,12 @@ import chisel3._
 
 /* Currently only supports the RV32I Base Instruction Set
  */
-class AdeptConfig {
+class AdeptConfig(simulation:Boolean = true, debugMode:Boolean = false, verboseMode:Boolean = true) {
   // Should the memory be simulated? You can find more memory details at the
   // memory.scala file.
-  val sim = true
-  final val DEBUG = false
-  final val VERBOSE = false
+  val sim = simulation
+  val debug = debugMode
+  val verbose = verboseMode
 
   // ISA length
   val XLen = 32

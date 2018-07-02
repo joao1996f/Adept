@@ -55,7 +55,7 @@ class RegisterFile(val config: AdeptConfig) extends Module {
   io.registers.rs2 := registers(io.decoder.rs2_sel)
 
   // Debug
-  if (config.sim && config.VERBOSE) {
+  if (config.sim || config.verbose) {
     when (io.success.getOrElse(false.B)) {
       for (i <- 0 until 32) {
         printf("R%d = 0x%x\n", i.U, registers(i))
