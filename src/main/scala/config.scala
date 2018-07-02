@@ -10,6 +10,7 @@ class AdeptConfig {
   // memory.scala file.
   val sim = true
   final val DEBUG = false
+  final val VERBOSE = false
 
   // ISA length
   val XLen = 32
