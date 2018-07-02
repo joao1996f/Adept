@@ -68,7 +68,6 @@ class Memory(config: AdeptConfig) extends Module {
 
   private def buildReadData(op: UInt, byte_sel_read: UInt, read_port: Vec[UInt]) : UInt = {
     val byte_sel_read_reg = RegNext(byte_sel_read)
-    val op_reg = op
 
     return MuxLookup(op, op, Array(
                 // Load Byte (8 bits)
@@ -100,7 +99,6 @@ class Memory(config: AdeptConfig) extends Module {
 
   // Pass PC to memory
   my_mem.io.cache.pc_in := io.pc_in
-  my_mem.io.cache.pc_en := true.B // TODO: Don't tie this to a constant
 
   // Connect Program Loading interface
   my_mem.io.load <> io.load
@@ -108,7 +106,6 @@ class Memory(config: AdeptConfig) extends Module {
   // Pass address, read and write enable
   my_mem.io.cache.addr := addr
   my_mem.io.cache.we   := io.decode.we
-  my_mem.io.cache.re   := ~io.decode.we
 
   when (io.decode.we && io.decode.en) {
     // Write Port

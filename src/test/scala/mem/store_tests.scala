@@ -110,7 +110,7 @@ class StoreHalf(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
       expect(c.io.data_out, finalWrite._1)
     }
   }
-  
+
   for (i <- 0 until 100) {
     val addr = rnd.nextInt(5000)
     val data_in = rnd.nextInt(65536)

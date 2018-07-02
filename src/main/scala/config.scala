@@ -9,7 +9,7 @@ class AdeptConfig {
   // Should the memory be simulated? You can find more memory details at the
   // memory.scala file.
   val sim = true
-  final val DEBUG = false
+  val DEBUG = false
 
   // ISA length
   val XLen = 32

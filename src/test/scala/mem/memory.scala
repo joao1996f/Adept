@@ -92,63 +92,60 @@ class MemoryTester extends ChiselFlatSpec {
   // Generate configuration
   val config = new AdeptConfig
 
-  private val backendNames = Array("firrtl", "verilator")
+  // Don't test in FIRRTL because it can't simulate a Verilog module
 
-  for ( backendName <- backendNames ) {
-
-    "Memory" should s"tests stalling logic (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new StallLogic(c)
-      } should be (true)
-    }
-
-    ///////////////////////////////////////////////////////////
-    // Loads
-    ///////////////////////////////////////////////////////////
-    "Memory" should s"tests byte loads (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new LoadByte(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests half loads (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new LoadHalf(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests word loads (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new LoadWord(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests byte unsigned loads (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new LoadByteUnsigned(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests half unsigned loads (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new LoadHalfUnsigned(c, config)
-      } should be (true)
-    }
-
-    ///////////////////////////////////////////////////////////
-    // Stores
-    ///////////////////////////////////////////////////////////
-    "Memory" should s"tests byte stores (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new StoreByte(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests half stores (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new StoreHalf(c, config)
-      } should be (true)
-    }
-    "Memory" should s"tests word stores (with $backendName)" in {
-      Driver(() => new Memory(config), backendName) {
-        c => new StoreWord(c, config)
-      } should be (true)
-    }
-
+  "Memory" should s"tests stalling logic (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new StallLogic(c)
+    } should be (true)
   }
+
+  ///////////////////////////////////////////////////////////
+  // Loads
+  ///////////////////////////////////////////////////////////
+  "Memory" should s"tests byte loads (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new LoadByte(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests half loads (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new LoadHalf(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests word loads (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new LoadWord(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests byte unsigned loads (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new LoadByteUnsigned(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests half unsigned loads (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new LoadHalfUnsigned(c, config)
+    } should be (true)
+  }
+
+  ///////////////////////////////////////////////////////////
+  // Stores
+  ///////////////////////////////////////////////////////////
+  "Memory" should s"tests byte stores (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new StoreByte(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests half stores (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new StoreHalf(c, config)
+    } should be (true)
+  }
+  "Memory" should s"tests word stores (with verilator)" in {
+    Driver(() => new Memory(config), "verilator") {
+      c => new StoreWord(c, config)
+    } should be (true)
+  }
+
 }
