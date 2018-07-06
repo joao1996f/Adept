@@ -92,7 +92,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
 
   io.pc_out := program_counter
 
-  if (config.DEBUG) {
+  if (config.sim && config.verbose >= 2) {
     printf("PC\n")
     printf("Current PC=[0x%x], New PC=[0x%x, A=0x%x, B=0x%x], PC En=[%b]\n"
             , program_counter
@@ -102,7 +102,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
             , !stall_reg && !io.stall && (mem_en_reg ^ !io.mem_en))
   }
 
-  if (config.sim) {
+  if (config.sim && config.verbose >= 1) {
     when (io.success.getOrElse(false.B)) {
       printf("PC = 0x%x\n", program_counter)
     }

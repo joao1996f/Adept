@@ -27,7 +27,7 @@ class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
 
 class PcTester extends ChiselFlatSpec {
   // Generate configuration
-  val config = new AdeptConfig
+  val config = new AdeptConfig(false)
   val branch_config = new BranchOpConstants
 
   private val backendNames = Array("firrtl", "verilator")

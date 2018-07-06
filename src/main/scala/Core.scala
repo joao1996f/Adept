@@ -173,7 +173,7 @@ class Adept(config: AdeptConfig) extends Module {
     io.success := false.B
   }
 
-  if (config.DEBUG) {
+  if (config.sim && config.verbose >= 2) {
     // Debug
     // Stole this from Sodor
     // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
@@ -196,6 +196,6 @@ class Adept(config: AdeptConfig) extends Module {
 }
 
 object Adept extends App {
-  val config = new AdeptConfig
-  chisel3.Driver.execute(args, () => new Adept(config))
+  val (config, firrtlArgs) = AdeptConfig(args)
+  chisel3.Driver.execute(firrtlArgs, () => new Adept(config))
 }

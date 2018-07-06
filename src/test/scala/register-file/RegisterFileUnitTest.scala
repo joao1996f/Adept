@@ -61,7 +61,7 @@ class RegisterFileR0UnitTester(c: RegisterFile) extends PeekPokeTester(c) {
 
 class RegisterFileTester extends ChiselFlatSpec {
   // Generate configuration
-  val config = new AdeptConfig
+  val config = new AdeptConfig(false, 0)
 
   private val backendNames = Array("firrtl", "verilator")
 
