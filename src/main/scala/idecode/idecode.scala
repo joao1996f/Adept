@@ -5,32 +5,9 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.mem.MemDecodeIO
-
-class DecoderALUOut(val config: AdeptConfig) extends Bundle {
-  // Immediate, is sign extended
-  val imm          = Output(SInt(config.XLen.W))
-  // Operation
-  val op           = Output(UInt(config.funct.W))
-  val op_code      = Output(UInt(config.op_code.W))
-  val switch_2_imm = Output(Bool())
-
-  override def cloneType: this.type = {
-    new DecoderALUOut(config).asInstanceOf[this.type]
-  }
-}
-
-class DecoderRegisterOut(val config: AdeptConfig) extends Bundle {
-  // Registers
-  val rs1_sel = Output(UInt(config.rs_len.W))
-  val rs2_sel = Output(UInt(config.rs_len.W))
-  val rsd_sel = Output(UInt(config.rs_len.W))
-  val we      = Output(Bool())
-
-  override def cloneType: this.type = {
-    new DecoderRegisterOut(config).asInstanceOf[this.type]
-  }
-}
+import adept.mem.DecoderMemIO
+import adept.alu.DecoderAluIO
+import adept.registerfile.DecoderRegisterFileIO
 
 ////////////////////////////////////////////////////////////////////////////////
 // BE WARNED! THIS IS TERRIBLE CODE, READ AT YOUR OWN PERIL!
@@ -42,9 +19,9 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val stall_reg   = Input(Bool())
 
                 // Output
-                val registers     = new DecoderRegisterOut(config)
-                val alu           = new DecoderALUOut(config)
-                val mem           = Flipped(new MemDecodeIO(config))
+                val registers     = Output(new DecoderRegisterFileIO(config))
+                val alu           = Output(new DecoderAluIO(config))
+                val mem           = Output(new DecoderMemIO(config))
 
                 // ALU selection control signals
                 val sel_operand_a = Output(UInt(1.W))
@@ -53,13 +30,12 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
                 // Branch Execute
                 val imm_b_offset  = Output(SInt(config.XLen.W))
-                val br_op         = Output(UInt(3.W))
+                val br_op         = Output(UInt(config.funct.W))
               })
 
   // BTW this is a bad implementation, but its OK to start off.
   // Optimizations will be done down the line.
-  val instruction = Wire(UInt(32.W))
-  instruction := io.instruction
+  val instruction = io.instruction
   val op_code    = Wire(UInt(7.W))
   val rsd_sel    = instruction(11, 7)
   val op         = instruction(14, 12)

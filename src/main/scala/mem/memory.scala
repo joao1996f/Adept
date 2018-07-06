@@ -17,25 +17,36 @@ class MemIO(val config: AdeptConfig) extends Bundle {
   }
 }
 
-class MemDecodeIO(val config: AdeptConfig) extends Bundle {
-  val op = Input(UInt(config.funct.W))
-  val we = Input(Bool())
-  val en = Input(Bool())
+class MemLoadIO(config: AdeptConfig) extends Bundle {
+  // Inputs
+  val data_in = Input(Vec(4, UInt(8.W)))
+  val addr_w  = Input(UInt(config.XLen.W))
+  val we      = Input(Bool())
 
   override def cloneType: this.type = {
-    new MemDecodeIO(config).asInstanceOf[this.type]
+    new MemLoadIO(config).asInstanceOf[this.type]
+  }
+}
+
+class DecoderMemIO(val config: AdeptConfig) extends Bundle {
+  val op = UInt(config.funct.W)
+  val we = Bool()
+  val en = Bool()
+
+  override def cloneType: this.type = {
+    new DecoderMemIO(config).asInstanceOf[this.type]
   }
 }
 
 class Memory(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
                 // Program Load
-                val load = new MemLoadIO(config)
+                val load     = new MemLoadIO(config)
 
                 // Data R/W Ports
-                val in     = new MemIO(config)
-                val decode = new MemDecodeIO(config)
-                val data_out  = Output(SInt(config.XLen.W))
+                val in       = new MemIO(config)
+                val decode   = Input(new DecoderMemIO(config))
+                val data_out = Output(SInt(config.XLen.W))
 
                 // Instruction Read Port
                 val pc_in     = Input(UInt(config.XLen.W))

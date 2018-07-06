@@ -5,7 +5,18 @@ import chisel3._
 import chisel3.util.log2Ceil
 
 import adept.config.AdeptConfig
-import adept.idecode.DecoderRegisterOut
+
+class DecoderRegisterFileIO(val config: AdeptConfig) extends Bundle {
+  // Registers
+  val rs1_sel = UInt(config.rs_len.W)
+  val rs2_sel = UInt(config.rs_len.W)
+  val rsd_sel = UInt(config.rs_len.W)
+  val we      = Bool()
+
+  override def cloneType: this.type = {
+    new DecoderRegisterFileIO(config).asInstanceOf[this.type]
+  }
+}
 
 class RegisterFileOut(val config: AdeptConfig) extends Bundle {
   val rs1 = Output(SInt(config.XLen.W))
@@ -19,7 +30,7 @@ class RegisterFileOut(val config: AdeptConfig) extends Bundle {
 class RegisterFileIO(val config: AdeptConfig) extends Bundle {
   // Inputs
   val rsd_value  = Input(SInt(config.XLen.W))
-  val decoder    = Flipped(new DecoderRegisterOut(config))
+  val decoder    = Input(new DecoderRegisterFileIO(config))
 
   // Used in simulation only to print the registers at the end
   val success = if (config.sim) {

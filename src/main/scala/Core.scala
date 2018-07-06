@@ -8,20 +8,10 @@ import adept.config.AdeptConfig
 import adept.idecode.InstructionDecoder
 import adept.registerfile.RegisterFile
 import adept.mem.Memory
+import adept.mem.MemLoadIO
 import adept.pc.BranchOpConstants
 import adept.pc.Pc
 import adept.alu.ALU
-
-class MemLoadIO(config: AdeptConfig) extends Bundle {
-  // Inputs
-  val data_in = Input(Vec(4, UInt(8.W)))
-  val addr_w  = Input(UInt(config.XLen.W))
-  val we      = Input(Bool())
-
-  override def cloneType: this.type = {
-    new MemLoadIO(config).asInstanceOf[this.type]
-  }
-}
 
 class Adept(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{
@@ -30,6 +20,7 @@ class Adept(config: AdeptConfig) extends Module {
 
                 // Outputs
                 val success = Output(Bool())
+                val trap    = Output(Bool())
               })
 
   //////////////////////////////////////////////////////////////////////////////
@@ -172,6 +163,8 @@ class Adept(config: AdeptConfig) extends Module {
   } else {
     io.success := false.B
   }
+
+  io.trap := DontCare
 
   if (config.sim && config.verbose >= 2) {
     // Debug

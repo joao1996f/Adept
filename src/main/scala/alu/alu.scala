@@ -5,7 +5,6 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.DecoderALUOut
 import adept.registerfile.RegisterFileOut
 
 /*
@@ -16,7 +15,20 @@ import adept.registerfile.RegisterFileOut
 
 class AluIO(config: AdeptConfig) extends Bundle {
   val registers      = Flipped(new RegisterFileOut(config))
-  val decoder_params = Flipped(new DecoderALUOut(config))
+  val decoder_params = Input(new DecoderAluIO(config))
+}
+
+class DecoderAluIO(val config: AdeptConfig) extends Bundle {
+  // Immediate, is sign extended
+  val imm          = SInt(config.XLen.W)
+  // Operation
+  val op           = UInt(config.funct.W)
+  val op_code      = UInt(config.op_code.W)
+  val switch_2_imm = Bool()
+
+  override def cloneType: this.type = {
+    new DecoderAluIO(config).asInstanceOf[this.type]
+  }
 }
 
 class ALU(config: AdeptConfig) extends Module {
