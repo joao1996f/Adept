@@ -56,7 +56,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////
   val load_decode = new LoadControlSignals(config, instruction)
   val jalr_decode = new JalRControlSignals(config, instruction)
-  val imm_decode = new ImmediateControlSignals(config, instruction)
+  val imm_decode  = new ImmediateControlSignals(config, instruction)
 
   //////////////////////////////////////////////////////
   // R-Type Decode
@@ -69,36 +69,14 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val stores_decode = new StoresControlSignals(config, instruction)
 
   //////////////////////////////////////////////////////
-  // B-Type Decode => OP Code: 1100011 of instruction
+  // B-Type Decode
   //////////////////////////////////////////////////////
-  when (op_code === "b1100011".U) {
-    io.registers.rs1_sel := rs1_sel
-    io.registers.rs2_sel := rs2_sel
-    io.registers.rsd_sel := 0.U
-    io.pc.br_offset      := Cat(imm(11), rsd_sel(0), imm(10, 5), rsd_sel(4, 1), 0.asUInt(1.W)).asSInt
-    io.alu.imm           := 1024.S
-    io.alu.switch_2_imm  := false.B
+  val branches_decode = new BranchesControlSignals(config, instruction)
 
-    when (op === "b000".U || op === "b001".U) {
-      io.alu.op := "b000".U
-    } .elsewhen (op === "b100".U || op === "b101".U) {
-      io.alu.op := "b010".U
-    } .otherwise {
-      io.alu.op := "b011".U
-    }
-
-    io.registers.we  := false.B
-    io.sel_operand_a := 0.U
-    // This is don't care. Register File write enable is set to false
-    io.sel_rf_wb     := 0.U
-    io.mem.we        := false.B
-    io.mem.op        := 0.U
-    mem_en           := false.B
-  }
   //////////////////////////////////////////////////////
   // U-Type Decode => OP Code: 0010111 or 0110111 of instruction
   //////////////////////////////////////////////////////
-    .elsewhen (op_code === "b0010111".U || op_code === "b0110111".U) {
+  when (op_code === "b0010111".U || op_code === "b0110111".U) {
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U
     io.registers.rsd_sel := rsd_sel
@@ -112,7 +90,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
       io.alu.switch_2_imm := false.B
       io.sel_operand_a    := 1.U
     } .otherwise {
-    // JALR
+    // LUI
       io.alu.switch_2_imm := true.B
       io.sel_operand_a    := 0.U
     }

@@ -34,7 +34,6 @@ class DecoderAluIO(val config: AdeptConfig) extends Bundle {
     op           := DontCare
     op_code      := DontCare
     switch_2_imm := DontCare
-
   }
 }
 
