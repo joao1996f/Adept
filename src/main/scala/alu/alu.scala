@@ -28,6 +28,14 @@ class DecoderAluIO(val config: AdeptConfig) extends Bundle {
   override def cloneType: this.type = {
     new DecoderAluIO(config).asInstanceOf[this.type]
   }
+
+  def setAllDontCare = {
+    imm          := DontCare
+    op           := DontCare
+    op_code      := DontCare
+    switch_2_imm := DontCare
+
+  }
 }
 
 class ALU(config: AdeptConfig) extends Module {

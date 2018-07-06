@@ -16,6 +16,13 @@ class DecoderRegisterFileIO(val config: AdeptConfig) extends Bundle {
   override def cloneType: this.type = {
     new DecoderRegisterFileIO(config).asInstanceOf[this.type]
   }
+
+  def setAllDontCare = {
+    rs1_sel := DontCare
+    rs2_sel := DontCare
+    rsd_sel := DontCare
+    we      := DontCare
+  }
 }
 
 class RegisterFileOut(val config: AdeptConfig) extends Bundle {

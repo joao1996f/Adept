@@ -27,6 +27,11 @@ class DecoderPcIO(val config: AdeptConfig) extends Bundle {
   override def cloneType: this.type = {
     new DecoderPcIO(config).asInstanceOf[this.type]
   }
+
+  def setAllDontCare = {
+    br_op     := DontCare
+    br_offset := DontCare
+  }
 }
 
 class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {

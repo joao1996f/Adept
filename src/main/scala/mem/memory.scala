@@ -35,6 +35,12 @@ class DecoderMemIO(val config: AdeptConfig) extends Bundle {
   override def cloneType: this.type = {
     new DecoderMemIO(config).asInstanceOf[this.type]
   }
+
+  def setAllDontCare = {
+    op := DontCare
+    we := DontCare
+    en := DontCare
+  }
 }
 
 class Memory(config: AdeptConfig) extends Module {
