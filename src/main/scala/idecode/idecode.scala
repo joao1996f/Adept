@@ -52,76 +52,21 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   io.mem.en      := mem_en
 
   //////////////////////////////////////////////////////
-  // I-Type Decode => OP Code: 0010011 of instruction for immediate and 0000011
-  // Load instructions and 1100011 for JALR
+  // I-Type Decode
   //////////////////////////////////////////////////////
-  when (op_code === "b0010011".U || op_code === "b0000011".U || op_code === "b1100111".U) {
-    io.registers.rs1_sel := rs1_sel
-    // Shift instructions don't have rs2. In that case rs2 contains the shift
-    // amount.
-    io.registers.rs2_sel := rs2_sel
-    io.registers.rsd_sel := rsd_sel
-    // Shift instructions have a special code in the immediate, in the ALU check
-    // the two LSBs of the OP
-    io.alu.switch_2_imm := true.B
-    io.registers.we     := true.B
-    io.mem.we           := false.B
-    // Selects the ALU result to be written to the Register File when it is not
-    // a load instruction
-    when (op_code === "b0010011".U) {
-      // Immediate
-      io.sel_operand_a := 0.U
-      io.pc.br_offset  := 0.S
-      io.alu.imm       := imm.asSInt
-      io.sel_rf_wb     := 0.U
-      io.alu.op        := op
-      io.mem.op        := 0.U
-      mem_en           := false.B
-    } .elsewhen (op_code === "b1100111".U) {
-      // JALR
-      io.sel_operand_a := 1.U // Operand A is PC
-      io.alu.imm       := 4.S // Set immediate
-      io.alu.op        := 0.U // ALU: PC + 4
-      io.pc.br_offset  := imm.asSInt // Pass immediate to PC
-      io.sel_rf_wb     := 0.U
-      io.mem.op        := 0.U
-      mem_en           := false.B
-    } .otherwise {
-      // Load
-      io.sel_operand_a := 0.U
-      io.pc.br_offset  := 0.S
-      io.alu.imm       := imm.asSInt
-      io.sel_rf_wb     := 1.U // Select the Memory to write to the register file
-      io.alu.op        := 0.U // Always perform an ADD when it's a Load
-      io.mem.op        := op
-      mem_en           := true.B
-    }
-  }
+  val load_decode = new LoadControlSignals(config, instruction)
+  val jalr_decode = new JalRControlSignals(config, instruction)
+  val imm_decode = new ImmediateControlSignals(config, instruction)
+
   //////////////////////////////////////////////////////
   // R-Type Decode => OP Code: 0110011 of instruction
   //////////////////////////////////////////////////////
-    .elsewhen (op_code === "b0110011".U) {
-    io.registers.rs1_sel := rs1_sel
-    io.registers.rs2_sel := rs2_sel
-    io.registers.rsd_sel := rsd_sel
-    // Shift instructions and Add/Sub have a special code in the immediate, in
-    // the ALU check the two LSBs of the OP
-    io.alu.imm      := imm.asSInt
-    io.alu.op       := op
-    io.alu.switch_2_imm := false.B
-    io.pc.br_offset := 0.S
-    io.registers.we := true.B
-    // Select RS1 and write the ALU result to the register file
-    io.sel_operand_a := 0.U
-    io.sel_rf_wb     := 0.U
-    io.mem.we        := false.B
-    io.mem.op        := 0.U
-    mem_en           := false.B
-  }
+  val registers_decode = new RegisterControlSignals(config, instruction)
+
   //////////////////////////////////////////////////////
   // S-Type Decode => OP Code: 0100011 of instruction
   //////////////////////////////////////////////////////
-    .elsewhen (op_code === "b0100011".U) {
+  when (op_code === "b0100011".U) {
     io.registers.rs1_sel := rs1_sel
     io.registers.rs2_sel := rs2_sel
     io.registers.rsd_sel := 0.U

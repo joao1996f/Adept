@@ -4,6 +4,7 @@ import chisel3._
 
 import adept.config.AdeptConfig
 
+// TODO: Check check if the function code is 000, else throw trap
 class JalRControlSignals(override val config: AdeptConfig,
                               instruction: UInt)
     extends InstructionControlSignals(config, instruction) {
