@@ -28,7 +28,7 @@ class DecoderPcIO(val config: AdeptConfig) extends Bundle {
     new DecoderPcIO(config).asInstanceOf[this.type]
   }
 
-  def setAllDontCare = {
+  def setDefaults = {
     br_op     := DontCare
     br_offset := DontCare
   }

@@ -29,7 +29,7 @@ class DecoderAluIO(val config: AdeptConfig) extends Bundle {
     new DecoderAluIO(config).asInstanceOf[this.type]
   }
 
-  def setAllDontCare = {
+  def setDefaults = {
     imm          := DontCare
     op           := DontCare
     op_code      := DontCare

@@ -36,10 +36,10 @@ class DecoderMemIO(val config: AdeptConfig) extends Bundle {
     new DecoderMemIO(config).asInstanceOf[this.type]
   }
 
-  def setAllDontCare = {
+  def setDefaults = {
     op := DontCare
-    we := DontCare
-    en := DontCare
+    we := false.B
+    en := false.B
   }
 }
 

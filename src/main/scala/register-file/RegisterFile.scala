@@ -17,11 +17,11 @@ class DecoderRegisterFileIO(val config: AdeptConfig) extends Bundle {
     new DecoderRegisterFileIO(config).asInstanceOf[this.type]
   }
 
-  def setAllDontCare = {
+  def setDefaults = {
     rs1_sel := DontCare
     rs2_sel := DontCare
     rsd_sel := DontCare
-    we      := DontCare
+    we      := false.B
   }
 }
 
