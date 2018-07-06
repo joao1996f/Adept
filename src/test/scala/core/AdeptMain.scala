@@ -8,7 +8,7 @@ import adept.config.AdeptConfig
 import adept.test.common.Common
 
 object AdeptMain extends App {
-  private val config = new AdeptConfig
+  private val config = new AdeptConfig(true, 1)
 
   if (args.length < 1) {
     println("You need to provide, at the very least, a test file")

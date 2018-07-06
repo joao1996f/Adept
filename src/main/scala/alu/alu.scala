@@ -9,8 +9,7 @@ import adept.registerfile.RegisterFileOut
 
 /*
  *  This is an ALU used in a RISC-V processor. The main idea behind it is to be
- *  able to generate an ALU for any RISC-V ISA. Currently, it only supports the
- *  base instruction set for the R-Type and I-Type instructions.
+ *  able to generate an ALU for any RISC-V ISA.
  */
 
 class AluIO(config: AdeptConfig) extends Bundle {
