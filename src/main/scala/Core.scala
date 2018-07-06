@@ -173,7 +173,7 @@ class Adept(config: AdeptConfig) extends Module {
     io.success := false.B
   }
 
-  if (config.debug && config.verbose) {
+  if (config.sim && config.verbose >= 2) {
     // Debug
     // Stole this from Sodor
     // https://github.com/ucb-bar/riscv-sodor/blob/master/src/rv32_1stage/dpath.scala#L196
