@@ -122,8 +122,6 @@ class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
     if (finalRead._2) {
       val signExtend = getSignExtend(finalRead._1, LB_OP_CODE)
-      println("Data from Fake: " + (signExtend | finalRead._1))
-      println("Data from Sim: " + c.io.data_out.toPrintable)
       expect(c.io.data_out, signExtend | finalRead._1)
     }
   }
