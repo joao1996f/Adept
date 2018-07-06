@@ -5,7 +5,6 @@ import chisel3._
 import chisel3.util.{Counter, Cat}
 
 import adept.config.AdeptConfig
-import adept.core.MemLoadIO
 
 class CacheIO(config: AdeptConfig) extends Bundle {
   // Handshake Protocol

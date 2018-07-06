@@ -5,7 +5,6 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.core.MemLoadIO
 
 class MemIO(val config: AdeptConfig) extends Bundle {
   // Inputs

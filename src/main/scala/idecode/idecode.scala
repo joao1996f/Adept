@@ -8,6 +8,7 @@ import adept.config.AdeptConfig
 import adept.mem.DecoderMemIO
 import adept.alu.DecoderAluIO
 import adept.registerfile.DecoderRegisterFileIO
+import adept.pc.DecoderPcIO
 
 ////////////////////////////////////////////////////////////////////////////////
 // BE WARNED! THIS IS TERRIBLE CODE, READ AT YOUR OWN PERIL!
@@ -19,18 +20,15 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val stall_reg   = Input(Bool())
 
                 // Output
-                val registers     = Output(new DecoderRegisterFileIO(config))
-                val alu           = Output(new DecoderAluIO(config))
-                val mem           = Output(new DecoderMemIO(config))
+                val registers = Output(new DecoderRegisterFileIO(config))
+                val alu       = Output(new DecoderAluIO(config))
+                val mem       = Output(new DecoderMemIO(config))
+                val pc        = Output(new DecoderPcIO(config))
 
                 // ALU selection control signals
                 val sel_operand_a = Output(UInt(1.W))
                 // Write Back selection signals
                 val sel_rf_wb     = Output(UInt(1.W))
-
-                // Branch Execute
-                val imm_b_offset  = Output(SInt(config.XLen.W))
-                val br_op         = Output(UInt(config.funct.W))
               })
 
   // BTW this is a bad implementation, but its OK to start off.
@@ -45,7 +43,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val mem_en     = Wire(Bool())
 
   // Send OP to the branch execute module
-  io.br_op       := op
+  io.pc.br_op    := op
 
   // Ignore current instruction when the previous was a control instruction
   op_code        := Mux(io.stall_reg, 0.U, instruction(6, 0))
@@ -73,7 +71,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     when (op_code === "b0010011".U) {
       // Immediate
       io.sel_operand_a := 0.U
-      io.imm_b_offset  := 0.S
+      io.pc.br_offset  := 0.S
       io.alu.imm       := imm.asSInt
       io.sel_rf_wb     := 0.U
       io.alu.op        := op
@@ -84,14 +82,14 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
       io.sel_operand_a := 1.U // Operand A is PC
       io.alu.imm       := 4.S // Set immediate
       io.alu.op        := 0.U // ALU: PC + 4
-      io.imm_b_offset  := imm.asSInt // Pass immediate to PC
+      io.pc.br_offset  := imm.asSInt // Pass immediate to PC
       io.sel_rf_wb     := 0.U
       io.mem.op        := 0.U
       mem_en           := false.B
     } .otherwise {
       // Load
       io.sel_operand_a := 0.U
-      io.imm_b_offset  := 0.S
+      io.pc.br_offset  := 0.S
       io.alu.imm       := imm.asSInt
       io.sel_rf_wb     := 1.U // Select the Memory to write to the register file
       io.alu.op        := 0.U // Always perform an ADD when it's a Load
@@ -111,7 +109,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.alu.imm      := imm.asSInt
     io.alu.op       := op
     io.alu.switch_2_imm := false.B
-    io.imm_b_offset := 0.S
+    io.pc.br_offset := 0.S
     io.registers.we := true.B
     // Select RS1 and write the ALU result to the register file
     io.sel_operand_a := 0.U
@@ -131,7 +129,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.alu.imm           := Cat(imm(11, 5), rsd_sel).asSInt
     io.alu.op            := 0.U // Perform ADD in the ALU between rs1 and the immediate
     io.registers.we      := false.B
-    io.imm_b_offset      := 0.S
+    io.pc.br_offset      := 0.S
     io.sel_operand_a     := 0.U
     // This is don't care. Register File write enable is set to false
     io.sel_rf_wb         := 0.U
@@ -146,7 +144,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rs1_sel := rs1_sel
     io.registers.rs2_sel := rs2_sel
     io.registers.rsd_sel := 0.U
-    io.imm_b_offset      := Cat(imm(11), rsd_sel(0), imm(10, 5), rsd_sel(4, 1), 0.asUInt(1.W)).asSInt
+    io.pc.br_offset      := Cat(imm(11), rsd_sel(0), imm(10, 5), rsd_sel(4, 1), 0.asUInt(1.W)).asSInt
     io.alu.imm           := 1024.S
     io.alu.switch_2_imm  := false.B
 
@@ -175,7 +173,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rsd_sel := rsd_sel
     io.alu.imm           := Cat(imm, rs1_sel, op, Fill(12, "b0".U)).asSInt
     io.alu.op            := 0.U
-    io.imm_b_offset      := 0.S
+    io.pc.br_offset      := 0.S
     io.registers.we      := true.B
 
     when (op_code(5) === false.B) {
@@ -200,7 +198,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U
     io.registers.rsd_sel := rsd_sel
-    io.imm_b_offset      := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
+    io.pc.br_offset      := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
     io.alu.switch_2_imm  := true.B
     io.alu.imm           := 4.S
     io.alu.op            := 0.U
@@ -218,7 +216,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U
     io.registers.rsd_sel := rsd_sel
-    io.imm_b_offset      := 0.S
+    io.pc.br_offset      := 0.S
     io.alu.switch_2_imm  := false.B
     io.alu.imm           := 0.S
     io.alu.op            := 0.U

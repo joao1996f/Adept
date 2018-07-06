@@ -20,17 +20,23 @@ class BranchOpConstants {
   val JALR = "b1100111".U
 }
 
+class DecoderPcIO(val config: AdeptConfig) extends Bundle {
+  val br_op     = UInt(config.funct.W)
+  val br_offset = SInt(config.XLen.W)
+
+  override def cloneType: this.type = {
+    new DecoderPcIO(config).asInstanceOf[this.type]
+  }
+}
+
 class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
   val io = IO(new Bundle {
     // flag for branch confirmation
     val br_flag   = Input(Bool())
     // In from decoder
-    val in_opcode = Input(UInt(config.op_code.W)) // opcode(7 bits)
-    val br_func   = Input(UInt(config.funct.W))   // function(3 bits)
+    val in_opcode = Input(UInt(config.op_code.W))
     // Value of RS1 used in JALR
     val rs1       = Input(SInt(config.XLen.W))
-    // Offsets
-    val br_offset = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
     val pc_in     = Input(UInt(config.XLen.W))
     // Stall control signal
@@ -41,6 +47,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
     val stall_reg = Output(Bool())
     // Program count to be sent for calc of new PC or for storage
     val pc_out    = Output(UInt(config.XLen.W))
+    // Decoder control signals
+    val decoder   = Input(new DecoderPcIO(config))
 
     // Used in simulation only to print the PC at the end
     val success = if (config.sim) {
@@ -51,7 +59,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
   })
 
   // Conditional Branch verification and flags attribution
-  val cond_br_ver = MuxLookup (io.br_func, false.B,
+  val cond_br_ver = MuxLookup (io.decoder.br_op, false.B,
     Array(br.BEQ  -> ~io.br_flag,
           br.BNE  -> io.br_flag,
           br.BLT  -> io.br_flag,
@@ -61,7 +69,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
 
   val cond_br_exe   = (io.in_opcode === br.BR) & cond_br_ver
   val offset_sel    = (io.in_opcode === br.JAL) | (io.in_opcode === br.JALR) | cond_br_exe
-  val add_to_pc_val = Mux(offset_sel, io.br_offset, 4.S)
+  val add_to_pc_val = Mux(offset_sel, io.decoder.br_offset, 4.S)
 
   val program_counter = RegInit("h_1000_0000".asUInt(config.XLen.W))
 

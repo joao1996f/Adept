@@ -13,9 +13,9 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
   def setBranchSignals(opcode: Int, offset: BigInt, func: Int = 0, flag: Boolean = false, rs1: BigInt = 0) = {
     // Decoder result
     poke(c.io.in_opcode, opcode)
-    poke(c.io.br_func, func)
+    poke(c.io.decoder.br_op, func)
     // RS1 Value
-    poke(c.io.br_offset, offset)
+    poke(c.io.decoder.br_offset, offset)
 
     // ALU comparison result
     poke(c.io.br_flag, flag)
