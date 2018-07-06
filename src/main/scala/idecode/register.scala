@@ -12,13 +12,13 @@ class RegisterControlSignals(override val config: AdeptConfig,
 
   op_code := op_codes.Registers
 
-  val rsd_sel = instruction(11, 7)
-  val op      = instruction(14, 12)
-  val rs1_sel = instruction(19, 15)
-  val rs2_sel = instruction(24, 20)
-  val imm     = instruction(31, 25)
+  def generateControlSignals(config: AdeptConfig, instruction: UInt) = {
+    val rsd_sel = instruction(11, 7)
+    val op      = instruction(14, 12)
+    val rs1_sel = instruction(19, 15)
+    val rs2_sel = instruction(24, 20)
+    val imm     = instruction(31, 25)
 
-  def generateControlSignals(config: AdeptConfig) = {
     registers.rs1_sel := rs1_sel
     registers.rs2_sel := rs2_sel
     registers.rsd_sel := rsd_sel

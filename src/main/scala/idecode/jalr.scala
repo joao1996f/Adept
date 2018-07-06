@@ -11,12 +11,12 @@ class JalRControlSignals(override val config: AdeptConfig,
 
   op_code := op_codes.JALR
 
-  val op      = instruction(14, 12)
-  val rsd_sel = instruction(11, 7)
-  val rs1_sel = instruction(19, 15)
-  val imm     = instruction(31, 20)
+  def generateControlSignals(config: AdeptConfig, instruction: UInt) = {
+    val op      = instruction(14, 12)
+    val rsd_sel = instruction(11, 7)
+    val rs1_sel = instruction(19, 15)
+    val imm     = instruction(31, 20)
 
-  def generateControlSignals(config: AdeptConfig) = {
     registers.we      := true.B
     registers.rsd_sel := rsd_sel
     registers.rs1_sel := rs1_sel

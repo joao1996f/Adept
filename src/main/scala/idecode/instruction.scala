@@ -30,19 +30,19 @@ abstract class InstructionControlSignals(val config: AdeptConfig, instruction: U
   op_code := DontCare
 
   // Register File Control Signals
-  val registers = new DecoderRegisterFileIO(config)
+  val registers = Wire(new DecoderRegisterFileIO(config))
   registers.setDefaults
 
   // ALU Control Signals
-  val alu = new DecoderAluIO(config)
+  val alu = Wire(new DecoderAluIO(config))
   alu.setDefaults
 
   // PC
-  val pc  = new DecoderPcIO(config)
+  val pc  = Wire(new DecoderPcIO(config))
   pc.setDefaults
 
   // Memory Control Signals
-  val mem = new DecoderMemIO(config)
+  val mem = Wire(new DecoderMemIO(config))
   mem.setDefaults
 
   // Select the memory or the ALU to write to the Register File
@@ -56,9 +56,9 @@ abstract class InstructionControlSignals(val config: AdeptConfig, instruction: U
   // Execute control signals when instruction op code is equal to the op code of the implemented
   // instruction type
   when (instruction(6, 0) === op_code) {
-    generateControlSignals(config)
+    generateControlSignals(config, instruction)
   }
 
   // Define your control signals in this method when implementing this class
-  def generateControlSignals(config: AdeptConfig)
+  def generateControlSignals(config: AdeptConfig, instruction: UInt)
 }
