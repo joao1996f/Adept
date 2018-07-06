@@ -17,10 +17,10 @@ technology.
 git submodule update --init
 ```
 
-4. To create an Adept Verilog model, from the project root run
+4. To create an Adept Verilog model to be used in simulation/FPGA, from the project root run
 
 ```
-make verilog
+make verilog ARGS=-s
 ```
 
 The generated verilog will be in a verilog folder at the root of the project.
@@ -36,7 +36,7 @@ variable `MODULE` with the package name of the specific module. For example, to
 generate verilog just for the ALU run 
 
 ```
-MODULE=alu.ALU make verilog
+make verilog MODULE=alu.ALU ARGS=-s
 ```
 
 The generated verilog will be in the verilog folder.
@@ -63,7 +63,7 @@ module to test with the `MODULE` environment variable. For example, to test the
 ALU run 
 
 ```
-MODULE=alu.ALU make test-verilator
+make test-verilator MODULE=alu.ALU 
 ```
 
 The generated waveforms will be in the `test-run-dir` folder in the root of the project.

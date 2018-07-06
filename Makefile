@@ -5,9 +5,10 @@ MODULE?=core.Adept
 PACKAGE?=adept
 export SBT_OPTS=-Xss4M -Xmx2G
 PROG?=
+ARGS?=--help
 
 verilog:
-	sbt 'runMain $(PACKAGE).$(MODULE) --target-dir verilog --top-name $(MODULE)'
+	sbt 'runMain $(PACKAGE).$(MODULE) $(ARGS) --target-dir verilog --top-name $(MODULE)'
 
 test-verilator:
 	sbt 'test:runMain $(PACKAGE).$(MODULE)Main --backend-name verilator --program-file=$(PROG)'

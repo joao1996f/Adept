@@ -196,6 +196,6 @@ class Adept(config: AdeptConfig) extends Module {
 }
 
 object Adept extends App {
-  val config = new AdeptConfig
-  chisel3.Driver.execute(args, () => new Adept(config))
+  val (config, firrtlArgs) = AdeptConfig(args)
+  chisel3.Driver.execute(firrtlArgs, () => new Adept(config))
 }
