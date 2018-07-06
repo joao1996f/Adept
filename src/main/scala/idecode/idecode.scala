@@ -59,33 +59,19 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   val imm_decode = new ImmediateControlSignals(config, instruction)
 
   //////////////////////////////////////////////////////
-  // R-Type Decode => OP Code: 0110011 of instruction
+  // R-Type Decode
   //////////////////////////////////////////////////////
   val registers_decode = new RegisterControlSignals(config, instruction)
 
   //////////////////////////////////////////////////////
-  // S-Type Decode => OP Code: 0100011 of instruction
+  // S-Type Decode
   //////////////////////////////////////////////////////
-  when (op_code === "b0100011".U) {
-    io.registers.rs1_sel := rs1_sel
-    io.registers.rs2_sel := rs2_sel
-    io.registers.rsd_sel := 0.U
-    io.alu.switch_2_imm  := true.B
-    io.alu.imm           := Cat(imm(11, 5), rsd_sel).asSInt
-    io.alu.op            := 0.U // Perform ADD in the ALU between rs1 and the immediate
-    io.registers.we      := false.B
-    io.pc.br_offset      := 0.S
-    io.sel_operand_a     := 0.U
-    // This is don't care. Register File write enable is set to false
-    io.sel_rf_wb         := 0.U
-    io.mem.we            := true.B
-    io.mem.op            := op
-    mem_en               := true.B
-  }
+  val stores_decode = new StoresControlSignals(config, instruction)
+
   //////////////////////////////////////////////////////
   // B-Type Decode => OP Code: 1100011 of instruction
   //////////////////////////////////////////////////////
-  .elsewhen (op_code === "b1100011".U) {
+  when (op_code === "b1100011".U) {
     io.registers.rs1_sel := rs1_sel
     io.registers.rs2_sel := rs2_sel
     io.registers.rsd_sel := 0.U
