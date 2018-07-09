@@ -76,41 +76,20 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////
   // U-Type Decode => OP Code: 0010111 or 0110111 of instruction
   //////////////////////////////////////////////////////
-  when (op_code === "b0010111".U || op_code === "b0110111".U) {
-    io.registers.rs1_sel := 0.U
-    io.registers.rs2_sel := 0.U
-    io.registers.rsd_sel := rsd_sel
-    io.alu.imm           := Cat(imm, rs1_sel, op, Fill(12, "b0".U)).asSInt
-    io.alu.op            := 0.U
-    io.pc.br_offset      := 0.S
-    io.registers.we      := true.B
+  val lui_decode = new LUIControlSignals(config, instruction)
+  val auipc_decode = new AUIPCControlSignals(config, instruction)
 
-    when (op_code(5) === false.B) {
-    // AUIPC
-      io.alu.switch_2_imm := false.B
-      io.sel_operand_a    := 1.U
-    } .otherwise {
-    // LUI
-      io.alu.switch_2_imm := true.B
-      io.sel_operand_a    := 0.U
-    }
-
-    io.sel_rf_wb     := 0.U
-    io.mem.we        := false.B
-    io.mem.op        := 0.U
-    mem_en           := false.B
-  }
   //////////////////////////////////////////////////////
   // J-Type Decode => OP Code: 1101111 of instruction
   //////////////////////////////////////////////////////
-    .elsewhen(op_code === "b1101111".U) {
+  when(op_code === "b1101111".U) {
     io.registers.rs1_sel := 0.U
     io.registers.rs2_sel := 0.U
     io.registers.rsd_sel := rsd_sel
     io.pc.br_offset      := Cat(imm(11), rs1_sel, op, imm(0), imm(10, 1), 0.asUInt(1.W)).asSInt
     io.alu.switch_2_imm  := true.B
     io.alu.imm           := 4.S
-    io.alu.op            := 0.U
+      io.alu.op            := 0.U
     io.registers.we      := true.B
     io.sel_operand_a     := 1.U
     io.sel_rf_wb         := 0.U
