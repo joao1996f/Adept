@@ -31,6 +31,7 @@ class Adept(config: AdeptConfig) extends Module {
 
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))
+  io.trap := idecode.io.trap
 
   // Register File
   val register_file = Module(new RegisterFile(config))

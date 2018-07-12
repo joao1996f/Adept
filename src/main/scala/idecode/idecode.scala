@@ -26,12 +26,24 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val sel_operand_a = Output(UInt(1.W))
                 // Write Back selection signals
                 val sel_rf_wb     = Output(UInt(1.W))
+
+                // Trap
+                val trap          = Output(Bool())
               })
 
-  val instruction = io.instruction
-
   // Ignore current instruction when the previous was a control instruction
-  op_code        := Mux(io.stall_reg, 0.U, instruction(6, 0))
+  val instruction = Mux(io.stall_reg, 0.U, io.instruction)
+  val op_code = instruction(6, 0)
+
+  def connectDecoders(decoder: InstructionControlSignals) = {
+    io.registers     := decoder.registers
+    io.alu           := decoder.alu
+    io.mem           := decoder.mem
+    io.pc            := decoder.pc
+    io.sel_operand_a := decoder.sel_operand_a
+    io.sel_rf_wb     := decoder.sel_rf_wb
+    io.trap          := decoder.trap
+  }
 
   //////////////////////////////////////////////////////
   // I-Type Decode
@@ -66,12 +78,37 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////
   val jal_decode = new JALControlSignals(config, instruction)
 
-  //////////////////////////////////////////////////////
-  // Invalid Instruction executes a NOP, and sets trap to 1
-  //////////////////////////////////////////////////////
-  // .otherwise {
-  //   io.registers.we      := false.B
-  //   io.mem.we            := false.B
-  //   mem_en               := false.B
-  // }
+  // Build Decoder
+  when (load_decode.op_code === op_code) {
+    connectDecoders(load_decode)
+  } .elsewhen (jalr_decode.op_code === op_code) {
+    connectDecoders(jalr_decode)
+  } .elsewhen (imm_decode.op_code === op_code) {
+    connectDecoders(imm_decode)
+  } .elsewhen (stores_decode.op_code === op_code) {
+    connectDecoders(stores_decode)
+  } .elsewhen (registers_decode.op_code === op_code) {
+    connectDecoders(registers_decode)
+  } .elsewhen (branches_decode.op_code === op_code) {
+    connectDecoders(branches_decode)
+  } .elsewhen (lui_decode.op_code === op_code) {
+    connectDecoders(lui_decode)
+  } .elsewhen (auipc_decode.op_code === op_code) {
+    connectDecoders(auipc_decode)
+  } .elsewhen (jal_decode.op_code === op_code) {
+    connectDecoders(jal_decode)
+  } .otherwise {
+    //////////////////////////////////////////////////////
+    // Invalid Instruction executes an architecture
+    // specific NOP, and sets trap to 1
+    //////////////////////////////////////////////////////
+    io.registers.setDefaults
+    io.alu.setDefaults
+    io.pc.setDefaults
+    io.mem.setDefaults
+    io.sel_rf_wb     := DontCare
+    io.sel_operand_a := DontCare
+    io.trap          := true.B
+  }
+
 }

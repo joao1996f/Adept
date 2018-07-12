@@ -22,7 +22,8 @@ final class OpCodes {
   val Registers = "b0110011".U
 }
 
-abstract class InstructionControlSignals(val config: AdeptConfig, instruction: UInt) {
+abstract class InstructionControlSignals(val config: AdeptConfig,
+                                         instruction: UInt) {
   // Generate List of possible Op Codes
   val op_codes = new OpCodes
 
@@ -53,11 +54,11 @@ abstract class InstructionControlSignals(val config: AdeptConfig, instruction: U
   val sel_operand_a = Wire(UInt(1.W))
   sel_operand_a := DontCare
 
-  // Execute control signals when instruction op code is equal to the op code of the implemented
-  // instruction type
-  when (instruction(6, 0) === op_code) {
-    generateControlSignals(config, instruction)
-  }
+  // Set Trap signal
+  val trap = Wire(Bool())
+  trap := false.B
+
+  generateControlSignals(config, instruction)
 
   // Define your control signals in this method when implementing this class
   def generateControlSignals(config: AdeptConfig, instruction: UInt)
