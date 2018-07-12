@@ -23,6 +23,7 @@ class BranchesControlSignals(override val config: AdeptConfig,
     pc.br_offset      := Cat(instruction(31), instruction(7),
                              instruction(30, 25), instruction(11, 8),
                              0.asUInt(1.W)).asSInt
+    pc.br_op          := op
     alu.switch_2_imm  := false.B
 
     // Select ALU op depending on branch type
