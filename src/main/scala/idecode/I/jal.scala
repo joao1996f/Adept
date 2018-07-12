@@ -23,6 +23,7 @@ class JALControlSignals(override val config: AdeptConfig,
     alu.switch_2_imm  := true.B
     alu.imm           := 4.S // Add 4 to PC
     alu.op            := 0.U // Perform an Add between the PC and the immediate
+    alu.op_code       := op_codes.JAL
 
     sel_operand_a     := 1.U // Select the PC into the ALU
     sel_rf_wb         := 0.U // Select the ALU to write to the register file

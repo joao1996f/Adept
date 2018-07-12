@@ -29,6 +29,7 @@ class RegisterControlSignals(override val config: AdeptConfig,
     alu.imm          := imm.asSInt
     alu.op           := op
     alu.switch_2_imm := false.B
+    alu.op_code      := op_codes.Registers
 
     // Select RS1 and write the ALU result to the register file
     sel_operand_a := 0.U

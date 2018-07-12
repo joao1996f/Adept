@@ -32,7 +32,7 @@ class DecoderAluIO(val config: AdeptConfig) extends Bundle {
   def setDefaults = {
     imm          := DontCare
     op           := DontCare
-    op_code      := DontCare
+    op_code      := 0.U
     switch_2_imm := DontCare
   }
 }
