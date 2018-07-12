@@ -61,7 +61,7 @@ class Memory(config: AdeptConfig) extends Module {
               })
 
   private def buildWriteData(data_in: UInt, op: UInt, byte_sel_write: UInt) : Vec[UInt] = {
-    val new_data = WireInit(Vec(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
+    val new_data = WireInit(VecInit(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
     // Store Byte (8 bits)
     new_data(byte_sel_write) := data_in(7, 0)
     // Store Half (16 bits)
@@ -110,7 +110,7 @@ class Memory(config: AdeptConfig) extends Module {
     // Module(new Cache(config))
   // }
 
-  val read_port = WireInit(Vec(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
+  val read_port = WireInit(VecInit(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
   val addr = io.in.addr >> 2
 
   // Pass PC to memory
@@ -129,8 +129,8 @@ class Memory(config: AdeptConfig) extends Module {
     my_mem.io.cache.mask    := buildWriteMask(io.decode.op, io.in.addr(1, 0).asUInt).toBools
   } .otherwise {
     // Read Port
-    my_mem.io.cache.data_in := Vec(0.U, 0.U, 0.U, 0.U)
-    my_mem.io.cache.mask    := Vec(false.B, false.B, false.B, false.B)
+    my_mem.io.cache.data_in := VecInit(0.U, 0.U, 0.U, 0.U)
+    my_mem.io.cache.mask    := VecInit(false.B, false.B, false.B, false.B)
     read_port               := my_mem.io.cache.data_out
   }
 
