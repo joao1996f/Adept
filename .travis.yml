@@ -10,12 +10,6 @@ script:
   - make verilog ARGS=-s
   - make test-all
 
-after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
-
-after_failure:
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./scripts/artifacts.sh
-
 notifications:
   email:
     recipients:
