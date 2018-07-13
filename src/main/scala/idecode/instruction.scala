@@ -10,6 +10,8 @@ import adept.alu.DecoderAluIO
 import adept.registerfile.DecoderRegisterFileIO
 import adept.pc.DecoderPcIO
 
+import adept.alu.AluOps
+
 final class OpCodes {
   val LUI       = "b0110111".U
   val AUIPC     = "b0010111".U
@@ -33,6 +35,9 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
 
   // Outputs of the decoder
   val io = Wire(decoder_out)
+
+  // Enumerate for ALU operations
+  val alu_ops = AluOps
 
   io.registers.setDefaults
   io.alu.setDefaults

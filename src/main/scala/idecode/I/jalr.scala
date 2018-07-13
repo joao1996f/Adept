@@ -23,7 +23,7 @@ class JalRControlSignals(override val config: AdeptConfig,
 
     io.alu.switch_2_imm := true.B
     io.alu.imm          := 4.S // Add 4 to PC
-    io.alu.op           := 0.U // Perform PC + 4
+    io.alu.op           := alu_ops.add // Perform PC + 4
     io.alu.op_code      := op_codes.JALR
 
     io.pc.br_offset  := imm.asSInt // Pass immediate to PC

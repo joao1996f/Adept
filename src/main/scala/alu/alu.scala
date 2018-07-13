@@ -17,6 +17,10 @@ class AluIO(config: AdeptConfig) extends Bundle {
   val decoder_params = Input(new DecoderAluIO(config))
 }
 
+final object AluOps {
+  val add :: sll :: slt :: sltu :: xor :: sr :: or :: and :: Nil = Enum(8)
+}
+
 class DecoderAluIO(val config: AdeptConfig) extends Bundle {
   // Immediate, is sign extended
   val imm          = SInt(config.XLen.W)
@@ -66,9 +70,7 @@ class ALU(config: AdeptConfig) extends Module {
     when (io.in.decoder_params.imm(10) === true.B &&
             (io.in.decoder_params.op_code === "b0110011".U || io.in.decoder_params.op_code === "b1100011".U)
             && io.in.decoder_params.op === 0.U) {
-      operand_B := (~(sel_oper_B.asUInt)).asSInt
-      // Issue #122 firrt-interpreter
-      // operand_B := ~sel_oper_B
+      operand_B := ~sel_oper_B
       carry_in := 1.S
     } .otherwise {
       operand_B := sel_oper_B
@@ -103,15 +105,16 @@ class ALU(config: AdeptConfig) extends Module {
   //////////////////////////////////////////////////////////////////////////////
   // Output MUX
   //////////////////////////////////////////////////////////////////////////////
+  val alu_ops = AluOps
   val result = MuxLookup(io.in.decoder_params.op, -1.S, Array(
-                           0.U -> add_result,
-                           1.U -> shift_left_logic_result,
-                           2.U -> set_less_result,
-                           3.U -> set_less_unsigned_result,
-                           4.U -> xor_result,
-                           5.U -> shift_right_result,
-                           6.U -> or_result,
-                           7.U -> and_result))
+                           alu_ops.add  -> add_result,
+                           alu_ops.sll  -> shift_left_logic_result,
+                           alu_ops.slt  -> set_less_result,
+                           alu_ops.sltu -> set_less_unsigned_result,
+                           alu_ops.xor  -> xor_result,
+                           alu_ops.sr   -> shift_right_result,
+                           alu_ops.or   -> or_result,
+                           alu_ops.and  -> and_result))
 
   //////////////////////////////////////////////////////////////////////////////
   // Output

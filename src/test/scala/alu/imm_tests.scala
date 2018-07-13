@@ -4,17 +4,23 @@ import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.alu._
+import adept.idecode.OpCodes
+
+class ImmediateTestBase(c: ALU) extends PeekPokeTester(c) {
+  val alu_ops = AluOps
+  val op_code = new OpCodes
+}
 
 ////////////////////////////////////////////////
 // Test Suite for Immediate Type instructions
 ////////////////////////////////////////////////
-class ADDI(c: ALU) extends PeekPokeTester(c) {
+class ADDI(c: ALU) extends ImmediateTestBase(c) {
   private def ADDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.op, 0) // b000
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.add)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 + imm)
   }
@@ -37,14 +43,14 @@ class ADDI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SLLI(c: ALU) extends PeekPokeTester(c) {
+class SLLI(c: ALU) extends ImmediateTestBase(c) {
   private def SLLI(rs1: Int, imm: Int) {
     val special_imm = 31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
-    poke(c.io.in.decoder_params.op, 1) // b001
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.sll)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 << special_imm)
   }
@@ -67,13 +73,13 @@ class SLLI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SLTI(c: ALU) extends PeekPokeTester(c) {
+class SLTI(c: ALU) extends ImmediateTestBase(c) {
   private def SLTI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.op, 2) // b010
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.slt)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 < imm)
   }
@@ -96,7 +102,7 @@ class SLTI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SLTIU(c: ALU) extends PeekPokeTester(c) {
+class SLTIU(c: ALU) extends ImmediateTestBase(c) {
   private def SLTIU(rs1: Int, imm: Int) {
     // Turns out Scala doesn't have unsigned types so we do this trickery
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
@@ -104,8 +110,8 @@ class SLTIU(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.op, 3) // b011
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.sltu)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, u_rs1 < u_imm)
   }
@@ -128,13 +134,13 @@ class SLTIU(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class XORI(c: ALU) extends PeekPokeTester(c) {
+class XORI(c: ALU) extends ImmediateTestBase(c) {
   private def XORI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.imm, imm)
     poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.op, 4) // b100
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.xor)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 ^ imm)
   }
@@ -157,14 +163,14 @@ class XORI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SRLI(c: ALU) extends PeekPokeTester(c) {
+class SRLI(c: ALU) extends ImmediateTestBase(c) {
   private def SRLI(rs1: Int, imm: Int) {
     val special_imm =  31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
-    poke(c.io.in.decoder_params.op, 5) // b101
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.sr)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     // >>> is the logic right shift operator
     expect(c.io.result, rs1 >>> special_imm)
@@ -188,15 +194,15 @@ class SRLI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SRAI(c: ALU) extends PeekPokeTester(c) {
+class SRAI(c: ALU) extends ImmediateTestBase(c) {
   private def SRAI(rs1: Int, imm: Int) {
     val special_imm_2_shift =  31 & imm // h_0000_001f
     val special_imm =  1024 | special_imm_2_shift // h_0000_0400
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, special_imm)
-    poke(c.io.in.decoder_params.op, 5) // b101
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.sr)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 >> special_imm_2_shift)
   }
@@ -219,13 +225,13 @@ class SRAI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class ORI(c: ALU) extends PeekPokeTester(c) {
+class ORI(c: ALU) extends ImmediateTestBase(c) {
   private def ORI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.op, 6) // b110
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.or)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 | imm)
   }
@@ -248,13 +254,13 @@ class ORI(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class ANDI(c: ALU) extends PeekPokeTester(c) {
+class ANDI(c: ALU) extends ImmediateTestBase(c) {
   private def ANDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
     poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.op, 7) // b111
-    poke(c.io.in.decoder_params.op_code, 19) // b0010011
+    poke(c.io.in.decoder_params.op, alu_ops.and)
+    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 & imm)
   }

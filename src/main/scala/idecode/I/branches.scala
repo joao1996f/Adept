@@ -31,11 +31,11 @@ class BranchesControlSignals(override val config: AdeptConfig,
     // Select ALU op depending on branch type
     when (op === "b000".U || op === "b001".U) {
       io.alu.imm := 1024.S   // Force a subtraction
-      io.alu.op  := "b000".U // Perform a SUB
+      io.alu.op  := alu_ops.add // Perform a SUB
     } .elsewhen (op === "b100".U || op === "b101".U) {
-      io.alu.op := "b010".U // Perform a set less than
+      io.alu.op := alu_ops.slt // Perform a set less than
     } .otherwise {
-      io.alu.op := "b011".U // Perform a set less than unsigned
+      io.alu.op := alu_ops.sltu // Perform a set less than unsigned
     }
 
     io.sel_operand_a := 0.U // Select RS1 to be read by the ALU
