@@ -7,7 +7,7 @@ before_install:
   - export PATH=$RISCV:$PATH
 
 script:
-  - make verilog
+  - make verilog ARGS=-s
   - make test-all
 
 after_success:
