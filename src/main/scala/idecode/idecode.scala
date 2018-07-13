@@ -45,7 +45,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // Connects the wires of an instruction implementation to the output of the
   // Decoder
-  def connectDecoders(decoder: InstructionControlSignals) = {
+  def connectDecoders[T <: InstructionControlSignals](decoder: T) = {
     io.out.registers     := decoder.io.registers
     io.out.alu           := decoder.io.alu
     io.out.mem           := decoder.io.mem
