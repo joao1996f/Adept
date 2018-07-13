@@ -65,7 +65,9 @@ class Adept(config: AdeptConfig) extends Module {
   pc.io.br_flag   := alu.io.cmp_flag
   pc.io.in_opcode := idecode.io.out.alu.op_code
   pc.io.decoder   <> idecode.io.out.pc
-  pc.io.rs1       := Mux(sel_frw_path_rs1, write_back, register_file.io.registers.rs1)
+  pc.io.rs1       := Mux(sel_frw_path_rs1,
+                         write_back,
+                         register_file.io.registers.rs1)
   pc.io.pc_in     := ex_pc.asUInt
   pc.io.stall     := stall
   pc.io.mem_en    := idecode.io.out.mem.en
@@ -88,7 +90,9 @@ class Adept(config: AdeptConfig) extends Module {
     prev_instr := mem.io.instr_out
   }
 
-  idecode.io.instruction := Mux(mem.io.stall, prev_instr, mem.io.instr_out & Fill(config.XLen, rst))
+  idecode.io.instruction := Mux(mem.io.stall,
+                                prev_instr,
+                                mem.io.instr_out & Fill(config.XLen, rst))
   idecode.io.stall_reg   := pc.io.stall_reg
 
   // Register File
@@ -97,7 +101,9 @@ class Adept(config: AdeptConfig) extends Module {
 
   // MUX Selections to Operands in ALU
   // Don't read from the forwarding path when operating on PC
-  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.out.sel_operand_a =/= 1.U, 2.U, idecode.io.out.sel_operand_a)
+  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.out.sel_operand_a =/= 1.U,
+                    2.U,
+                    idecode.io.out.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
@@ -106,7 +112,8 @@ class Adept(config: AdeptConfig) extends Module {
                                        ))
 
   alu.io.in.registers.rs2 := Mux(sel_frw_path_rs2,
-                                 write_back, register_file.io.registers.rs2)
+                                 write_back,
+                                 register_file.io.registers.rs2)
   alu.io.in.decoder_params <> idecode.io.out.alu
 
   // Memory Connections

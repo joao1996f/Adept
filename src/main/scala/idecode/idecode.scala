@@ -40,7 +40,9 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
               })
 
   // Ignore current instruction when the previous was a control instruction
-  val instruction = Mux(io.stall_reg, 0.U, io.instruction)
+  val instruction = Mux(io.stall_reg,
+                        0.U,
+                        io.instruction)
   val op_code = instruction(6, 0)
 
   // Connects the wires of an instruction implementation to the output of the

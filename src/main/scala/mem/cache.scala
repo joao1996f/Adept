@@ -90,7 +90,9 @@ class CacheSim(config: AdeptConfig) extends Module {
   bram.io.io_load_we := io.load.we
 
   // Address
-  bram.io.io_instr_addr := Mux(io.load.we, io.load.addr_w, io.cache.pc_in)
+  bram.io.io_instr_addr := Mux(io.load.we,
+                               io.load.addr_w,
+                               io.cache.pc_in)
 
   // Instruction Out
   io.cache.pc_out := Cat(bram.io.io_instr_out_3,

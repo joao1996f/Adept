@@ -68,8 +68,12 @@ class Memory(config: AdeptConfig) extends Module {
     new_data(byte_sel_write + 1.U) := Mux(op(0) === true.B || op(1) === true.B,
                                           data_in(15, 8), 0.U)
     // Store Word (32 bits)
-    new_data(byte_sel_write + 2.U) := Mux(op(1) === true.B, data_in(23, 16), 0.U)
-    new_data(byte_sel_write + 3.U) := Mux(op(1) === true.B, data_in(31, 24), 0.U)
+    new_data(byte_sel_write + 2.U) := Mux(op(1) === true.B,
+                                          data_in(23, 16),
+                                          0.U)
+    new_data(byte_sel_write + 3.U) := Mux(op(1) === true.B,
+                                          data_in(31, 24),
+                                          0.U)
 
     return new_data
   }
@@ -77,7 +81,9 @@ class Memory(config: AdeptConfig) extends Module {
   private def buildWriteMask(op: UInt, byte_sel_write: UInt) : UInt = {
     val mask = Wire(UInt(4.W))
     mask := Mux(op === 0.U, 1.U << byte_sel_write,
-                Mux(op === 1.U, 3.U << byte_sel_write, 15.U << byte_sel_write))
+                Mux(op === 1.U,
+                    3.U << byte_sel_write,
+                    15.U << byte_sel_write))
 
     return mask
   }

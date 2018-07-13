@@ -74,17 +74,25 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
 
   val cond_br_exe   = (io.in_opcode === br.BR) & cond_br_ver
   val offset_sel    = (io.in_opcode === br.JAL) | (io.in_opcode === br.JALR) | cond_br_exe
-  val add_to_pc_val = Mux(offset_sel, io.decoder.br_offset, 4.S)
+  val add_to_pc_val = Mux(offset_sel,
+                          io.decoder.br_offset,
+                          4.S)
 
   val program_counter = RegInit("h_1000_0000".asUInt(config.XLen.W))
 
-  val select_pc  = Mux(offset_sel, io.pc_in, program_counter).asSInt
-  val pc_result  = Mux(io.in_opcode === br.JALR, io.rs1, select_pc) + add_to_pc_val
+  val select_pc  = Mux(offset_sel,
+                       io.pc_in,
+                       program_counter).asSInt
+  val pc_result  = Mux(io.in_opcode === br.JALR,
+                       io.rs1,
+                       select_pc) + add_to_pc_val
   // Remove LSB for JALR
   val jalr_value = pc_result & "h_FFFF_FFFE".U.asSInt
   val jalr_flag  = io.in_opcode === br.JALR
   // Next PC
-  val next_pc    = Mux(jalr_flag, jalr_value, pc_result)
+  val next_pc    = Mux(jalr_flag,
+                       jalr_value,
+                       pc_result)
 
   // Logic to stall the next PC.
   // When a control instruction is detected in the decoder and ALU stage, store the new PC
