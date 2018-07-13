@@ -157,8 +157,8 @@ class Adept(config: AdeptConfig) extends Module {
   if (config.sim) {
     val success = mem.io.instr_out === "h_dead_0737".U
 
-    register_file.io.success.getOrElse(false.B) := success
-    pc.io.success.getOrElse(false.B)            := success
+    register_file.io.success.getOrElse(false.B) := success | idecode.io.out.trap
+    pc.io.success.getOrElse(false.B)            := success | idecode.io.out.trap
     io.success                                  := RegNext(success)
   } else {
     io.success := false.B
