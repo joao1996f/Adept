@@ -31,7 +31,6 @@ class Adept(config: AdeptConfig) extends Module {
 
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))
-  io.trap := idecode.io.out.trap
 
   // Register File
   val register_file = Module(new RegisterFile(config))
@@ -160,18 +159,20 @@ class Adept(config: AdeptConfig) extends Module {
   // Debug Stuff
   ///////////////////////////////////////////////////////////////////
 
+  io.trap := idecode.io.out.trap
+
   // Simulation ends when program detects a write of 0xdead0000 to R13
   if (config.sim) {
     val success = mem.io.instr_out === "h_dead_0737".U
 
-    register_file.io.success.getOrElse(false.B) := success | idecode.io.out.trap
-    pc.io.success.getOrElse(false.B)            := success | idecode.io.out.trap
+    register_file.io.success.getOrElse(false.B) := (success | idecode.io.out.trap) &
+                                                    RegNext(~io.load.we) & ~io.load.we
+    pc.io.success.getOrElse(false.B)            := (success | idecode.io.out.trap) &
+                                                    RegNext(~io.load.we) & ~io.load.we
     io.success                                  := RegNext(success)
   } else {
     io.success := false.B
   }
-
-  io.trap := DontCare
 
   if (config.sim && config.verbose >= 2) {
     // Debug

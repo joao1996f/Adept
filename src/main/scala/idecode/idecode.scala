@@ -41,7 +41,7 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
 
   // Ignore current instruction when the previous was a control instruction
   val instruction = Mux(io.stall_reg,
-                        0.U,
+                        "h_0000_0013".U,
                         io.instruction)
   val op_code = instruction(6, 0)
 

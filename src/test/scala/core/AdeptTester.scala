@@ -45,7 +45,7 @@ class AdeptUnitTester(c: Adept, programFileName: String) extends PeekPokeTester(
 
   // Wait for success
   while(peek(c.io.success) == 0) {
+    expect(c.io.trap, false)
     step(1)
   }
-
 }
