@@ -8,14 +8,14 @@ import adept.alu._
 ////////////////////////////////////////////////
 // Test Suite for Register Type instructions
 ////////////////////////////////////////////////
-class ADD(c: ALU) extends PeekPokeTester(c) {
+class ADD(c: ALU) extends ALUTestBase(c) {
   private def ADD(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 31 & imm)
-    poke(c.io.in.decoder_params.op, 0) // b000
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.add)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 + rs2)
   }
@@ -42,14 +42,14 @@ class ADD(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SUB(c: ALU) extends PeekPokeTester(c) {
+class SUB(c: ALU) extends ALUTestBase(c) {
   private def SUB(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 1024)
-    poke(c.io.in.decoder_params.op, 0) // b000
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.add)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 - rs2)
   }
@@ -77,15 +77,15 @@ class SUB(c: ALU) extends PeekPokeTester(c) {
 }
 
   // SLL
-class SLL(c: ALU) extends PeekPokeTester(c) {
+class SLL(c: ALU) extends ALUTestBase(c) {
   private def SLL(rs1: Int, rs2: Int, imm: Int) {
     val special_rs2 = 31 & rs2 // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, special_rs2)
     poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 31 & imm)
-    poke(c.io.in.decoder_params.op, 1) // b001
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.sll) // b001
+    poke(c.io.in.decoder_params.op_code, op_code.Registers) // b0110011
     step(1)
     expect(c.io.result, rs1 << special_rs2)
   }
@@ -112,14 +112,14 @@ class SLL(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SLT(c: ALU) extends PeekPokeTester(c) {
+class SLT(c: ALU) extends ALUTestBase(c) {
   private def SLT(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 2) // b010
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.slt)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 < rs2)
   }
@@ -146,7 +146,7 @@ class SLT(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SLTU(c: ALU) extends PeekPokeTester(c) {
+class SLTU(c: ALU) extends ALUTestBase(c) {
   private def SLTU(rs1: Int, rs2: Int, imm: Int) {
     // Turns out Scala doesn't have unsigned types so we do this trickery
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
@@ -155,8 +155,8 @@ class SLTU(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 3) // b011
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.sltu)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, u_rs1 < u_rs2)
   }
@@ -183,14 +183,14 @@ class SLTU(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class XOR(c: ALU) extends PeekPokeTester(c) {
+class XOR(c: ALU) extends ALUTestBase(c) {
   private def XOR(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 4) // b100
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.xor)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 ^ rs2)
   }
@@ -217,15 +217,15 @@ class XOR(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SRL(c: ALU) extends PeekPokeTester(c) {
+class SRL(c: ALU) extends ALUTestBase(c) {
   private def SRL(rs1: Int, rs2: Int, imm: Int) {
     val special_rs2 =  31 & rs2 // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, special_rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 5) // b101
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.sr)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     // >>> is the logic right shift operator
     expect(c.io.result, rs1 >>> special_rs2)
@@ -253,7 +253,7 @@ class SRL(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class SRA(c: ALU) extends PeekPokeTester(c) {
+class SRA(c: ALU) extends ALUTestBase(c) {
   private def SRA(rs1: Int, rs2: Int, imm: Int) {
     val special_rs2_2_shift =  31 & rs2 // h_0000_001f
     val special_rs2 =  1024 | special_rs2_2_shift // h_0000_0400
@@ -261,8 +261,8 @@ class SRA(c: ALU) extends PeekPokeTester(c) {
     poke(c.io.in.registers.rs2, special_rs2)
     poke(c.io.in.decoder_params.switch_2_imm, false)
     poke(c.io.in.decoder_params.imm, 1024)
-    poke(c.io.in.decoder_params.op, 5) // b101
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.sr) // b101
+    poke(c.io.in.decoder_params.op_code, op_code.Registers) // b0110011
     step(1)
     expect(c.io.result, rs1 >> special_rs2_2_shift)
   }
@@ -289,14 +289,14 @@ class SRA(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class OR(c: ALU) extends PeekPokeTester(c) {
+class OR(c: ALU) extends ALUTestBase(c) {
   private def OR(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 6) // b110
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.or)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 | rs2)
   }
@@ -323,14 +323,14 @@ class OR(c: ALU) extends PeekPokeTester(c) {
   }
 }
 
-class AND(c: ALU) extends PeekPokeTester(c) {
+class AND(c: ALU) extends ALUTestBase(c) {
   private def AND(rs1: Int, rs2: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.registers.rs2, rs2)
     poke(c.io.in.decoder_params.imm, 31 & imm)
     poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, 7) // b111
-    poke(c.io.in.decoder_params.op_code, 51) // b0110011
+    poke(c.io.in.decoder_params.op, alu_ops.and)
+    poke(c.io.in.decoder_params.op_code, op_code.Registers)
     step(1)
     expect(c.io.result, rs1 & rs2)
   }

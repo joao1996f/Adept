@@ -6,15 +6,10 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import adept.alu._
 import adept.idecode.OpCodes
 
-class ImmediateTestBase(c: ALU) extends PeekPokeTester(c) {
-  val alu_ops = AluOps
-  val op_code = new OpCodes
-}
-
 ////////////////////////////////////////////////
 // Test Suite for Immediate Type instructions
 ////////////////////////////////////////////////
-class ADDI(c: ALU) extends ImmediateTestBase(c) {
+class ADDI(c: ALU) extends ALUTestBase(c) {
   private def ADDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.imm, imm)
@@ -43,7 +38,7 @@ class ADDI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class SLLI(c: ALU) extends ImmediateTestBase(c) {
+class SLLI(c: ALU) extends ALUTestBase(c) {
   private def SLLI(rs1: Int, imm: Int) {
     val special_imm = 31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
@@ -73,7 +68,7 @@ class SLLI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class SLTI(c: ALU) extends ImmediateTestBase(c) {
+class SLTI(c: ALU) extends ALUTestBase(c) {
   private def SLTI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
@@ -102,7 +97,7 @@ class SLTI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class SLTIU(c: ALU) extends ImmediateTestBase(c) {
+class SLTIU(c: ALU) extends ALUTestBase(c) {
   private def SLTIU(rs1: Int, imm: Int) {
     // Turns out Scala doesn't have unsigned types so we do this trickery
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
@@ -134,7 +129,7 @@ class SLTIU(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class XORI(c: ALU) extends ImmediateTestBase(c) {
+class XORI(c: ALU) extends ALUTestBase(c) {
   private def XORI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.imm, imm)
@@ -163,7 +158,7 @@ class XORI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class SRLI(c: ALU) extends ImmediateTestBase(c) {
+class SRLI(c: ALU) extends ALUTestBase(c) {
   private def SRLI(rs1: Int, imm: Int) {
     val special_imm =  31 & imm // h_0000_001f
     poke(c.io.in.registers.rs1, rs1)
@@ -194,7 +189,7 @@ class SRLI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class SRAI(c: ALU) extends ImmediateTestBase(c) {
+class SRAI(c: ALU) extends ALUTestBase(c) {
   private def SRAI(rs1: Int, imm: Int) {
     val special_imm_2_shift =  31 & imm // h_0000_001f
     val special_imm =  1024 | special_imm_2_shift // h_0000_0400
@@ -225,7 +220,7 @@ class SRAI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class ORI(c: ALU) extends ImmediateTestBase(c) {
+class ORI(c: ALU) extends ALUTestBase(c) {
   private def ORI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)
@@ -254,7 +249,7 @@ class ORI(c: ALU) extends ImmediateTestBase(c) {
   }
 }
 
-class ANDI(c: ALU) extends ImmediateTestBase(c) {
+class ANDI(c: ALU) extends ALUTestBase(c) {
   private def ANDI(rs1: Int, imm: Int) {
     poke(c.io.in.registers.rs1, rs1)
     poke(c.io.in.decoder_params.switch_2_imm, true)

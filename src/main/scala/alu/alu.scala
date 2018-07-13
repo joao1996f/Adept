@@ -7,11 +7,6 @@ import chisel3.util._
 import adept.config.AdeptConfig
 import adept.registerfile.RegisterFileOut
 
-/*
- *  This is an ALU used in a RISC-V processor. The main idea behind it is to be
- *  able to generate an ALU for any RISC-V ISA.
- */
-
 class AluIO(config: AdeptConfig) extends Bundle {
   val registers      = Flipped(new RegisterFileOut(config))
   val decoder_params = Input(new DecoderAluIO(config))
