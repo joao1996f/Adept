@@ -31,4 +31,4 @@ clean:
 	rm -rf logs
 
 clean-verilog:
-	rm -rf verilog/$(MODULE)*
+	rm -rf verilog/*
