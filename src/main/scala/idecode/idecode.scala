@@ -10,6 +10,25 @@ import adept.alu.DecoderAluIO
 import adept.registerfile.DecoderRegisterFileIO
 import adept.pc.DecoderPcIO
 
+class InstructionDecoderOutput(config: AdeptConfig) extends Bundle {
+  val registers = new DecoderRegisterFileIO(config)
+  val alu       = new DecoderAluIO(config)
+  val mem       = new DecoderMemIO(config)
+  val pc        = new DecoderPcIO(config)
+
+  // ALU selection control signals
+  val sel_operand_a = UInt(1.W)
+  // Write Back selection signals
+  val sel_rf_wb     = UInt(1.W)
+
+  // Trap
+  val trap          = Bool()
+
+  override def cloneType: this.type = {
+    new InstructionDecoderOutput(config).asInstanceOf[this.type]
+  }
+}
+
 class InstructionDecoder(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{
                 // Input
@@ -17,66 +36,57 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
                 val stall_reg   = Input(Bool())
 
                 // Output
-                val registers = Output(new DecoderRegisterFileIO(config))
-                val alu       = Output(new DecoderAluIO(config))
-                val mem       = Output(new DecoderMemIO(config))
-                val pc        = Output(new DecoderPcIO(config))
-
-                // ALU selection control signals
-                val sel_operand_a = Output(UInt(1.W))
-                // Write Back selection signals
-                val sel_rf_wb     = Output(UInt(1.W))
-
-                // Trap
-                val trap          = Output(Bool())
+                val out = Output(new InstructionDecoderOutput(config))
               })
 
   // Ignore current instruction when the previous was a control instruction
   val instruction = Mux(io.stall_reg, 0.U, io.instruction)
   val op_code = instruction(6, 0)
 
+  // Connects the wires of an instruction implementation to the output of the
+  // Decoder
   def connectDecoders(decoder: InstructionControlSignals) = {
-    io.registers     := decoder.registers
-    io.alu           := decoder.alu
-    io.mem           := decoder.mem
-    io.pc            := decoder.pc
-    io.sel_operand_a := decoder.sel_operand_a
-    io.sel_rf_wb     := decoder.sel_rf_wb
-    io.trap          := decoder.trap
+    io.out.registers     := decoder.io.registers
+    io.out.alu           := decoder.io.alu
+    io.out.mem           := decoder.io.mem
+    io.out.pc            := decoder.io.pc
+    io.out.sel_operand_a := decoder.io.sel_operand_a
+    io.out.sel_rf_wb     := decoder.io.sel_rf_wb
+    io.out.trap          := decoder.io.trap
   }
 
   //////////////////////////////////////////////////////
   // I-Type Decode
   //////////////////////////////////////////////////////
-  val load_decode = new LoadControlSignals(config, instruction)
-  val jalr_decode = new JalRControlSignals(config, instruction)
-  val imm_decode  = new ImmediateControlSignals(config, instruction)
+  val load_decode = new LoadControlSignals(config, instruction, new InstructionDecoderOutput(config))
+  val jalr_decode = new JalRControlSignals(config, instruction, new InstructionDecoderOutput(config))
+  val imm_decode  = new ImmediateControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   //////////////////////////////////////////////////////
   // R-Type Decode
   //////////////////////////////////////////////////////
-  val registers_decode = new RegisterControlSignals(config, instruction)
+  val registers_decode = new RegisterControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   //////////////////////////////////////////////////////
   // S-Type Decode
   //////////////////////////////////////////////////////
-  val stores_decode = new StoresControlSignals(config, instruction)
+  val stores_decode = new StoresControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   //////////////////////////////////////////////////////
   // B-Type Decode
   //////////////////////////////////////////////////////
-  val branches_decode = new BranchesControlSignals(config, instruction)
+  val branches_decode = new BranchesControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   //////////////////////////////////////////////////////
   // U-Type Decode
   //////////////////////////////////////////////////////
-  val lui_decode = new LUIControlSignals(config, instruction)
-  val auipc_decode = new AUIPCControlSignals(config, instruction)
+  val lui_decode = new LUIControlSignals(config, instruction, new InstructionDecoderOutput(config))
+  val auipc_decode = new AUIPCControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   //////////////////////////////////////////////////////
   // J-Type Decode
   //////////////////////////////////////////////////////
-  val jal_decode = new JALControlSignals(config, instruction)
+  val jal_decode = new JALControlSignals(config, instruction, new InstructionDecoderOutput(config))
 
   // Build Decoder
   when (load_decode.op_code === op_code) {
@@ -102,13 +112,13 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     // Invalid Instruction executes an architecture
     // specific NOP, and sets trap to 1
     //////////////////////////////////////////////////////
-    io.registers.setDefaults
-    io.alu.setDefaults
-    io.pc.setDefaults
-    io.mem.setDefaults
-    io.sel_rf_wb     := DontCare
-    io.sel_operand_a := DontCare
-    io.trap          := true.B
+    io.out.registers.setDefaults
+    io.out.alu.setDefaults
+    io.out.pc.setDefaults
+    io.out.mem.setDefaults
+    io.out.sel_rf_wb     := DontCare
+    io.out.sel_operand_a := DontCare
+    io.out.trap          := true.B
   }
 
 }

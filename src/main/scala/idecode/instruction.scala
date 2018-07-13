@@ -23,40 +23,24 @@ final class OpCodes {
 }
 
 abstract class InstructionControlSignals(val config: AdeptConfig,
-                                         instruction: UInt) {
+                                         instruction: UInt,
+                                         decoder_out: InstructionDecoderOutput) {
   // Generate List of possible Op Codes
   val op_codes = new OpCodes
 
   val op_code = Wire(UInt(7.W))
   op_code := DontCare
 
-  // Register File Control Signals
-  val registers = Wire(new DecoderRegisterFileIO(config))
-  registers.setDefaults
+  // Outputs of the decoder
+  val io = Wire(decoder_out)
 
-  // ALU Control Signals
-  val alu = Wire(new DecoderAluIO(config))
-  alu.setDefaults
-
-  // PC
-  val pc  = Wire(new DecoderPcIO(config))
-  pc.setDefaults
-
-  // Memory Control Signals
-  val mem = Wire(new DecoderMemIO(config))
-  mem.setDefaults
-
-  // Select the memory or the ALU to write to the Register File
-  val sel_rf_wb = Wire(UInt(1.W))
-  sel_rf_wb := DontCare
-
-  // Select Operand A for ALU
-  val sel_operand_a = Wire(UInt(1.W))
-  sel_operand_a := DontCare
-
-  // Set Trap signal
-  val trap = Wire(Bool())
-  trap := false.B
+  io.registers.setDefaults
+  io.alu.setDefaults
+  io.pc.setDefaults
+  io.mem.setDefaults
+  io.sel_rf_wb := DontCare
+  io.sel_operand_a := DontCare
+  io.trap := false.B
 
   generateControlSignals(config, instruction)
 

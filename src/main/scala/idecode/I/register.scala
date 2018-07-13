@@ -7,8 +7,8 @@ import adept.config.AdeptConfig
 // TODO: Check if immediate is zero or has a single bit set to one in position
 // 5, else throw trap.
 class RegisterControlSignals(override val config: AdeptConfig,
-                         instruction: UInt)
-    extends InstructionControlSignals(config, instruction) {
+                         instruction: UInt, decoder_out: InstructionDecoderOutput)
+    extends InstructionControlSignals(config, instruction, decoder_out) {
 
   op_code := op_codes.Registers
 
@@ -19,21 +19,21 @@ class RegisterControlSignals(override val config: AdeptConfig,
     val rs2_sel = instruction(24, 20)
     val imm     = instruction(31, 25)
 
-    registers.rs1_sel := rs1_sel
-    registers.rs2_sel := rs2_sel
-    registers.rsd_sel := rsd_sel
-    registers.we      := true.B
+    io.registers.rs1_sel := rs1_sel
+    io.registers.rs2_sel := rs2_sel
+    io.registers.rsd_sel := rsd_sel
+    io.registers.we      := true.B
 
     // Shift instructions and Add/Sub have a special code in the immediate, in
     // the ALU check the two LSBs of the OP
-    alu.imm          := imm.asSInt
-    alu.op           := op
-    alu.switch_2_imm := false.B
-    alu.op_code      := op_codes.Registers
+    io.alu.imm          := imm.asSInt
+    io.alu.op           := op
+    io.alu.switch_2_imm := false.B
+    io.alu.op_code      := op_codes.Registers
 
     // Select RS1 and write the ALU result to the register file
-    sel_operand_a := 0.U
-    sel_rf_wb     := 0.U
+    io.sel_operand_a := 0.U
+    io.sel_rf_wb     := 0.U
   }
 
 }

@@ -7,8 +7,8 @@ import adept.config.AdeptConfig
 
 // TODO: Validate function op, else throw trap.
 class BranchesControlSignals(override val config: AdeptConfig,
-                           instruction: UInt)
-    extends InstructionControlSignals(config, instruction) {
+                           instruction: UInt, decoder_out: InstructionDecoderOutput)
+    extends InstructionControlSignals(config, instruction, decoder_out) {
 
   op_code := op_codes.Branches
 
@@ -17,28 +17,28 @@ class BranchesControlSignals(override val config: AdeptConfig,
     val rs1_sel = instruction(19, 15)
     val rs2_sel = instruction(24, 20)
 
-    registers.rs1_sel := rs1_sel
-    registers.rs2_sel := rs2_sel
+    io.registers.rs1_sel := rs1_sel
+    io.registers.rs2_sel := rs2_sel
 
-    pc.br_offset      := Cat(instruction(31), instruction(7),
+    io.pc.br_offset      := Cat(instruction(31), instruction(7),
                              instruction(30, 25), instruction(11, 8),
                              0.asUInt(1.W)).asSInt
-    pc.br_op          := op
+    io.pc.br_op          := op
 
-    alu.switch_2_imm  := false.B
-    alu.op_code       := op_codes.Branches
+    io.alu.switch_2_imm  := false.B
+    io.alu.op_code       := op_codes.Branches
 
     // Select ALU op depending on branch type
     when (op === "b000".U || op === "b001".U) {
-      alu.imm := 1024.S   // Force a subtraction
-      alu.op  := "b000".U // Perform a SUB
+      io.alu.imm := 1024.S   // Force a subtraction
+      io.alu.op  := "b000".U // Perform a SUB
     } .elsewhen (op === "b100".U || op === "b101".U) {
-      alu.op := "b010".U // Perform a set less than
+      io.alu.op := "b010".U // Perform a set less than
     } .otherwise {
-      alu.op := "b011".U // Perform a set less than unsigned
+      io.alu.op := "b011".U // Perform a set less than unsigned
     }
 
-    sel_operand_a := 0.U // Select RS1 to be read by the ALU
+    io.sel_operand_a := 0.U // Select RS1 to be read by the ALU
   }
 
 }

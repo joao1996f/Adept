@@ -31,7 +31,7 @@ class Adept(config: AdeptConfig) extends Module {
 
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))
-  io.trap := idecode.io.trap
+  io.trap := idecode.io.out.trap
 
   // Register File
   val register_file = Module(new RegisterFile(config))
@@ -46,7 +46,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Connections
   //////////////////////////////////////////////////////////////////////////////
   val stall = WireInit(false.B)
-  stall := (mem.io.stall & idecode.io.mem.en) | pc.io.stall_reg
+  stall := (mem.io.stall & idecode.io.out.mem.en) | pc.io.stall_reg
 
   // Pipeline PC
   val ex_pc = RegInit(0.S)
@@ -63,12 +63,12 @@ class Adept(config: AdeptConfig) extends Module {
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
   pc.io.br_flag   := alu.io.cmp_flag
-  pc.io.in_opcode := idecode.io.alu.op_code
-  pc.io.decoder   <> idecode.io.pc
+  pc.io.in_opcode := idecode.io.out.alu.op_code
+  pc.io.decoder   <> idecode.io.out.pc
   pc.io.rs1       := Mux(sel_frw_path_rs1, write_back, register_file.io.registers.rs1)
   pc.io.pc_in     := ex_pc.asUInt
   pc.io.stall     := stall
-  pc.io.mem_en    := idecode.io.mem.en
+  pc.io.mem_en    := idecode.io.out.mem.en
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -83,8 +83,8 @@ class Adept(config: AdeptConfig) extends Module {
   // instruction is enabled. Ignore all others
   val prev_instr               = RegInit(0.U)
   val prev_instr_1delay_stall  = RegInit(false.B)
-  prev_instr_1delay_stall     := idecode.io.mem.en
-  when ((idecode.io.mem.en && !prev_instr_1delay_stall) || !stall) {
+  prev_instr_1delay_stall     := idecode.io.out.mem.en
+  when ((idecode.io.out.mem.en && !prev_instr_1delay_stall) || !stall) {
     prev_instr := mem.io.instr_out
   }
 
@@ -92,12 +92,12 @@ class Adept(config: AdeptConfig) extends Module {
   idecode.io.stall_reg   := pc.io.stall_reg
 
   // Register File
-  register_file.io.decoder.rs1_sel := idecode.io.registers.rs1_sel
-  register_file.io.decoder.rs2_sel := idecode.io.registers.rs2_sel
+  register_file.io.decoder.rs1_sel := idecode.io.out.registers.rs1_sel
+  register_file.io.decoder.rs2_sel := idecode.io.out.registers.rs2_sel
 
   // MUX Selections to Operands in ALU
   // Don't read from the forwarding path when operating on PC
-  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.sel_operand_a =/= 1.U, 2.U, idecode.io.sel_operand_a)
+  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.out.sel_operand_a =/= 1.U, 2.U, idecode.io.out.sel_operand_a)
   alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
                                        Array(
                                           0.U -> register_file.io.registers.rs1,
@@ -107,12 +107,12 @@ class Adept(config: AdeptConfig) extends Module {
 
   alu.io.in.registers.rs2 := Mux(sel_frw_path_rs2,
                                  write_back, register_file.io.registers.rs2)
-  alu.io.in.decoder_params <> idecode.io.alu
+  alu.io.in.decoder_params <> idecode.io.out.alu
 
   // Memory Connections
   mem.io.in.data_in := register_file.io.registers.rs2
   mem.io.in.addr    := alu.io.result.asUInt
-  mem.io.decode     <> idecode.io.mem
+  mem.io.decode     <> idecode.io.out.mem
 
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
@@ -126,10 +126,10 @@ class Adept(config: AdeptConfig) extends Module {
   stall_wb_reg    := stall
 
   when (!stall_wb_reg) {
-    rsd_sel_wb := idecode.io.registers.rsd_sel
-    we_wb      := idecode.io.registers.we
+    rsd_sel_wb := idecode.io.out.registers.rsd_sel
+    we_wb      := idecode.io.out.registers.we
     alu_res_wb := alu.io.result
-    sel_rf_wb  := idecode.io.sel_rf_wb
+    sel_rf_wb  := idecode.io.out.sel_rf_wb
   }
 
   // MUX Selections to Register File
@@ -144,9 +144,9 @@ class Adept(config: AdeptConfig) extends Module {
   register_file.io.decoder.we      := we_wb
 
   // Forwarding Path Control Logic
-  sel_frw_path_rs1 := rsd_sel_wb === idecode.io.registers.rs1_sel &&
+  sel_frw_path_rs1 := rsd_sel_wb === idecode.io.out.registers.rs1_sel &&
     rsd_sel_wb =/= 0.U && we_wb
-  sel_frw_path_rs2 := rsd_sel_wb === idecode.io.registers.rs2_sel &&
+  sel_frw_path_rs2 := rsd_sel_wb === idecode.io.out.registers.rs2_sel &&
     rsd_sel_wb =/= 0.U && we_wb
 
   ///////////////////////////////////////////////////////////////////
@@ -175,10 +175,10 @@ class Adept(config: AdeptConfig) extends Module {
             , ex_pc
             , alu.io.in.registers.rs1
             , alu.io.in.registers.rs2
-            , idecode.io.registers.we
-            , idecode.io.registers.rsd_sel
+            , idecode.io.out.registers.we
+            , idecode.io.out.registers.rsd_sel
             , register_file.io.rsd_value
-            , idecode.io.sel_rf_wb
+            , idecode.io.out.sel_rf_wb
             , mem.io.data_out
             , mem.io.in.data_in
             , mem.io.instr_out)
