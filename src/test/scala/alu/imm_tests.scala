@@ -11,11 +11,9 @@ import adept.idecode.OpCodes
 ////////////////////////////////////////////////
 class ADDI(c: ALU) extends ALUTestBase(c) {
   private def ADDI(rs1: Int, imm: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.add)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 + imm)
   }
@@ -41,11 +39,9 @@ class ADDI(c: ALU) extends ALUTestBase(c) {
 class SLLI(c: ALU) extends ALUTestBase(c) {
   private def SLLI(rs1: Int, imm: Int) {
     val special_imm = 31 & imm // h_0000_001f
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, special_imm)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, special_imm)
     poke(c.io.in.decoder_params.op, alu_ops.sll)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 << special_imm)
   }
@@ -70,11 +66,9 @@ class SLLI(c: ALU) extends ALUTestBase(c) {
 
 class SLTI(c: ALU) extends ALUTestBase(c) {
   private def SLTI(rs1: Int, imm: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, imm)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.slt)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 < imm)
   }
@@ -102,11 +96,9 @@ class SLTIU(c: ALU) extends ALUTestBase(c) {
     // Turns out Scala doesn't have unsigned types so we do this trickery
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
     val u_imm = imm.asInstanceOf[Long] & 0x00000000ffffffffL
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, imm)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.sltu)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, u_rs1 < u_imm)
   }
@@ -131,11 +123,9 @@ class SLTIU(c: ALU) extends ALUTestBase(c) {
 
 class XORI(c: ALU) extends ALUTestBase(c) {
   private def XORI(rs1: Int, imm: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.imm, imm)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.xor)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 ^ imm)
   }
@@ -161,11 +151,9 @@ class XORI(c: ALU) extends ALUTestBase(c) {
 class SRLI(c: ALU) extends ALUTestBase(c) {
   private def SRLI(rs1: Int, imm: Int) {
     val special_imm =  31 & imm // h_0000_001f
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, special_imm)
-    poke(c.io.in.decoder_params.op, alu_ops.sr)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, special_imm)
+    poke(c.io.in.decoder_params.op, alu_ops.srl)
     step(1)
     // >>> is the logic right shift operator
     expect(c.io.result, rs1 >>> special_imm)
@@ -191,15 +179,12 @@ class SRLI(c: ALU) extends ALUTestBase(c) {
 
 class SRAI(c: ALU) extends ALUTestBase(c) {
   private def SRAI(rs1: Int, imm: Int) {
-    val special_imm_2_shift =  31 & imm // h_0000_001f
-    val special_imm =  1024 | special_imm_2_shift // h_0000_0400
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, special_imm)
-    poke(c.io.in.decoder_params.op, alu_ops.sr)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
+    val special_imm =  31 & imm // h_0000_001f
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, special_imm)
+    poke(c.io.in.decoder_params.op, alu_ops.sra)
     step(1)
-    expect(c.io.result, rs1 >> special_imm_2_shift)
+    expect(c.io.result, rs1 >> special_imm)
   }
 
   for (i <- 0 until 100) {
@@ -222,11 +207,9 @@ class SRAI(c: ALU) extends ALUTestBase(c) {
 
 class ORI(c: ALU) extends ALUTestBase(c) {
   private def ORI(rs1: Int, imm: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, imm)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.or)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 | imm)
   }
@@ -251,11 +234,9 @@ class ORI(c: ALU) extends ALUTestBase(c) {
 
 class ANDI(c: ALU) extends ALUTestBase(c) {
   private def ANDI(rs1: Int, imm: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.decoder_params.switch_2_imm, true)
-    poke(c.io.in.decoder_params.imm, imm)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, imm)
     poke(c.io.in.decoder_params.op, alu_ops.and)
-    poke(c.io.in.decoder_params.op_code, op_code.Immediate)
     step(1)
     expect(c.io.result, rs1 & imm)
   }

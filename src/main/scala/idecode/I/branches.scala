@@ -24,14 +24,13 @@ class BranchesControlSignals(override val config: AdeptConfig,
                              instruction(30, 25), instruction(11, 8),
                              0.asUInt(1.W)).asSInt
     io.pc.br_op          := op
+    io.pc.op_code        := op_codes.Branches
 
-    io.alu.switch_2_imm  := false.B
-    io.alu.op_code       := op_codes.Branches
+    io.switch_2_imm  := false.B
 
     // Select ALU op depending on branch type
     when (op === "b000".U || op === "b001".U) {
-      io.alu.imm := 1024.S   // Force a subtraction
-      io.alu.op  := alu_ops.add // Perform a SUB
+      io.alu.op    := alu_ops.sub // Perform a SUB
     } .elsewhen (op === "b100".U || op === "b101".U) {
       io.alu.op := alu_ops.slt // Perform a set less than
     } .otherwise {

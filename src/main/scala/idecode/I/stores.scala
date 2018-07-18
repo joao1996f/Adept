@@ -20,10 +20,12 @@ class StoresControlSignals(override val config: AdeptConfig,
     io.registers.rs1_sel := rs1_sel
     io.registers.rs2_sel := rs2_sel
 
-    io.alu.switch_2_imm  := true.B
-    io.alu.imm           := Cat(instruction(31, 25), instruction(11, 7)).asSInt
+    io.switch_2_imm      := true.B
+    io.immediate         := Cat(instruction(31, 25), instruction(11, 7)).asSInt
+
     io.alu.op            := alu_ops.add // Perform ADD in the ALU between rs1 and the immediate
-    io.alu.op_code       := op_codes.Stores
+
+    io.pc.op_code        := op_codes.Stores
 
     io.sel_operand_a     := 0.U
 

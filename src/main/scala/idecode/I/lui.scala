@@ -19,10 +19,12 @@ class LUIControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.we      := true.B
 
-    io.alu.switch_2_imm := true.B
-    io.alu.imm          := Cat(imm, Fill(12, "b0".U)).asSInt
+    io.switch_2_imm     := true.B
+    io.immediate        := Cat(imm, Fill(12, "b0".U)).asSInt
+
     io.alu.op           := alu_ops.add // Select an Add
-    io.alu.op_code      := op_codes.LUI
+
+    io.pc.op_code       := op_codes.LUI
 
     io.sel_operand_a    := 0.U // Select RS1 for operand A of the ALU
 

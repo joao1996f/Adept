@@ -62,7 +62,6 @@ class Adept(config: AdeptConfig) extends Module {
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
   pc.io.br_flag   := alu.io.cmp_flag
-  pc.io.in_opcode := idecode.io.out.alu.op_code
   pc.io.decoder   <> idecode.io.out.pc
   pc.io.rs1       := Mux(sel_frw_path_rs1,
                          write_back,
@@ -91,7 +90,8 @@ class Adept(config: AdeptConfig) extends Module {
 
   idecode.io.instruction := Mux(mem.io.stall,
                                 prev_instr,
-                                mem.io.instr_out & Fill(config.XLen, rst))
+                                mem.io.instr_out & Fill(config.XLen, rst)
+                            )
   idecode.io.stall_reg   := pc.io.stall_reg
 
   // Register File
@@ -103,16 +103,19 @@ class Adept(config: AdeptConfig) extends Module {
   val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.out.sel_operand_a =/= 1.U,
                     2.U,
                     idecode.io.out.sel_operand_a)
-  alu.io.in.registers.rs1 := MuxLookup(sel_rs1, 0.S,
-                                       Array(
-                                          0.U -> register_file.io.registers.rs1,
-                                          1.U -> ex_pc.asSInt,
-                                          2.U -> write_back
-                                       ))
+  alu.io.in.operand_A := MuxLookup(sel_rs1, 0.S,
+                                  Array(
+                                    0.U -> register_file.io.registers.rs1,
+                                    1.U -> ex_pc.asSInt,
+                                    2.U -> write_back
+                                  ))
 
-  alu.io.in.registers.rs2 := Mux(sel_frw_path_rs2,
-                                 write_back,
+  alu.io.in.operand_B := Mux(sel_frw_path_rs2,
+                            write_back,
+                             Mux(idecode.io.out.switch_2_imm,
+                                 idecode.io.out.immediate,
                                  register_file.io.registers.rs2)
+                         )
   alu.io.in.decoder_params <> idecode.io.out.alu
 
   // Memory Connections
@@ -181,8 +184,8 @@ class Adept(config: AdeptConfig) extends Module {
     printf("ALU, RF and Mem\n")
     printf("EX PC=[0x%x], Op1=[0x%x] Op2=[0x%x] W[%b, %d = 0x%x] Mem[%b: R:0x%x W:0x%x] DASM(0x%x)\n"
             , ex_pc
-            , alu.io.in.registers.rs1
-            , alu.io.in.registers.rs2
+            , alu.io.in.operand_A
+            , alu.io.in.operand_B
             , idecode.io.out.registers.we
             , idecode.io.out.registers.rsd_sel
             , register_file.io.rsd_value

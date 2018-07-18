@@ -13,15 +13,15 @@ import adept.pc.DecoderPcIO
 import adept.alu.AluOps
 
 final class OpCodes {
-  val LUI       = "b0110111".U
-  val AUIPC     = "b0010111".U
-  val Branches  = "b1100011".U
-  val JAL       = "b1101111".U
-  val JALR      = "b1100111".U
-  val Loads     = "b0000011".U
-  val Stores    = "b0100011".U
-  val Immediate = "b0010011".U
-  val Registers = "b0110011".U
+  val LUI       = "b0110111".U(7.W)
+  val AUIPC     = "b0010111".U(7.W)
+  val Branches  = "b1100011".U(7.W)
+  val JAL       = "b1101111".U(7.W)
+  val JALR      = "b1100111".U(7.W)
+  val Loads     = "b0000011".U(7.W)
+  val Stores    = "b0100011".U(7.W)
+  val Immediate = "b0010011".U(7.W)
+  val Registers = "b0110011".U(7.W)
 }
 
 abstract class InstructionControlSignals(val config: AdeptConfig,
@@ -43,9 +43,12 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
   io.alu.setDefaults
   io.pc.setDefaults
   io.mem.setDefaults
-  io.sel_rf_wb := DontCare
+
+  io.sel_rf_wb     := DontCare
   io.sel_operand_a := DontCare
-  io.trap := false.B
+  io.immediate     := DontCare
+  io.switch_2_imm  := false.B
+  io.trap          := false.B
 
   generateControlSignals(config, instruction)
 

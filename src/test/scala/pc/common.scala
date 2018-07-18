@@ -12,7 +12,7 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
 
   def setBranchSignals(opcode: Int, offset: BigInt, func: Int = 0, flag: Boolean = false, rs1: BigInt = 0) = {
     // Decoder result
-    poke(c.io.in_opcode, opcode)
+    poke(c.io.decoder.op_code, opcode)
     poke(c.io.decoder.br_op, func)
     // RS1 Value
     poke(c.io.decoder.br_offset, offset)
@@ -50,7 +50,7 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
       // Because I'm forcing the branch to be taken,
       // I need to insert a non control instruction opcode
       // in the next instruction
-      poke(c.io.in_opcode, 0)
+      poke(c.io.decoder.op_code, 0)
 
       step(n_cycles)
     }

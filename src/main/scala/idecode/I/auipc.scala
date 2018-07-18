@@ -18,14 +18,16 @@ class AUIPCControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.we      := true.B
 
-    io.alu.switch_2_imm := true.B
-    io.alu.imm          := Cat(imm, Fill(12, "b0".U)).asSInt
-    io.alu.op           := alu_ops.add
-    io.alu.op_code      := op_codes.AUIPC
+    io.switch_2_imm    := true.B
+    io.immediate       := Cat(imm, Fill(12, "b0".U)).asSInt
 
-    io.sel_operand_a    := 1.U // Select PC for operand A of the ALU
+    io.alu.op          := alu_ops.add
 
-    io.sel_rf_wb        := 0.U // Write result of the ALU to the register file
+    io.pc.op_code      := op_codes.AUIPC
+
+    io.sel_operand_a   := 1.U // Select PC for operand A of the ALU
+
+    io.sel_rf_wb       := 0.U // Write result of the ALU to the register file
   }
 
 }

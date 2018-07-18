@@ -11,12 +11,9 @@ import adept.idecode.OpCodes
 ////////////////////////////////////////////////
 class BEQ_BNE(c: ALU) extends ALUTestBase(c) {
   private def BEQ_BNE(rs1: Int, rs2: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.registers.rs2, rs2)
-    poke(c.io.in.decoder_params.imm, 1024)
-    poke(c.io.in.decoder_params.switch_2_imm, false)
-    poke(c.io.in.decoder_params.op, alu_ops.add)
-    poke(c.io.in.decoder_params.op_code, op_code.Branches)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, rs2)
+    poke(c.io.in.decoder_params.op, alu_ops.sub)
     step(1)
     expect(c.io.result, rs1 - rs2)
   }
@@ -41,12 +38,9 @@ class BEQ_BNE(c: ALU) extends ALUTestBase(c) {
 
 class BLT_BGE(c: ALU) extends ALUTestBase(c) {
   private def BLT_BGE(rs1: Int, rs2: Int) {
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.registers.rs2, rs2)
-    poke(c.io.in.decoder_params.imm, 1024)
-    poke(c.io.in.decoder_params.switch_2_imm, false)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, rs2)
     poke(c.io.in.decoder_params.op, alu_ops.slt)
-    poke(c.io.in.decoder_params.op_code, op_code.Branches) // b1100011
     step(1)
     expect(c.io.result, rs1 < rs2)
   }
@@ -74,12 +68,9 @@ class BLTU_BGEU(c: ALU) extends ALUTestBase(c) {
     // Turns out Scala doesn't have unsigned types so we do this trickery
     val u_rs1 = rs1.asInstanceOf[Long] & 0x00000000ffffffffL
     val u_rs2 = rs2.asInstanceOf[Long] & 0x00000000ffffffffL
-    poke(c.io.in.registers.rs1, rs1)
-    poke(c.io.in.registers.rs2, rs2)
-    poke(c.io.in.decoder_params.imm, 1024)
-    poke(c.io.in.decoder_params.switch_2_imm, false)
+    poke(c.io.in.operand_A, rs1)
+    poke(c.io.in.operand_B, rs2)
     poke(c.io.in.decoder_params.op, alu_ops.sltu)
-    poke(c.io.in.decoder_params.op_code, op_code.Branches) // b1100011
     step(1)
     expect(c.io.result, u_rs1 < u_rs2)
   }

@@ -21,12 +21,13 @@ class JalRControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.rs1_sel := rs1_sel
 
-    io.alu.switch_2_imm := true.B
-    io.alu.imm          := 4.S // Add 4 to PC
-    io.alu.op           := alu_ops.add // Perform PC + 4
-    io.alu.op_code      := op_codes.JALR
+    io.switch_2_imm      := true.B
+    io.immediate         := 4.S // Add 4 to PC
 
-    io.pc.br_offset  := imm.asSInt // Pass immediate to PC
+    io.alu.op           := alu_ops.add // Perform PC + 4
+
+    io.pc.br_offset := imm.asSInt // Pass immediate to PC
+    io.pc.op_code   := op_codes.JALR
 
     io.sel_rf_wb     := 0.U // Selects ALU to write to the Register File
     io.sel_operand_a := 1.U // Select PC to be an input of the ALU

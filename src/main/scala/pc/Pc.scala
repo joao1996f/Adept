@@ -23,6 +23,7 @@ class BranchOpConstants {
 class DecoderPcIO(val config: AdeptConfig) extends Bundle {
   val br_op     = UInt(config.funct.W)
   val br_offset = SInt(config.XLen.W)
+  val op_code   = UInt(config.op_code.W)
 
   override def cloneType: this.type = {
     new DecoderPcIO(config).asInstanceOf[this.type]
@@ -31,6 +32,7 @@ class DecoderPcIO(val config: AdeptConfig) extends Bundle {
   def setDefaults = {
     br_op     := DontCare
     br_offset := DontCare
+    op_code    := 0.U
   }
 }
 
@@ -38,8 +40,6 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
   val io = IO(new Bundle {
     // flag for branch confirmation
     val br_flag   = Input(Bool())
-    // In from decoder
-    val in_opcode = Input(UInt(config.op_code.W))
     // Value of RS1 used in JALR
     val rs1       = Input(SInt(config.XLen.W))
     // Program count after 1st pipeline level
@@ -72,8 +72,8 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
           br.BLTU -> io.br_flag,
           br.BGEU -> ~io.br_flag))
 
-  val cond_br_exe   = (io.in_opcode === br.BR) & cond_br_ver
-  val offset_sel    = (io.in_opcode === br.JAL) | (io.in_opcode === br.JALR) | cond_br_exe
+  val cond_br_exe   = (io.decoder.op_code === br.BR) & cond_br_ver
+  val offset_sel    = (io.decoder.op_code === br.JAL) | (io.decoder.op_code === br.JALR) | cond_br_exe
   val add_to_pc_val = Mux(offset_sel,
                           io.decoder.br_offset,
                           4.S)
@@ -83,12 +83,12 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
   val select_pc  = Mux(offset_sel,
                        io.pc_in,
                        program_counter).asSInt
-  val pc_result  = Mux(io.in_opcode === br.JALR,
+  val pc_result  = Mux(io.decoder.op_code === br.JALR,
                        io.rs1,
                        select_pc) + add_to_pc_val
   // Remove LSB for JALR
   val jalr_value = pc_result & "h_FFFF_FFFE".U.asSInt
-  val jalr_flag  = io.in_opcode === br.JALR
+  val jalr_flag  = io.decoder.op_code === br.JALR
   // Next PC
   val next_pc    = Mux(jalr_flag,
                        jalr_value,
@@ -118,7 +118,7 @@ class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
     printf("Current PC=[0x%x], New PC=[0x%x, A=0x%x, B=0x%x], PC En=[%b]\n"
             , program_counter
             , next_pc
-            , Mux(io.in_opcode === br.JALR, io.rs1, select_pc)
+            , Mux(io.decoder.op_code === br.JALR, io.rs1, select_pc)
             , add_to_pc_val
             , !stall_reg && !io.stall && (mem_en_reg ^ !io.mem_en))
   }

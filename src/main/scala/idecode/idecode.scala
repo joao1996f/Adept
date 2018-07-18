@@ -20,6 +20,9 @@ class InstructionDecoderOutput(config: AdeptConfig) extends Bundle {
   val sel_operand_a = UInt(1.W)
   // Write Back selection signals
   val sel_rf_wb     = UInt(1.W)
+  // Select immediate in operand B of the ALU
+  val switch_2_imm  = Bool()
+  val immediate     = SInt(config.XLen.W)
 
   // Trap
   val trap          = Bool()
@@ -52,6 +55,8 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.out.alu           := decoder.io.alu
     io.out.mem           := decoder.io.mem
     io.out.pc            := decoder.io.pc
+    io.out.immediate     := decoder.io.immediate
+    io.out.switch_2_imm  := decoder.io.switch_2_imm
     io.out.sel_operand_a := decoder.io.sel_operand_a
     io.out.sel_rf_wb     := decoder.io.sel_rf_wb
     io.out.trap          := decoder.io.trap
@@ -121,6 +126,8 @@ class InstructionDecoder(config: AdeptConfig) extends Module {
     io.out.sel_rf_wb     := DontCare
     io.out.sel_operand_a := DontCare
     io.out.trap          := true.B
+    io.out.immediate     := DontCare
+    io.out.switch_2_imm  := false.B
   }
 
 }
