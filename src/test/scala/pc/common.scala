@@ -5,16 +5,31 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.config.AdeptConfig
 import adept.pc.Pc
+import adept.pc.PcOps
 
 class ControlCommon(c: Pc) extends PeekPokeTester(c) {
-  val pc_base = BigInt("10000000", 16)
-  var my_pc = pc_base
+  var my_pc = BigInt("10000000", 16)
+  val pc_ops = PcOps
 
-  def setBranchSignals(opcode: Int, offset: BigInt, func: Int = 0, flag: Boolean = false, rs1: BigInt = 0) = {
+  def evalBranch(op: BigInt, offset: BigInt, rs1: BigInt = 0, flag: Boolean = false) : BigInt = {
+    if ((op == pc_ops.bne.litValue() || op == pc_ops.blt.litValue() ||
+           op == pc_ops.bltu.litValue()) && flag) {
+      return my_pc + offset
+    } else if ((op == pc_ops.beq.litValue() || op == pc_ops.bge.litValue() ||
+                  op == pc_ops.bgeu.litValue()) && !flag) {
+      return my_pc + offset
+    } else if (op == pc_ops.jal.litValue()) {
+      return my_pc + offset
+    } else if (op == pc_ops.jalr.litValue()) {
+      return (offset + rs1) & BigInt("00FFFFFFFE", 16)
+    } else {
+      return my_pc + 4
+    }
+  }
+
+  def setBranchSignals(op: BigInt, offset: BigInt, flag: Boolean = false, rs1: BigInt = 0) = {
     // Decoder result
-    poke(c.io.decoder.op_code, opcode)
-    poke(c.io.decoder.br_op, func)
-    // RS1 Value
+    poke(c.io.decoder.op, op)
     poke(c.io.decoder.br_offset, offset)
 
     // ALU comparison result
@@ -47,10 +62,9 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
 
   def branchHazardStall(n_cycles: Int, flag: Boolean) = {
     if (flag) {
-      // Because I'm forcing the branch to be taken,
-      // I need to insert a non control instruction opcode
-      // in the next instruction
-      poke(c.io.decoder.op_code, 0)
+      // Because I'm forcing the branch to be taken, I need to insert a non
+      // control op in the next instruction
+      poke(c.io.decoder.op, pc_ops.no_jmp)
 
       step(n_cycles)
     }
