@@ -1,12 +1,13 @@
-package adept.idecode
+package adept.idecode.integer
 
 import chisel3._
 
 import adept.config.AdeptConfig
+import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
 
 // TODO: Check if immediate is zero or has a single bit set to one in position
 // 5, else throw trap.
-class RegisterControlSignals(override val config: AdeptConfig,
+private class RegisterControlSignals(override val config: AdeptConfig,
                          instruction: UInt, decoder_out: InstructionDecoderOutput)
     extends InstructionControlSignals(config, instruction, decoder_out) {
 
