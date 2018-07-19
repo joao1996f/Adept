@@ -24,16 +24,14 @@ class RegisterControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.we      := true.B
 
-    io.alu.op := alu_ops.getALUOp(op, imm, op_codes.Registers)
+    io.alu.op            := alu_ops.getALUOp(op, imm, op_codes.Registers)
 
-    io.immediate       := imm.asSInt
-    io.switch_2_imm    := false.B
-
-    io.pc.op_code := op_codes.Registers
+    io.immediate         := imm.asSInt
+    io.switch_2_imm      := false.B
 
     // Select RS1 and write the ALU result to the register file
-    io.sel_operand_a := 0.U
-    io.sel_rf_wb     := 0.U
+    io.sel_operand_a     := 0.U
+    io.sel_rf_wb         := 0.U
   }
 
 }

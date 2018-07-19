@@ -24,8 +24,6 @@ class LUIControlSignals(override val config: AdeptConfig,
 
     io.alu.op           := alu_ops.add // Select an Add
 
-    io.pc.op_code       := op_codes.LUI
-
     io.sel_operand_a    := 0.U // Select RS1 for operand A of the ALU
 
     io.sel_rf_wb        := 0.U // Write result of the ALU to the register file

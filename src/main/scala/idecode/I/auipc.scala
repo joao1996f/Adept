@@ -23,8 +23,6 @@ class AUIPCControlSignals(override val config: AdeptConfig,
 
     io.alu.op          := alu_ops.add
 
-    io.pc.op_code      := op_codes.AUIPC
-
     io.sel_operand_a   := 1.U // Select PC for operand A of the ALU
 
     io.sel_rf_wb       := 0.U // Write result of the ALU to the register file

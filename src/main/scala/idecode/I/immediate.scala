@@ -25,15 +25,13 @@ class ImmediateControlSignals(override val config: AdeptConfig,
     // amount.
     io.registers.rs2_sel := rs2_sel
 
-    io.switch_2_imm := true.B
-    io.immediate          := imm.asSInt
+    io.switch_2_imm      := true.B
+    io.immediate         := imm.asSInt
 
-    io.alu.op := alu_ops.getALUOp(op, imm(11, 5), op_codes.Immediate)
+    io.alu.op            := alu_ops.getALUOp(op, imm(11, 5), op_codes.Immediate)
 
-    io.pc.op_code := op_codes.Immediate
-
-    io.sel_rf_wb     := 0.U // Selects ALU to write to the Register File
-    io.sel_operand_a := 0.U // Select RS1 to be an input of the ALU
+    io.sel_rf_wb         := 0.U // Selects ALU to write to the Register File
+    io.sel_operand_a     := 0.U // Select RS1 to be an input of the ALU
   }
 
 }

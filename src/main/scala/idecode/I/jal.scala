@@ -19,7 +19,8 @@ class JALControlSignals(override val config: AdeptConfig,
     io.registers.we      := true.B
 
     io.pc.br_offset      := Cat(imm(19), imm(6, 0), imm(7), imm(18, 8), 0.asUInt(1.W)).asSInt
-    io.pc.op_code        := op_codes.JAL
+    // The funct3 in JAL is a don't Care
+    io.pc.op             := pc_ops.getPcOp(0.U(3.W), op_codes.JAL)
 
     io.switch_2_imm      := true.B
     io.immediate         := 4.S // Add 4 to PC

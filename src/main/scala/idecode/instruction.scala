@@ -11,6 +11,7 @@ import adept.registerfile.DecoderRegisterFileIO
 import adept.pc.DecoderPcIO
 
 import adept.alu.AluOps
+import adept.pc.PcOps
 
 final class OpCodes {
   val LUI       = "b0110111".U(7.W)
@@ -38,6 +39,9 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
 
   // Enumerate for ALU operations
   val alu_ops = AluOps
+
+  // Enumerate for Pc operations
+  val pc_ops = PcOps
 
   io.registers.setDefaults
   io.alu.setDefaults
