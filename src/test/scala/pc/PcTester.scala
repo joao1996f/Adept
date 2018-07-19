@@ -28,7 +28,6 @@ class PcUnitTester(c: Pc) extends PeekPokeTester(c) {
 class PcTester extends ChiselFlatSpec {
   // Generate configuration
   val config = new AdeptConfig(false)
-  val branch_config = new BranchOpConstants
 
   private val backendNames = Array("firrtl", "verilator")
 
@@ -37,32 +36,32 @@ class PcTester extends ChiselFlatSpec {
     // Branches
     ///////////////////////////////////////////
     "PC" should s"test BEQ operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BEQ(c)
       } should be (true)
     }
     "PC" should s"test BNE operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BNE(c)
       } should be (true)
     }
     "PC" should s"test BLT operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BLT(c)
       } should be (true)
     }
     "PC" should s"test BGE operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BGE(c)
       } should be (true)
     }
     "PC" should s"test BLTU operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BLTU(c)
       } should be (true)
     }
     "PC" should s"test BGEU operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new BGEU(c)
       } should be (true)
     }
@@ -71,12 +70,12 @@ class PcTester extends ChiselFlatSpec {
     // Jumps
     ///////////////////////////////////////////
     "PC" should s"test JAL operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new JAL(c)
       } should be (true)
     }
     "PC" should s"test JALR operations (with $backendName)" in {
-      Driver(() => new Pc(config, branch_config), backendName) {
+      Driver(() => new Pc(config), backendName) {
         c => new JALR(c)
       } should be (true)
     }

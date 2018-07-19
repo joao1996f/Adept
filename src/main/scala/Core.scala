@@ -9,7 +9,6 @@ import adept.idecode.InstructionDecoder
 import adept.registerfile.RegisterFile
 import adept.mem.Memory
 import adept.mem.MemLoadIO
-import adept.pc.BranchOpConstants
 import adept.pc.Pc
 import adept.alu.ALU
 
@@ -27,7 +26,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Create Modules
   //////////////////////////////////////////////////////////////////////////////
   // Instruction Fetch
-  val pc = Module(new Pc(config, new BranchOpConstants))
+  val pc = Module(new Pc(config))
 
   // Instruction Decoder
   val idecode = Module(new InstructionDecoder(config))

@@ -7,17 +7,15 @@ import adept.test.common.Common
 
 object PcMain extends App {
   val config= new AdeptConfig
-  val branchConsts = new BranchOpConstants
 
   val parseArgs = Common(args)
 
-  iotesters.Driver.execute(parseArgs.firrtlArgs, () => new Pc(config, branchConsts)) {
+  iotesters.Driver.execute(parseArgs.firrtlArgs, () => new Pc(config)) {
     c => new PcUnitTester(c)
   }
 }
 
 object PcRepl extends App {
   val config= new AdeptConfig
-  val b = new BranchOpConstants
-  iotesters.Driver.executeFirrtlRepl(args, () => new Pc(config, b))
+  iotesters.Driver.executeFirrtlRepl(args, () => new Pc(config))
 }

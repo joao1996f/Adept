@@ -7,20 +7,6 @@ import chisel3.util._
 import adept.config.AdeptConfig
 import adept.idecode.OpCodes
 
-class BranchOpConstants {
-  // Branch Type
-  val BNE  = 1.U // Branch on NotEqual
-  val BEQ  = 0.U // Branch on Equal
-  val BGE  = 5.U // Branch on Greater/Equal
-  val BGEU = 7.U // Branch on Greater/Equal Unsigned
-  val BLT  = 4.U // Branch on Less Than
-  val BLTU = 6.U // Branch on Less Than Unsigned
-
-  val BR   = "b1100011".U
-  val JAL  = "b1101111".U
-  val JALR = "b1100111".U
-}
-
 class DecoderPcIO(val config: AdeptConfig) extends Bundle {
   val op        = UInt(4.W)
   val br_offset = SInt(config.XLen.W)
@@ -78,7 +64,7 @@ final object PcOps {
   }
 }
 
-class Pc(config: AdeptConfig, br: BranchOpConstants) extends Module {
+class Pc(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
     // flag for branch confirmation
     val br_flag   = Input(Bool())
