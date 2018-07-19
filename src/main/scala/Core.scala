@@ -60,14 +60,14 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
-  pc.io.br_flag   := alu.io.cmp_flag
-  pc.io.decoder   <> idecode.io.out.pc
-  pc.io.rs1       := Mux(sel_frw_path_rs1,
-                         write_back,
-                         register_file.io.registers.rs1)
-  pc.io.pc_in     := ex_pc.asUInt
-  pc.io.stall     := stall
-  pc.io.mem_en    := idecode.io.out.mem.en
+  pc.io.decoder <> idecode.io.out.pc
+  pc.io.flag    := alu.io.cmp_flag
+  pc.io.rs1     := Mux(sel_frw_path_rs1,
+                       write_back,
+                       register_file.io.registers.rs1)
+  pc.io.pc_in   := ex_pc.asUInt
+  pc.io.stall   := stall
+  pc.io.mem_en  := idecode.io.out.mem.en
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage

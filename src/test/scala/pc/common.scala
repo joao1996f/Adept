@@ -33,7 +33,7 @@ class ControlCommon(c: Pc) extends PeekPokeTester(c) {
     poke(c.io.decoder.br_offset, offset)
 
     // ALU comparison result
-    poke(c.io.br_flag, flag)
+    poke(c.io.flag, flag)
 
     // RS1 Value
     poke(c.io.rs1, rs1)

@@ -66,22 +66,17 @@ final object PcOps {
 
 class Pc(config: AdeptConfig) extends Module {
   val io = IO(new Bundle {
-    // flag for branch confirmation
-    val br_flag   = Input(Bool())
-    // Value of RS1 used in JALR
+    // Flag for branch confirmation
+    val flag      = Input(Bool())
     val rs1       = Input(SInt(config.XLen.W))
-    // Program count after 1st pipeline level
+    // Program counter after 1st pipeline level
     val pc_in     = Input(UInt(config.XLen.W))
-    // Stall control signal
     val stall     = Input(Bool())
-    // Memory enable control signal
     val mem_en    = Input(Bool())
-    // Stall delayed by 1 clock
-    val stall_reg = Output(Bool())
-    // Program count to be sent for calc of new PC or for storage
-    val pc_out    = Output(UInt(config.XLen.W))
-    // Decoder control signals
     val decoder   = Input(new DecoderPcIO(config))
+
+    val stall_reg = Output(Bool())
+    val pc_out    = Output(UInt(config.XLen.W))
 
     // Used in simulation only to print the PC at the end
     val success = if (config.sim) {
@@ -93,17 +88,19 @@ class Pc(config: AdeptConfig) extends Module {
 
   val pc_ops = PcOps
   // Conditional Branch verification and flags attribution
-  val cond_br_ver = MuxLookup (io.decoder.op, false.B,
-                                Array(pc_ops.beq  -> ~io.br_flag,
-                                      pc_ops.bne  -> io.br_flag,
-                                      pc_ops.blt  -> io.br_flag,
-                                      pc_ops.bge  -> ~io.br_flag,
-                                      pc_ops.bltu -> io.br_flag,
-                                      pc_ops.bgeu -> ~io.br_flag)
+  val branch_condition = MuxLookup (io.decoder.op, false.B,
+                                Array(pc_ops.beq  -> ~io.flag,
+                                      pc_ops.bne  -> io.flag,
+                                      pc_ops.blt  -> io.flag,
+                                      pc_ops.bge  -> ~io.flag,
+                                      pc_ops.bltu -> io.flag,
+                                      pc_ops.bgeu -> ~io.flag)
                               )
 
-  val cond_br_exe   = pc_ops.isBranch(io.decoder.op) & cond_br_ver
-  val offset_sel    = (io.decoder.op === pc_ops.jal) | (io.decoder.op === pc_ops.jalr) | cond_br_exe
+  val jalr_flag  = io.decoder.op === pc_ops.jalr
+
+  val branch_exec   = pc_ops.isBranch(io.decoder.op) & branch_condition
+  val offset_sel    = (io.decoder.op === pc_ops.jal) | jalr_flag | branch_exec
   val add_to_pc_val = Mux(offset_sel,
                           io.decoder.br_offset,
                           4.S)
@@ -113,12 +110,11 @@ class Pc(config: AdeptConfig) extends Module {
   val select_pc  = Mux(offset_sel,
                        io.pc_in,
                        program_counter).asSInt
-  val pc_result  = Mux(io.decoder.op === pc_ops.jalr,
+  val pc_result  = Mux(jalr_flag,
                        io.rs1,
                        select_pc) + add_to_pc_val
   // Remove LSB for JALR
   val jalr_value = pc_result & "h_FFFF_FFFE".U.asSInt
-  val jalr_flag  = io.decoder.op === pc_ops.jalr
   // Next PC
   val next_pc    = Mux(jalr_flag,
                        jalr_value,
