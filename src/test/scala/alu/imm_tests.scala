@@ -4,7 +4,7 @@ import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.alu._
-import adept.idecode.OpCodes
+import adept.decoder.OpCodes
 
 ////////////////////////////////////////////////
 // Test Suite for Immediate Type instructions

@@ -1,9 +1,9 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 // TODO: Check check if the function code is 000, else throw trap
 private class JalRControlSignals(override val config: AdeptConfig,

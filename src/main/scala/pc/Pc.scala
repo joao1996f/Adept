@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.OpCodes
+import adept.decoder.OpCodes
 
 class DecoderPcIO(val config: AdeptConfig) extends Bundle {
   val op        = UInt(4.W)

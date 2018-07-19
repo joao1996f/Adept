@@ -1,10 +1,10 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 // TODO: Validate function op, else throw trap.
 private class LUIControlSignals(override val config: AdeptConfig,

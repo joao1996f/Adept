@@ -8,7 +8,7 @@ import adept.alu.imm._
 import adept.alu.reg._
 import adept.alu.br._
 
-import adept.idecode.OpCodes
+import adept.decoder.OpCodes
 
 class ALUTestBase(c: ALU) extends PeekPokeTester(c) {
   val alu_ops = AluOps

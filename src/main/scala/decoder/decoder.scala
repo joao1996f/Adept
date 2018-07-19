@@ -1,5 +1,5 @@
 // See LICENSE for license details.
-package adept.idecode
+package adept.decoder
 
 import chisel3._
 import chisel3.util._
@@ -10,7 +10,7 @@ import adept.alu.DecoderAluIO
 import adept.registerfile.DecoderRegisterFileIO
 import adept.pc.DecoderPcIO
 
-import adept.idecode.integer.IntegerDecoder
+import adept.decoder.integer.IntegerDecoder
 
 import scala.collection.mutable.ArrayBuffer
 

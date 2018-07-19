@@ -1,10 +1,10 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.InstructionDecoderOutput
+import adept.decoder.InstructionDecoderOutput
 
 class IntegerDecoder(val config: AdeptConfig, instruction: UInt) {
   //////////////////////////////////////////////////////

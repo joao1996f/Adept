@@ -1,9 +1,9 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 // TODO: Throw a trap when the immediate doesn't conform to the spec
 private class ImmediateControlSignals(override val config: AdeptConfig,

@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.InstructionDecoder
+import adept.decoder.InstructionDecoder
 import adept.registerfile.RegisterFile
 import adept.mem.Memory
 import adept.mem.MemLoadIO

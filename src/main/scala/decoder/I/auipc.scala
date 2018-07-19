@@ -1,10 +1,10 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 private class AUIPCControlSignals(override val config: AdeptConfig,
                            instruction: UInt, decoder_out: InstructionDecoderOutput)

@@ -6,7 +6,7 @@ import chisel3.util._
 
 import adept.config.AdeptConfig
 import adept.registerfile.RegisterFileOut
-import adept.idecode.OpCodes
+import adept.decoder.OpCodes
 
 class AluIO(config: AdeptConfig) extends Bundle {
   val decoder_params = Input(new DecoderAluIO(config))

@@ -1,9 +1,9 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 // TODO: Check if immediate is zero or has a single bit set to one in position
 // 5, else throw trap.

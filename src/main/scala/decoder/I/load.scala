@@ -1,9 +1,9 @@
-package adept.idecode.integer
+package adept.decoder.integer
 
 import chisel3._
 
 import adept.config.AdeptConfig
-import adept.idecode.{InstructionControlSignals, InstructionDecoderOutput}
+import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
 private class LoadControlSignals(override val config: AdeptConfig,
                          instruction: UInt, decoder_out: InstructionDecoderOutput)

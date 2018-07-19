@@ -1,4 +1,4 @@
-package adept.idecode
+package adept.decoder
 
 import chisel3._
 
