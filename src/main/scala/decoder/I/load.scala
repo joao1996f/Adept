@@ -26,8 +26,8 @@ private class LoadControlSignals(override val config: AdeptConfig,
 
     io.alu.op            := alu_ops.add // Add to create relative address
 
-    io.sel_rf_wb         := 1.U // Selects Memory to write to the Register File
-    io.sel_operand_a     := 0.U // Select RS1 to be an input of the ALU
+    io.sel_rf_wb         := core_ctl_signals.result_mem
+    io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
 
     io.mem.en            := true.B
     io.mem.op            := mem_ops.getMemOp(op, op_codes.Loads)

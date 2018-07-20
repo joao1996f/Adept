@@ -13,6 +13,7 @@ import adept.pc.DecoderPcIO
 import adept.alu.AluOps
 import adept.pc.PcOps
 import adept.mem.MemOps
+import adept.core.AdeptControlSignals
 
 final class OpCodes {
   val LUI       = "b0110111".U(7.W)
@@ -47,13 +48,16 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
   // Enumerate for Memory operations
   val mem_ops = MemOps
 
+  // Enumerates for control signals in the Core
+  val core_ctl_signals = AdeptControlSignals
+  io.sel_rf_wb     := DontCare
+  io.sel_operand_a := DontCare
+
   io.registers.setDefaults
   io.alu.setDefaults
   io.pc.setDefaults
   io.mem.setDefaults
 
-  io.sel_rf_wb     := DontCare
-  io.sel_operand_a := DontCare
   io.immediate     := DontCare
   io.switch_2_imm  := false.B
   io.trap          := false.B

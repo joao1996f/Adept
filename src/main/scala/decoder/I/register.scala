@@ -30,9 +30,8 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.immediate         := imm.asSInt
     io.switch_2_imm      := false.B
 
-    // Select RS1 and write the ALU result to the register file
-    io.sel_operand_a     := 0.U
-    io.sel_rf_wb         := 0.U
+    io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
+    io.sel_rf_wb         := core_ctl_signals.result_alu
   }
 
 }

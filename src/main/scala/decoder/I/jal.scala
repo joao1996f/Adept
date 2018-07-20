@@ -28,8 +28,8 @@ private class JALControlSignals(override val config: AdeptConfig,
 
     io.alu.op            := alu_ops.add // Perform an Add between the PC and the immediate
 
-    io.sel_operand_a     := 1.U // Select the PC into the ALU
-    io.sel_rf_wb         := 0.U // Select the ALU to write to the register file
+    io.sel_operand_a     := core_ctl_signals.sel_oper_A_pc
+    io.sel_rf_wb         := core_ctl_signals.result_alu
   }
 
 }

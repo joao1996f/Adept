@@ -29,15 +29,15 @@ private class BranchesControlSignals(override val config: AdeptConfig,
     io.switch_2_imm      := false.B
 
     // Select ALU op depending on branch type
-    when (op === "b000".U || op === "b001".U) {
-      io.alu.op    := alu_ops.sub // Perform a SUB
-    } .elsewhen (op === "b100".U || op === "b101".U) {
-      io.alu.op := alu_ops.slt // Perform a set less than
+    when (op === pc_ops.beq || op === pc_ops.bne) {
+      io.alu.op    := alu_ops.sub
+    } .elsewhen (op === pc_ops.blt || op === pc_ops.bge) {
+      io.alu.op := alu_ops.slt
     } .otherwise {
-      io.alu.op := alu_ops.sltu // Perform a set less than unsigned
+      io.alu.op := alu_ops.sltu
     }
 
-    io.sel_operand_a := 0.U // Select RS1 to be read by the ALU
+    io.sel_operand_a := core_ctl_signals.sel_oper_A_rs1
   }
 
 }

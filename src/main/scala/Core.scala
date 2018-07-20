@@ -12,6 +12,14 @@ import adept.mem.MemLoadIO
 import adept.pc.Pc
 import adept.alu.ALU
 
+final object AdeptControlSignals {
+  // Control signal to select operand A to ALU
+  val sel_oper_A_rs1 :: sel_oper_A_pc :: sel_oper_A_wb :: Nil = Enum(3)
+
+  // Control signal to select result to be written in the Register File
+  val result_alu :: result_mem :: Nil = Enum(2)
+}
+
 class Adept(config: AdeptConfig) extends Module {
   val io = IO(new Bundle{
                 // Load program interface
@@ -21,6 +29,8 @@ class Adept(config: AdeptConfig) extends Module {
                 val success = Output(Bool())
                 val trap    = Output(Bool())
               })
+
+  val core_ctl_signals = AdeptControlSignals
 
   //////////////////////////////////////////////////////////////////////////////
   // Create Modules
@@ -88,10 +98,10 @@ class Adept(config: AdeptConfig) extends Module {
   }
 
   idecode.io.basic.instruction := Mux(mem.io.stall,
-                                        prev_instr,
-                                        mem.io.instr_out & Fill(config.XLen, rst)
+                                      prev_instr,
+                                      mem.io.instr_out & Fill(config.XLen, rst)
                                      )
-  idecode.io.stall_reg   := pc.io.stall_reg
+  idecode.io.stall_reg         := pc.io.stall_reg
 
   // Register File
   register_file.io.decoder.rs1_sel := idecode.io.basic.out.registers.rs1_sel
@@ -99,18 +109,19 @@ class Adept(config: AdeptConfig) extends Module {
 
   // MUX Selections to Operands in ALU
   // Don't read from the forwarding path when operating on PC
-  val sel_rs1 = Mux(sel_frw_path_rs1 && idecode.io.basic.out.sel_operand_a =/= 1.U,
-                    2.U,
+  val sel_rs1 = Mux(sel_frw_path_rs1 &&
+                      idecode.io.basic.out.sel_operand_a =/= core_ctl_signals.sel_oper_A_pc,
+                    core_ctl_signals.sel_oper_A_wb,
                     idecode.io.basic.out.sel_operand_a)
   alu.io.in.operand_A := MuxLookup(sel_rs1, 0.S,
                                   Array(
-                                    0.U -> register_file.io.registers.rs1,
-                                    1.U -> ex_pc.asSInt,
-                                    2.U -> write_back
+                                    core_ctl_signals.sel_oper_A_rs1 -> register_file.io.registers.rs1,
+                                    core_ctl_signals.sel_oper_A_pc  -> ex_pc.asSInt,
+                                    core_ctl_signals.sel_oper_A_wb  -> write_back
                                   ))
 
   alu.io.in.operand_B := Mux(sel_frw_path_rs2,
-                            write_back,
+                             write_back,
                              Mux(idecode.io.basic.out.switch_2_imm,
                                  idecode.io.basic.out.immediate,
                                  register_file.io.registers.rs2)
@@ -143,9 +154,9 @@ class Adept(config: AdeptConfig) extends Module {
   // MUX Selections to Register File
   write_back := MuxLookup(sel_rf_wb, 0.S,
                           Array(
-                            0.U -> alu_res_wb,
+                            core_ctl_signals.result_alu -> alu_res_wb,
                             // Already delayed by one cycle
-                            1.U -> mem.io.data_out
+                            core_ctl_signals.result_mem -> mem.io.data_out
                           ))
   register_file.io.rsd_value       := write_back
   register_file.io.decoder.rsd_sel := rsd_sel_wb
