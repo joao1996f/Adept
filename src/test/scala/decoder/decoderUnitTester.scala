@@ -6,14 +6,16 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import adept.config.AdeptConfig
 
 import adept.decoder.tests.imm._
+import adept.decoder.tests.reg._
 
 class DecoderTestBase(c: InstructionDecoder) extends PeekPokeTester(c) {
   val op_code = new OpCodes
   val slli = Integer.parseInt("001", 2)
   val slti = Integer.parseInt("010", 2)
+  val funct7alu = Integer.parseInt("0100000", 2);
 
   def signExtension (imm: Int, nbits: Int) : Int = {
-    if ((imm >> (nbits-1)) == 1) {
+    if ((imm >> (nbits - 1)) == 1) {
       ((0xFFFFFFFF << nbits) | imm)
     } else {
       imm
@@ -26,6 +28,9 @@ class DecoderUnitTesterAll(e: InstructionDecoder) extends PeekPokeTester(e) {
     new ADDI(e)
     new SLTI(e)
     new SLLI(e)
+
+    // Register Type Instructions
+    new ADD(e)
 }
 
 class DecoderTester extends ChiselFlatSpec {
@@ -48,6 +53,15 @@ class DecoderTester extends ChiselFlatSpec {
   "Decoder" should s"test SLLI instruction (with verilator)" in {
     Driver(() => new InstructionDecoder(config), "verilator") {
       e => new SLLI(e)
+    } should be (true)
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Register Type Instructions
+  ////////////////////////////////////////////////////////////////////////////
+  "Decoder" should s"test ADD instruction (with verilator)" in {
+    Driver(() => new InstructionDecoder(config), "verilator") {
+      e => new ADD(e)
     } should be (true)
   }
 }

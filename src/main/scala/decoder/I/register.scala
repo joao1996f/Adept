@@ -5,8 +5,6 @@ import chisel3._
 import adept.config.AdeptConfig
 import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
-// TODO: Check if immediate is zero or has a single bit set to one in position
-// 5, else throw trap.
 private class RegisterControlSignals(override val config: AdeptConfig,
                          instruction: UInt, decoder_out: InstructionDecoderOutput)
     extends InstructionControlSignals(config, instruction, decoder_out) {
@@ -32,6 +30,13 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
     io.sel_operand_b     := core_ctl_signals.sel_oper_B_rs2
     io.sel_rf_wb         := core_ctl_signals.result_alu
+
+    // Check if the 7 MSBs respect the instruction set
+    when (imm =/= 0.U && imm =/= "b0100000".U) {
+      io.trap := true.B         
+    } .otherwise {
+      io.trap := false.B
+    }    
   }
 
 }
