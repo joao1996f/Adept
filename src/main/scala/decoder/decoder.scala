@@ -68,6 +68,7 @@ final class InvalidInstruction(decoder_out: InstructionDecoderOutput) {
   val io = Wire(decoder_out)
 
   io.setDefaults
+  io.trap := true.B
 }
 
 class InstructionDecoder(config: AdeptConfig) extends Module {

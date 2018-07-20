@@ -42,7 +42,7 @@ class Adept(config: AdeptConfig) extends Module {
   val pc = Module(new Pc(config))
 
   // Instruction Decoder
-  val idecode = Module(new InstructionDecoder(config))
+  val decoder = Module(new InstructionDecoder(config))
 
   // Register File
   val register_file = Module(new RegisterFile(config))
@@ -57,7 +57,7 @@ class Adept(config: AdeptConfig) extends Module {
   // Connections
   //////////////////////////////////////////////////////////////////////////////
   val stall = WireInit(false.B)
-  stall := (mem.io.stall & idecode.io.basic.out.mem.en) | pc.io.stall_reg
+  stall := (mem.io.stall & decoder.io.basic.out.mem.en) | pc.io.stall_reg
 
   // Pipeline PC
   val ex_pc = RegInit(0.S)
@@ -73,14 +73,14 @@ class Adept(config: AdeptConfig) extends Module {
   ///////////////////////////////////////////////////////////////////
   // Instruction Fetch Stage
   ///////////////////////////////////////////////////////////////////
-  pc.io.decoder <> idecode.io.basic.out.pc
+  pc.io.decoder <> decoder.io.basic.out.pc
   pc.io.flag    := alu.io.cmp_flag
   pc.io.rs1     := Mux(sel_frw_path_rs1,
                        write_back,
                        register_file.io.registers.rs1)
   pc.io.pc_in   := ex_pc.asUInt
   pc.io.stall   := stall
-  pc.io.mem_en  := idecode.io.basic.out.mem.en
+  pc.io.mem_en  := decoder.io.basic.out.mem.en
 
   ///////////////////////////////////////////////////////////////////
   // Decode, Execute and Memory Stage
@@ -95,27 +95,27 @@ class Adept(config: AdeptConfig) extends Module {
   // instruction is enabled. Ignore all others
   val prev_instr               = RegInit(0.U)
   val prev_instr_1delay_stall  = RegInit(false.B)
-  prev_instr_1delay_stall     := idecode.io.basic.out.mem.en
-  when ((idecode.io.basic.out.mem.en && !prev_instr_1delay_stall) || !stall) {
+  prev_instr_1delay_stall     := decoder.io.basic.out.mem.en
+  when ((decoder.io.basic.out.mem.en && !prev_instr_1delay_stall) || !stall) {
     prev_instr := mem.io.instr_out
   }
 
-  idecode.io.basic.instruction := Mux(mem.io.stall,
+  decoder.io.basic.instruction := Mux(mem.io.stall,
                                       prev_instr,
                                       mem.io.instr_out & Fill(config.XLen, rst)
                                      )
-  idecode.io.stall_reg         := pc.io.stall_reg
+  decoder.io.stall_reg         := pc.io.stall_reg
 
   // Register File
-  register_file.io.decoder.rs1_sel := idecode.io.basic.out.registers.rs1_sel
-  register_file.io.decoder.rs2_sel := idecode.io.basic.out.registers.rs2_sel
+  register_file.io.decoder.rs1_sel := decoder.io.basic.out.registers.rs1_sel
+  register_file.io.decoder.rs2_sel := decoder.io.basic.out.registers.rs2_sel
 
   // MUX Selections to Operands in ALU
   // Don't read from the forwarding path when operating on PC
   val sel_rs1 = Mux(sel_frw_path_rs1 &&
-                      idecode.io.basic.out.sel_operand_a =/= core_ctl_signals.sel_oper_A_pc,
+                      decoder.io.basic.out.sel_operand_a =/= core_ctl_signals.sel_oper_A_pc,
                     core_ctl_signals.sel_oper_A_wb,
-                    idecode.io.basic.out.sel_operand_a)
+                    decoder.io.basic.out.sel_operand_a)
   alu.io.in.operand_A := MuxLookup(sel_rs1, 0.S,
                                     Array(
                                       core_ctl_signals.sel_oper_A_rs1 -> register_file.io.registers.rs1,
@@ -124,22 +124,22 @@ class Adept(config: AdeptConfig) extends Module {
                                     ))
 
   val sel_rs2 = Mux(sel_frw_path_rs2 &&
-                      idecode.io.basic.out.sel_operand_b =/= core_ctl_signals.sel_oper_B_imm,
+                      decoder.io.basic.out.sel_operand_b =/= core_ctl_signals.sel_oper_B_imm,
                     core_ctl_signals.sel_oper_B_wb,
-                    idecode.io.basic.out.sel_operand_b)
+                    decoder.io.basic.out.sel_operand_b)
   alu.io.in.operand_B := MuxLookup(sel_rs2, 0.S,
                                      Array(
-                                       core_ctl_signals.sel_oper_B_imm -> idecode.io.basic.out.immediate,
+                                       core_ctl_signals.sel_oper_B_imm -> decoder.io.basic.out.immediate,
                                        core_ctl_signals.sel_oper_B_rs2 -> register_file.io.registers.rs2,
                                        core_ctl_signals.sel_oper_B_wb  -> write_back
                                      ))
 
-  alu.io.in.decoder_params <> idecode.io.basic.out.alu
+  alu.io.in.decoder_params <> decoder.io.basic.out.alu
 
   // Memory Connections
   mem.io.in.data_in := register_file.io.registers.rs2
   mem.io.in.addr    := alu.io.result.asUInt
-  mem.io.decode     <> idecode.io.basic.out.mem
+  mem.io.decode     <> decoder.io.basic.out.mem
 
   ///////////////////////////////////////////////////////////////////
   // Write Back Stage
@@ -153,10 +153,10 @@ class Adept(config: AdeptConfig) extends Module {
   stall_wb_reg    := stall
 
   when (!stall_wb_reg) {
-    rsd_sel_wb := idecode.io.basic.out.registers.rsd_sel
-    we_wb      := idecode.io.basic.out.registers.we
+    rsd_sel_wb := decoder.io.basic.out.registers.rsd_sel
+    we_wb      := decoder.io.basic.out.registers.we
     alu_res_wb := alu.io.result
-    sel_rf_wb  := idecode.io.basic.out.sel_rf_wb
+    sel_rf_wb  := decoder.io.basic.out.sel_rf_wb
   }
 
   // MUX Selections to Register File
@@ -171,24 +171,24 @@ class Adept(config: AdeptConfig) extends Module {
   register_file.io.decoder.we      := we_wb
 
   // Forwarding Path Control Logic
-  sel_frw_path_rs1 := rsd_sel_wb === idecode.io.basic.out.registers.rs1_sel &&
+  sel_frw_path_rs1 := rsd_sel_wb === decoder.io.basic.out.registers.rs1_sel &&
     rsd_sel_wb =/= 0.U && we_wb
-  sel_frw_path_rs2 := rsd_sel_wb === idecode.io.basic.out.registers.rs2_sel &&
+  sel_frw_path_rs2 := rsd_sel_wb === decoder.io.basic.out.registers.rs2_sel &&
     rsd_sel_wb =/= 0.U && we_wb
 
   ///////////////////////////////////////////////////////////////////
   // Debug Stuff
   ///////////////////////////////////////////////////////////////////
 
-  io.trap := idecode.io.basic.out.trap
+  io.trap := decoder.io.basic.out.trap
 
   // Simulation ends when program detects a write of 0xdead0000 to R13
   if (config.sim) {
     val success = mem.io.instr_out === "h_dead_0737".U
 
-    register_file.io.success.getOrElse(false.B) := (success | idecode.io.basic.out.trap) &
+    register_file.io.success.getOrElse(false.B) := (success | decoder.io.basic.out.trap) &
                                                     RegNext(~io.load.we) & ~io.load.we
-    pc.io.success.getOrElse(false.B)            := (success | idecode.io.basic.out.trap) &
+    pc.io.success.getOrElse(false.B)            := (success | decoder.io.basic.out.trap) &
                                                     RegNext(~io.load.we) & ~io.load.we
     io.success                                  := RegNext(success)
   } else {
@@ -204,10 +204,10 @@ class Adept(config: AdeptConfig) extends Module {
             , ex_pc
             , alu.io.in.operand_A
             , alu.io.in.operand_B
-            , idecode.io.basic.out.registers.we
-            , idecode.io.basic.out.registers.rsd_sel
+            , decoder.io.basic.out.registers.we
+            , decoder.io.basic.out.registers.rsd_sel
             , register_file.io.rsd_value
-            , idecode.io.basic.out.sel_rf_wb
+            , decoder.io.basic.out.sel_rf_wb
             , mem.io.data_out
             , mem.io.in.data_in
             , mem.io.instr_out)
