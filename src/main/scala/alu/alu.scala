@@ -26,31 +26,31 @@ final object AluOps {
 
     val result = WireInit(0.U(4.W))
 
-      when (funct === 0.U) {
-        when (op_code === op_codes.Immediate || (op_code === op_codes.Registers && funct7 === 0.U)) {
-          result := add
-        } .otherwise {
-          result := sub
-        }
-      } .elsewhen (funct === 1.U) {
-        result := sll
-      } .elsewhen (funct === 2.U) {
-        result := slt
-      } .elsewhen (funct === 3.U) {
-        result := sltu
-      } .elsewhen (funct === 4.U) {
-        result := xor
-      } .elsewhen (funct === 5.U) {
-        when (funct7 === 0.U) {
-          result := srl
-        } .otherwise {
-          result := sra
-        }
-      } .elsewhen (funct === 6.U) {
-        result := or
+    when (funct === 0.U) {
+      when (op_code === op_codes.Immediate || (op_code === op_codes.Registers && funct7 === 0.U)) {
+        result := add
       } .otherwise {
-        result := and
+        result := sub
       }
+    } .elsewhen (funct === 1.U) {
+      result := sll
+    } .elsewhen (funct === 2.U) {
+      result := slt
+    } .elsewhen (funct === 3.U) {
+      result := sltu
+    } .elsewhen (funct === 4.U) {
+      result := xor
+    } .elsewhen (funct === 5.U) {
+      when (funct7 === 0.U) {
+        result := srl
+      } .otherwise {
+        result := sra
+      }
+    } .elsewhen (funct === 6.U) {
+      result := or
+    } .otherwise {
+      result := and
+    }
 
     return result
   }
