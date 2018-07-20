@@ -4,6 +4,7 @@ import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 import adept.config.AdeptConfig
+import adept.decoder.OpCodes
 import adept.mem.tests._
 
 import scala.collection.mutable.HashMap
@@ -73,7 +74,9 @@ class BaseMemory(c: Memory, config: AdeptConfig) extends PeekPokeTester(c) {
   }
 
   // Initialize memory with garbage data
-  val mem_img = writeGarbage(c)
+  val mem_img  = writeGarbage(c)
+  val mem_ops  = MemOps
+  val op_codes = new OpCodes
 }
 
 

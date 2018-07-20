@@ -10,11 +10,7 @@ import adept.mem.BaseMemory
 import adept.config.AdeptConfig
 
 class BaseStore(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
-  final val SB_OP_CODE = 0;
-  final val SH_OP_CODE = 1;
-  final val SW_OP_CODE = 2;
-
-  def setWriteSignals(op: Int, addr: Int, data_in: BigInt) {
+  def setWriteSignals(op: BigInt, addr: Int, data_in: BigInt) {
     poke(c.io.in.addr, addr)
     poke(c.io.in.data_in, data_in)
     poke(c.io.decode.op, op)
@@ -22,24 +18,30 @@ class BaseStore(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
     poke(c.io.decode.we, true)
   }
 
-  def getFinalWrite(addr: Int, opType: Int, data_in: BigInt) : (Int, Boolean) = {
+  def getFinalWrite(addr: Int, opType: BigInt, data_in: BigInt) : (Int, Boolean) = {
     val lsbs = addr & 0x00000003
     val masked_addr = addr >>> 2
 
-    val bitMask = opType match {
-      case SB_OP_CODE => 0x000000ff << (8 * lsbs)
-      case SH_OP_CODE if lsbs < 3 => 0x0000ffff << (8 * lsbs)
-      case SW_OP_CODE if lsbs == 0 => 0xffffffff
+    val bitMask = if (opType == mem_ops.sb) {
+      0x000000ff << (8 * lsbs)
+    } else if (opType == mem_ops.sh && lsbs < 3) {
+      0x0000ffff << (8 * lsbs)
+    } else if (opType == mem_ops.sw && lsbs == 0) {
+      0xffffffff
+    } else {
       // TODO: Memory should throw a trap for an ilegal memory op
-      case _ => 0x00000000
+      0x00000000
     }
 
-    val final_data_in = opType match {
-      case SB_OP_CODE => (data_in.toInt & 0x000000ff) << (8 * lsbs)
-      case SH_OP_CODE if lsbs < 3 => (data_in.toInt & 0x0000ffff) << (8 * lsbs)
-      case SW_OP_CODE if lsbs == 0 => data_in.toInt
+    val final_data_in = if (opType == mem_ops.sb) {
+      (data_in.toInt & 0x000000ff) << (8 * lsbs)
+    } else if (opType == mem_ops.sh && lsbs < 3) {
+      (data_in.toInt & 0x0000ffff) << (8 * lsbs)
+    } else if (opType == mem_ops.sw && lsbs == 0) {
+      data_in.toInt
+    } else {
       // TODO: Memory should throw a trap for an ilegal memory op
-      case _ => 0x00000000
+      0x00000000
     }
 
     val result = if (bitMask != 0 && lsbs < 4) {
@@ -56,19 +58,19 @@ class BaseStore(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class StoreByte(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
   private def SB(addr: Int, mem_img: HashMap[Int, Int], data_in: BigInt) = {
-    setWriteSignals(SB_OP_CODE, addr, data_in)
+    setWriteSignals(mem_ops.sb.litValue(), addr, data_in)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalWrite = getFinalWrite(addr, SB_OP_CODE, data_in)
+    val finalWrite = getFinalWrite(addr, mem_ops.sb.litValue(), data_in)
 
     if (finalWrite._2) {
       // Read data from Adept memory, always read the entire word to ensure the
       // write mask is working properly
-      setLoadSignals(LW_OP_CODE, addr)
+      setLoadSignals(mem_ops.lw, addr)
 
       // Ignore output while stall is active and advance simulation
       do {
@@ -88,19 +90,19 @@ class StoreByte(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
 
 class StoreHalf(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
   private def SH(addr: Int, mem_img: HashMap[Int, Int], data_in: BigInt) = {
-    setWriteSignals(SH_OP_CODE, addr, data_in)
+    setWriteSignals(mem_ops.sh.litValue(), addr, data_in)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalWrite = getFinalWrite(addr, SH_OP_CODE, data_in)
+    val finalWrite = getFinalWrite(addr, mem_ops.sh.litValue(), data_in)
 
     if (finalWrite._2) {
       // Read data from Adept memory, always read the entire word to ensure the
       // write mask is working properly
-      setLoadSignals(LW_OP_CODE, addr)
+      setLoadSignals(mem_ops.lw.litValue(), addr)
 
       // Ignore output while stall is active and advance simulation
       do {
@@ -123,19 +125,19 @@ class StoreHalf(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
 
 class StoreWord(c: Memory, config: AdeptConfig) extends BaseStore(c, config) {
   private def SW(addr: Int, mem_img: HashMap[Int, Int], data_in: BigInt) = {
-    setWriteSignals(SW_OP_CODE, addr, data_in)
+    setWriteSignals(mem_ops.sw.litValue(), addr, data_in)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalWrite = getFinalWrite(addr, SW_OP_CODE, data_in)
+    val finalWrite = getFinalWrite(addr, mem_ops.sw.litValue(), data_in)
 
     if (finalWrite._2) {
       // Read data from Adept memory, always read the entire word to ensure the
       // write mask is working properly
-      setLoadSignals(LW_OP_CODE, addr)
+      setLoadSignals(mem_ops.lw.litValue(), addr)
 
       // Ignore output while stall is active and advance simulation
       do {

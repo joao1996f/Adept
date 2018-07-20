@@ -29,7 +29,7 @@ private class StoresControlSignals(override val config: AdeptConfig,
     io.sel_operand_a     := 0.U
 
     io.mem.we            := true.B
-    io.mem.op            := op
+    io.mem.op            := mem_ops.getMemOp(op, op_codes.Stores)
     io.mem.en            := true.B
   }
 

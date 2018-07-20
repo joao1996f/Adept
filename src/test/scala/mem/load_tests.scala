@@ -10,29 +10,26 @@ import adept.mem.BaseMemory
 import adept.config.AdeptConfig
 
 class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
-  final val LB_OP_CODE = 0;
-  final val LH_OP_CODE = 1;
-  final val LW_OP_CODE = 2;
-  final val LBU_OP_CODE = 4;
-  final val LHU_OP_CODE = 5;
-
-  def setLoadSignals(op: Int, addr: Int) {
+  def setLoadSignals(op: BigInt, addr: Int) {
     poke(c.io.decode.op, op)
     poke(c.io.in.addr, addr)
     poke(c.io.decode.en, true)
     poke(c.io.decode.we, false)
   }
 
-  def getFinalRead(addr: Int, opType: Int) : (Int, Boolean) = {
+  def getFinalRead(addr: Int, opType: BigInt) : (Int, Boolean) = {
     val lsbs = addr & 0x00000003
     val masked_addr = addr >>> 2
 
-    val bitMask = opType match {
-      case LB_OP_CODE | LBU_OP_CODE => 0x000000ff << (8 * lsbs)
-      case LH_OP_CODE | LHU_OP_CODE if lsbs < 3 => 0x0000ffff << (8 * lsbs)
-      case LW_OP_CODE if lsbs == 0 => 0xffffffff
+    val bitMask = if (opType == mem_ops.lb.litValue() || opType == mem_ops.lbu.litValue()) {
+      0x000000ff << (8 * lsbs)
+    } else if ((opType == mem_ops.lh.litValue() || opType == mem_ops.lhu.litValue()) && lsbs < 3) {
+      0x0000ffff << (8 * lsbs)
+    } else if (opType == mem_ops.lw.litValue() && lsbs == 0) {
+      0xffffffff
+    } else {
       // TODO: Memory should throw a trap for an ilegal memory op
-      case _ => 0x00000000
+      0x00000000
     }
 
     val result = if (lsbs < 4 && bitMask != 0) {
@@ -45,11 +42,13 @@ class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
     return result
   }
 
-  def getSignExtend(read: Int, opType: Int) : Int = {
-    val bitMask = opType match {
-      case LB_OP_CODE | LBU_OP_CODE => 0x00000080
-      case LH_OP_CODE | LHU_OP_CODE => 0x00008000
-      case _ => 0x00000000
+  def getSignExtend(read: Int, opType: BigInt) : Int = {
+    val bitMask = if (opType == mem_ops.lb.litValue() || opType == mem_ops.lbu.litValue()) {
+      0x00000080
+    } else if (opType == mem_ops.lh.litValue() || opType == mem_ops.lhu.litValue()) {
+      0x00008000
+    } else {
+      0x00000000
     }
 
     val shift = scala.math.log(bitMask) / scala.math.log(2)
@@ -66,14 +65,14 @@ class BaseLoad(c: Memory, config: AdeptConfig) extends BaseMemory(c, config) {
 
 class LoadWord(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LW(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setLoadSignals(LW_OP_CODE, addr)
+    setLoadSignals(mem_ops.lw.litValue(), addr)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalRead = getFinalRead(addr, LW_OP_CODE)
+    val finalRead = getFinalRead(addr, mem_ops.lw.litValue())
 
     if (finalRead._2) {
       expect(c.io.data_out, finalRead._1)
@@ -88,17 +87,17 @@ class LoadWord(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadHalf(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LH(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setLoadSignals(LH_OP_CODE, addr)
+    setLoadSignals(mem_ops.lh.litValue(), addr)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalRead = getFinalRead(addr, LH_OP_CODE)
+    val finalRead = getFinalRead(addr, mem_ops.lh.litValue())
 
     if (finalRead._2) {
-      val signExtend = getSignExtend(finalRead._1, LH_OP_CODE)
+      val signExtend = getSignExtend(finalRead._1, mem_ops.lh.litValue())
       expect(c.io.data_out, signExtend | finalRead._1)
     }
   }
@@ -111,17 +110,17 @@ class LoadHalf(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LB(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setLoadSignals(LB_OP_CODE, addr)
+    setLoadSignals(mem_ops.lb.litValue(), addr)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalRead = getFinalRead(addr, LB_OP_CODE)
+    val finalRead = getFinalRead(addr, mem_ops.lb.litValue())
 
     if (finalRead._2) {
-      val signExtend = getSignExtend(finalRead._1, LB_OP_CODE)
+      val signExtend = getSignExtend(finalRead._1, mem_ops.lb.litValue())
       expect(c.io.data_out, signExtend | finalRead._1)
     }
   }
@@ -134,14 +133,14 @@ class LoadByte(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
 
 class LoadHalfUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LHU(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setLoadSignals(LHU_OP_CODE, addr)
+    setLoadSignals(mem_ops.lhu.litValue(), addr)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalRead = getFinalRead(addr, LHU_OP_CODE)
+    val finalRead = getFinalRead(addr, mem_ops.lhu.litValue())
 
     if (finalRead._2) {
       expect(c.io.data_out, finalRead._1)
@@ -156,14 +155,14 @@ class LoadHalfUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, confi
 
 class LoadByteUnsigned(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
   private def LBU(addr: Int, mem_img: HashMap[Int, Int]) = {
-    setLoadSignals(LBU_OP_CODE, addr)
+    setLoadSignals(mem_ops.lbu.litValue(), addr)
 
     // Ignore output while stall is active and advance simulation
     do {
       step(1)
     } while (peek(c.io.stall) == 1)
 
-    val finalRead = getFinalRead(addr, LBU_OP_CODE)
+    val finalRead = getFinalRead(addr, mem_ops.lbu.litValue())
 
     if (finalRead._2) {
       expect(c.io.data_out, finalRead._1)

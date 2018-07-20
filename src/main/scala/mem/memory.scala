@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 
 import adept.config.AdeptConfig
+import adept.decoder.OpCodes
 
 class MemIO(val config: AdeptConfig) extends Bundle {
   // Inputs
@@ -28,7 +29,7 @@ class MemLoadIO(config: AdeptConfig) extends Bundle {
 }
 
 class DecoderMemIO(val config: AdeptConfig) extends Bundle {
-  val op = UInt(config.funct.W)
+  val op = UInt(3.W)
   val we = Bool()
   val en = Bool()
 
@@ -40,6 +41,43 @@ class DecoderMemIO(val config: AdeptConfig) extends Bundle {
     op := DontCare
     we := false.B
     en := false.B
+  }
+}
+
+final object MemOps {
+  val lb :: lh :: lw :: lbu :: lhu :: sb :: sh :: sw :: Nil = Enum(8)
+
+  private val op_codes = new OpCodes
+
+  def getMemOp(funct: UInt, op_code: UInt) : UInt = {
+    require(funct.getWidth == 3, "ALU Operations are only 3 bits wide")
+    require(op_code.getWidth == 7, "OP Codes are only 7 bits wide")
+
+    val result = WireInit(0.U(3.W))
+
+    when (op_code === op_codes.Loads) {
+      when (funct === 0.U) {
+        result := lb
+      } .elsewhen (funct === 1.U) {
+        result := lh
+      } .elsewhen (funct === 2.U) {
+        result := lw
+      } .elsewhen (funct === 4.U) {
+        result := lbu
+      } .otherwise {
+        result := lhu
+      }
+    } .otherwise {
+      when (funct === 0.U) {
+        result := sb
+      } .elsewhen (funct === 1.U) {
+        result := sh
+      } .otherwise {
+        result := sw
+      }
+    }
+
+    return result
   }
 }
 
@@ -62,46 +100,57 @@ class Memory(config: AdeptConfig) extends Module {
 
   private def buildWriteData(data_in: UInt, op: UInt, byte_sel_write: UInt) : Vec[UInt] = {
     val new_data = WireInit(VecInit(Seq.fill(config.XLen/8)(0.U((config.XLen/4).W))))
-    // Store Byte (8 bits)
-    new_data(byte_sel_write) := data_in(7, 0)
-    // Store Half (16 bits)
-    new_data(byte_sel_write + 1.U) := Mux(op(0) === true.B || op(1) === true.B,
-                                          data_in(15, 8), 0.U)
-    // Store Word (32 bits)
-    new_data(byte_sel_write + 2.U) := Mux(op(1) === true.B,
-                                          data_in(23, 16),
-                                          0.U)
-    new_data(byte_sel_write + 3.U) := Mux(op(1) === true.B,
-                                          data_in(31, 24),
-                                          0.U)
+    val mem_ops  = MemOps
+
+    when (op === mem_ops.sb) {
+      new_data(byte_sel_write)       := data_in(7, 0)
+      new_data(byte_sel_write + 1.U) := 0.U
+      new_data(byte_sel_write + 2.U) := 0.U
+      new_data(byte_sel_write + 3.U) := 0.U
+    } .elsewhen (op === mem_ops.sh) {
+      new_data(byte_sel_write)       := data_in(7, 0)
+      new_data(byte_sel_write + 1.U) := data_in(15, 8)
+      new_data(byte_sel_write + 2.U) := 0.U
+      new_data(byte_sel_write + 3.U) := 0.U
+    } .otherwise {
+      new_data(byte_sel_write)       := data_in(7, 0)
+      new_data(byte_sel_write + 1.U) := data_in(15, 8)
+      new_data(byte_sel_write + 2.U) := data_in(23, 16)
+      new_data(byte_sel_write + 3.U) := data_in(31, 24)
+    }
 
     return new_data
   }
 
   private def buildWriteMask(op: UInt, byte_sel_write: UInt) : UInt = {
-    val mask = Wire(UInt(4.W))
-    mask := Mux(op === 0.U, 1.U << byte_sel_write,
-                Mux(op === 1.U,
+    val mask    = Wire(UInt(4.W))
+    val mem_ops = MemOps
+
+    mask := Mux(op === mem_ops.sb,
+                1.U << byte_sel_write,
+                Mux(op === mem_ops.sh,
                     3.U << byte_sel_write,
-                    15.U << byte_sel_write))
+                    15.U << byte_sel_write)
+            )
 
     return mask
   }
 
   private def buildReadData(op: UInt, byte_sel_read: UInt, read_port: Vec[UInt]) : UInt = {
     val byte_sel_read_reg = RegNext(byte_sel_read)
+    val mem_ops = MemOps
 
     return MuxLookup(op, op, Array(
                 // Load Byte (8 bits)
-                0.U -> Cat(Fill(config.XLen - 8, read_port(byte_sel_read_reg)(7)), read_port(byte_sel_read_reg)),
+                mem_ops.lb  -> Cat(Fill(config.XLen - 8, read_port(byte_sel_read_reg)(7)), read_port(byte_sel_read_reg)),
                 // Load Half (16 bits)
-                1.U -> Cat(Fill(config.XLen - 16, read_port(byte_sel_read_reg + 1.U)(7)), read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg)),
+                mem_ops.lh  -> Cat(Fill(config.XLen - 16, read_port(byte_sel_read_reg + 1.U)(7)), read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg)),
                 // Load Word (32 bits)
-                2.U -> Cat(read_port(3), read_port(2), read_port(1), read_port(0)),
+                mem_ops.lw  -> Cat(read_port(3), read_port(2), read_port(1), read_port(0)),
                 // Load Byte Unsigned (8 bits)
-                4.U -> Cat(0.U, read_port(byte_sel_read_reg)),
+                mem_ops.lbu -> Cat(0.U, read_port(byte_sel_read_reg)),
                 // Load Half Unsigned (16 bits)
-                5.U -> Cat(0.U, read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg))
+                mem_ops.lhu -> Cat(0.U, read_port(byte_sel_read_reg + 1.U), read_port(byte_sel_read_reg))
               ))
   }
 
