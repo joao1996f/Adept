@@ -5,7 +5,6 @@ import chisel3._
 import adept.config.AdeptConfig
 import adept.decoder.{InstructionControlSignals, InstructionDecoderOutput}
 
-// TODO: Throw a trap when the immediate doesn't conform to the spec
 private class ImmediateControlSignals(override val config: AdeptConfig,
                               instruction: UInt, decoder_out: InstructionDecoderOutput)
     extends InstructionControlSignals(config, instruction, decoder_out) {
@@ -18,6 +17,7 @@ private class ImmediateControlSignals(override val config: AdeptConfig,
     val rs1_sel = instruction(19, 15)
     val rs2_sel = instruction(24, 20)
     val imm     = instruction(31, 20)
+    val msb_imm = imm(11, 5)
 
     io.registers.we      := true.B
     io.registers.rsd_sel := rsd_sel
@@ -27,12 +27,23 @@ private class ImmediateControlSignals(override val config: AdeptConfig,
     io.registers.rs2_sel := rs2_sel
 
     io.immediate         := imm.asSInt
-
-    io.alu.op            := alu_ops.getALUOp(op, imm(11, 5), op_codes.Immediate)
+        
+    val alu_op            = alu_ops.getALUOp(op, imm(11, 5), op_codes.Immediate)
+    io.alu.op            := alu_op
 
     io.sel_rf_wb         := core_ctl_signals.result_alu
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
     io.sel_operand_b     := core_ctl_signals.sel_oper_B_imm
+
+    // Check if the 7 MSBs conform to the spec when the operation is a shift
+    // immediate
+    when ((msb_imm =/= 0.U && alu_op === alu_ops.sll) ||
+	 ((msb_imm =/= "b0100000".U && msb_imm =/= 0.U)
+	 && alu_op === alu_ops.srl)){
+      io.trap := true.B
+    } .otherwise {
+      io.trap := false.B
+    }
   }
 
 }

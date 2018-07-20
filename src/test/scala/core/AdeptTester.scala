@@ -41,11 +41,19 @@ class AdeptUnitTester(c: Adept, programFileName: String) extends PeekPokeTester(
   // Lower reset and write_enable. Core should start processing
   poke(c.io.load.we, false)
 
+  step(1)
+
   reset(4)
 
+  step(1)
+
   // Wait for success
-  while(peek(c.io.success) == 0) {
-    expect(c.io.trap, false)
+  while(peek(c.io.success) == 0 && peek(c.io.trap) == 0) {
     step(1)
+  }
+
+  if (peek(c.io.trap) == 1) {
+    printf ("Trap\n")
+    step (1)
   }
 }
