@@ -28,9 +28,9 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.alu.op            := alu_ops.getALUOp(op, imm, op_codes.Registers)
 
     io.immediate         := imm.asSInt
-    io.switch_2_imm      := false.B
 
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
+    io.sel_operand_b     := core_ctl_signals.sel_oper_B_rs2
     io.sel_rf_wb         := core_ctl_signals.result_alu
   }
 

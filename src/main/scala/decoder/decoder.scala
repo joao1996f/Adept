@@ -21,11 +21,11 @@ class InstructionDecoderOutput(config: AdeptConfig) extends Bundle {
   val pc        = new DecoderPcIO(config)
 
   // ALU selection control signals
-  val sel_operand_a = UInt(1.W)
+  val sel_operand_a = UInt(2.W)
+  val sel_operand_b = UInt(2.W)
   // Write Back selection signals
   val sel_rf_wb     = UInt(1.W)
   // Select immediate in operand B of the ALU
-  val switch_2_imm  = Bool()
   val immediate     = SInt(config.XLen.W)
 
   // Trap
@@ -33,6 +33,20 @@ class InstructionDecoderOutput(config: AdeptConfig) extends Bundle {
 
   override def cloneType: this.type = {
     new InstructionDecoderOutput(config).asInstanceOf[this.type]
+  }
+
+  def setDefaults = {
+    sel_rf_wb     := DontCare
+    sel_operand_a := DontCare
+    sel_operand_b := DontCare
+
+    registers.setDefaults
+    alu.setDefaults
+    pc.setDefaults
+    mem.setDefaults
+
+    immediate     := DontCare
+    trap          := false.B
   }
 }
 
@@ -53,16 +67,7 @@ final class InvalidInstruction(decoder_out: InstructionDecoderOutput) {
   // Outputs of the decoder
   val io = Wire(decoder_out)
 
-  io.registers.setDefaults
-  io.alu.setDefaults
-  io.pc.setDefaults
-  io.mem.setDefaults
-
-  io.sel_rf_wb     := DontCare
-  io.sel_operand_a := DontCare
-  io.immediate     := DontCare
-  io.switch_2_imm  := false.B
-  io.trap          := false.B
+  io.setDefaults
 }
 
 class InstructionDecoder(config: AdeptConfig) extends Module {

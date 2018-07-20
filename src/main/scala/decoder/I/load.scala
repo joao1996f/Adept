@@ -21,13 +21,13 @@ private class LoadControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.rs1_sel := rs1_sel
 
-    io.switch_2_imm      := true.B
     io.immediate         := imm
 
     io.alu.op            := alu_ops.add // Add to create relative address
 
     io.sel_rf_wb         := core_ctl_signals.result_mem
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
+    io.sel_operand_b     := core_ctl_signals.sel_oper_B_imm
 
     io.mem.en            := true.B
     io.mem.op            := mem_ops.getMemOp(op, op_codes.Loads)

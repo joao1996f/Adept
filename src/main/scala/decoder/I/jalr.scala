@@ -22,7 +22,6 @@ private class JalRControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.rs1_sel := rs1_sel
 
-    io.switch_2_imm      := true.B
     io.immediate         := 4.S // Add 4 to PC
 
     io.alu.op            := alu_ops.add // Perform PC + 4
@@ -32,6 +31,7 @@ private class JalRControlSignals(override val config: AdeptConfig,
 
     io.sel_rf_wb         := core_ctl_signals.result_alu
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_pc
+    io.sel_operand_b     := core_ctl_signals.sel_oper_B_imm
   }
 
 }

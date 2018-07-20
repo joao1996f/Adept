@@ -26,8 +26,6 @@ private class BranchesControlSignals(override val config: AdeptConfig,
                              0.asUInt(1.W)).asSInt
     io.pc.op             := pc_ops.getPcOp(op, op_codes.Branches)
 
-    io.switch_2_imm      := false.B
-
     // Select ALU op depending on branch type
     when (op === pc_ops.beq || op === pc_ops.bne) {
       io.alu.op    := alu_ops.sub
@@ -38,6 +36,7 @@ private class BranchesControlSignals(override val config: AdeptConfig,
     }
 
     io.sel_operand_a := core_ctl_signals.sel_oper_A_rs1
+    io.sel_operand_b := core_ctl_signals.sel_oper_B_rs2
   }
 
 }

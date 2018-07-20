@@ -26,13 +26,13 @@ private class ImmediateControlSignals(override val config: AdeptConfig,
     // amount.
     io.registers.rs2_sel := rs2_sel
 
-    io.switch_2_imm      := true.B
     io.immediate         := imm.asSInt
 
     io.alu.op            := alu_ops.getALUOp(op, imm(11, 5), op_codes.Immediate)
 
     io.sel_rf_wb         := core_ctl_signals.result_alu
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_rs1
+    io.sel_operand_b     := core_ctl_signals.sel_oper_B_imm
   }
 
 }

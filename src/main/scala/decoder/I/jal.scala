@@ -23,12 +23,12 @@ private class JALControlSignals(override val config: AdeptConfig,
     // The funct3 in JAL is a don't Care
     io.pc.op             := pc_ops.getPcOp(0.U(3.W), op_codes.JAL)
 
-    io.switch_2_imm      := true.B
     io.immediate         := 4.S // Add 4 to PC
 
     io.alu.op            := alu_ops.add // Perform an Add between the PC and the immediate
 
     io.sel_operand_a     := core_ctl_signals.sel_oper_A_pc
+    io.sel_operand_b     := core_ctl_signals.sel_oper_B_imm
     io.sel_rf_wb         := core_ctl_signals.result_alu
   }
 

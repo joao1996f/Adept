@@ -38,6 +38,7 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
 
   // Outputs of the decoder
   val io = Wire(decoder_out)
+  io.setDefaults
 
   // Enumerate for ALU operations
   val alu_ops = AluOps
@@ -50,17 +51,6 @@ abstract class InstructionControlSignals(val config: AdeptConfig,
 
   // Enumerates for control signals in the Core
   val core_ctl_signals = AdeptControlSignals
-  io.sel_rf_wb     := DontCare
-  io.sel_operand_a := DontCare
-
-  io.registers.setDefaults
-  io.alu.setDefaults
-  io.pc.setDefaults
-  io.mem.setDefaults
-
-  io.immediate     := DontCare
-  io.switch_2_imm  := false.B
-  io.trap          := false.B
 
   generateControlSignals(config, instruction)
 

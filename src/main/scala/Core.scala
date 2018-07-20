@@ -16,6 +16,9 @@ final object AdeptControlSignals {
   // Control signal to select operand A to ALU
   val sel_oper_A_rs1 :: sel_oper_A_pc :: sel_oper_A_wb :: Nil = Enum(3)
 
+  // Control signal to select operand B to ALU
+  val sel_oper_B_rs2 :: sel_oper_B_imm :: sel_oper_B_wb :: Nil = Enum(3)
+
   // Control signal to select result to be written in the Register File
   val result_alu :: result_mem :: Nil = Enum(2)
 }
@@ -114,18 +117,23 @@ class Adept(config: AdeptConfig) extends Module {
                     core_ctl_signals.sel_oper_A_wb,
                     idecode.io.basic.out.sel_operand_a)
   alu.io.in.operand_A := MuxLookup(sel_rs1, 0.S,
-                                  Array(
-                                    core_ctl_signals.sel_oper_A_rs1 -> register_file.io.registers.rs1,
-                                    core_ctl_signals.sel_oper_A_pc  -> ex_pc.asSInt,
-                                    core_ctl_signals.sel_oper_A_wb  -> write_back
-                                  ))
+                                    Array(
+                                      core_ctl_signals.sel_oper_A_rs1 -> register_file.io.registers.rs1,
+                                      core_ctl_signals.sel_oper_A_pc  -> ex_pc.asSInt,
+                                      core_ctl_signals.sel_oper_A_wb  -> write_back
+                                    ))
 
-  alu.io.in.operand_B := Mux(sel_frw_path_rs2,
-                             write_back,
-                             Mux(idecode.io.basic.out.switch_2_imm,
-                                 idecode.io.basic.out.immediate,
-                                 register_file.io.registers.rs2)
-                         )
+  val sel_rs2 = Mux(sel_frw_path_rs2 &&
+                      idecode.io.basic.out.sel_operand_b =/= core_ctl_signals.sel_oper_B_imm,
+                    core_ctl_signals.sel_oper_B_wb,
+                    idecode.io.basic.out.sel_operand_b)
+  alu.io.in.operand_B := MuxLookup(sel_rs2, 0.S,
+                                     Array(
+                                       core_ctl_signals.sel_oper_B_imm -> idecode.io.basic.out.immediate,
+                                       core_ctl_signals.sel_oper_B_rs2 -> register_file.io.registers.rs2,
+                                       core_ctl_signals.sel_oper_B_wb  -> write_back
+                                     ))
+
   alu.io.in.decoder_params <> idecode.io.basic.out.alu
 
   // Memory Connections
