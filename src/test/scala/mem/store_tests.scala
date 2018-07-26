@@ -22,22 +22,22 @@ class BaseStore(c: Memory, config: AdeptConfig) extends BaseLoad(c, config) {
     val lsbs = addr & 0x00000003
     val masked_addr = addr >>> 2
 
-    val bitMask = if (opType == mem_ops.sb) {
+    val bitMask = if (opType == mem_ops.sb.litValue()) {
       0x000000ff << (8 * lsbs)
-    } else if (opType == mem_ops.sh && lsbs < 3) {
+    } else if (opType == mem_ops.sh.litValue() && lsbs < 3) {
       0x0000ffff << (8 * lsbs)
-    } else if (opType == mem_ops.sw && lsbs == 0) {
+    } else if (opType == mem_ops.sw.litValue() && lsbs == 0) {
       0xffffffff
     } else {
       // TODO: Memory should throw a trap for an ilegal memory op
       0x00000000
     }
 
-    val final_data_in = if (opType == mem_ops.sb) {
+    val final_data_in = if (opType == mem_ops.sb.litValue()) {
       (data_in.toInt & 0x000000ff) << (8 * lsbs)
-    } else if (opType == mem_ops.sh && lsbs < 3) {
+    } else if (opType == mem_ops.sh.litValue() && lsbs < 3) {
       (data_in.toInt & 0x0000ffff) << (8 * lsbs)
-    } else if (opType == mem_ops.sw && lsbs == 0) {
+    } else if (opType == mem_ops.sw.litValue() && lsbs == 0) {
       data_in.toInt
     } else {
       // TODO: Memory should throw a trap for an ilegal memory op
