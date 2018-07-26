@@ -28,6 +28,10 @@ for test in $HEXS/*; do
     # Run test in verilator
     make test-verilator PROG="$test" > "$OUTPUT_TEST_FILE"
     # Cut the log and take just the output that we want
-    tac "$OUTPUT_TEST_FILE" | grep "PC = " -m 1 -B32 | sed 's/\[.*\] \[.*\] //g' | tac > "$OUTPUT_RESULT_FILE"
+    if grep -q 'Trap' $LOG_FOLDER/verilator_$test_$(date +%d-%m-%Y); then
+        tac "$OUTPUT_TEST_FILE" | grep "Trap" -m 1 -B33 | sed 's/\[.*\] \[.*\] //g' | tac > "$OUTPUT_RESULT_FILE"
+    else
+        tac "$OUTPUT_TEST_FILE" | grep "PC = " -m 1 -B32 | sed 's/\[.*\] \[.*\] //g' | tac > "$OUTPUT_RESULT_FILE"
+    fi
     diff -w "$OUTPUT_RESULT_FILE" "$RESULTS_FOLDER/${TEST_NAME%.hex}/verilator"
 done
