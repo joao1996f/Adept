@@ -32,14 +32,9 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
     expect(c.io.basic.out.registers.rs1_sel, rs1)
     expect(c.io.basic.out.registers.rs2_sel, rs2)
     expect(c.io.basic.out.immediate, new_imm)
-    if (imm == 0) {
-      expect(c.io.basic.out.trap, trap)
+    expect(c.io.basic.out.trap, trap)
+    if (imm == 0) 
       expect(c.io.basic.out.alu.op, AluOps.add)    
-    } else if (imm == funct7alu) {
-      expect(c.io.basic.out.trap, trap)
-    } else {
-      expect(c.io.basic.out.trap, trap)
-    }
     expect(c.io.basic.out.sel_rf_wb, AdeptControlSignals.result_alu)
     expect(c.io.basic.out.sel_operand_a, AdeptControlSignals.sel_oper_A_rs1)
     expect(c.io.basic.out.sel_operand_b, AdeptControlSignals.sel_oper_B_rs2)
