@@ -32,7 +32,7 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.sel_rf_wb         := core_ctl_signals.result_alu
 
     // Check if the 7 MSBs respect the instruction set
-    when (imm =/= 0.U && imm =/= "b0100000".U){
+    when (imm =/= 0.U && imm =/= "b0100000".U) {
       io.trap := true.B         
     } .otherwise {
       io.trap := false.B

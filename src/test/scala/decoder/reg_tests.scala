@@ -14,14 +14,16 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
   private def ADD(rs1: Int, rs2: Int, imm: Int, rd: Int) {
     val instr = (((127 & imm) << 25) | ((31 & rs2) << 20) | 
                  ((31 & rs1) << 15) | ((31 & rd) << 7) | op_code.Registers.litValue())     
-    val new_imm = if ((imm >> 6) == 1)
+    val new_imm = if ((imm >> 6) == 1) {
                     ((0xFFFFFFF << 7) | imm)
-                  else 
+                  } else {
                     imm
-    val trap = if ((imm == 0) || (imm == funct7alu))
+                  }
+    val trap = if ((imm == 0) || (imm == funct7alu)) {
                  0
-               else
+               } else {
                  1                    
+               }
     poke(c.io.stall_reg, false)
     poke(c.io.basic.instruction, instr)
     
@@ -33,8 +35,9 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
     expect(c.io.basic.out.registers.rs2_sel, rs2)
     expect(c.io.basic.out.immediate, new_imm)
     expect(c.io.basic.out.trap, trap)
-    if (imm == 0) 
+    if (imm == 0) {
       expect(c.io.basic.out.alu.op, AluOps.add)    
+    }
     expect(c.io.basic.out.sel_rf_wb, AdeptControlSignals.result_alu)
     expect(c.io.basic.out.sel_operand_a, AdeptControlSignals.sel_oper_A_rs1)
     expect(c.io.basic.out.sel_operand_b, AdeptControlSignals.sel_oper_B_rs2)
@@ -44,12 +47,13 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
     var rs1 = rnd.nextInt(32)
     var rs2 = rnd.nextInt(32)
     val random = rnd.nextInt(128)
-    val imm = if (random % 2 == 0)
+    val imm = if (random % 2 == 0) {
                 0
-              else if (random % 5 == 0)
+              } else if (random % 5 == 0) {
                 funct7alu
-              else
+              } else {
                 random
+              }
     val rd  = rnd.nextInt(32)
     
     ADD(rs1, rs2, imm, rd)
