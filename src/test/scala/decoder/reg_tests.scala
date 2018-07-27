@@ -45,7 +45,7 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
     expect(c.io.basic.out.sel_operand_b, AdeptControlSignals.sel_oper_B_rs2)
   }
 
-  for (i <- 0 until 10000) {
+  for (i <- 0 until 100) {
     var rs1 = rnd.nextInt(32)
     var rs2 = rnd.nextInt(32)
     val random = rnd.nextInt(128)
