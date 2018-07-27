@@ -21,6 +21,8 @@ for test in $HEXS/*; do
     LOG_FOLDER=logs/"$TEST_NAME"_log
     mkdir -p "$LOG_FOLDER"
 
+    echo "Testing $TEST_NAME instruction"
+
     OUTPUT_TEST_FILE="$LOG_FOLDER/verilator_$test_$(date +%d-%m-%Y)"
     OUTPUT_RESULT_FILE="$LOG_FOLDER/verilator_result_$TEST_NAME_$(date +%d-%m-%Y)"
     # Run test in verilator
