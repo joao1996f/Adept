@@ -19,7 +19,8 @@ class DecoderUnitTesterAll(e: InstructionDecoder) extends PeekPokeTester(e) {
     new SLLI(e)
 
     // Register Type Instructions
-    new ADD(e)    
+    new ADD(e)
+    new SUB(e) 
 }
 
 class DecoderTester extends ChiselFlatSpec {
@@ -42,5 +43,10 @@ class DecoderTester extends ChiselFlatSpec {
     Driver(() => new InstructionDecoder(config), "verilator") {
       e => new ADD(e)
     } should be (true)
-  }  
+  }
+  "Decoder" should s"test SUB instruction (with verilator)" in {
+    Driver(() => new InstructionDecoder(config), "verilator") {
+      e => new SUB(e)
+    } should be (true)
+  }   
 }
