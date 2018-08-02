@@ -44,8 +44,8 @@ class ADD(c: InstructionDecoder) extends DecoderTestBase(c) {
   }
 
   for (i <- 0 until 100) {
-    var rs1 = rnd.nextInt(32)
-    var rs2 = rnd.nextInt(32)
+    val rs1 = rnd.nextInt(32)
+    val rs2 = rnd.nextInt(32)
     val random = rnd.nextInt(128)
     val imm = if (random % 2 == 0) {
                 0
