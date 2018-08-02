@@ -14,7 +14,7 @@ class DecoderTestBase(c: InstructionDecoder) extends PeekPokeTester(c) {
   val slti = Integer.parseInt("010", 2)
   val funct7alu = Integer.parseInt("0100000", 2);
 
-  def signExtension (imm: Int, nbits: Int) : Int = {
+  def signExtension(imm: Int, nbits: Int) : Int = {
     if ((imm >> (nbits - 1)) == 1) {
       ((0xFFFFFFFF << nbits) | imm)
     } else {
@@ -31,6 +31,7 @@ class DecoderUnitTesterAll(e: InstructionDecoder) extends PeekPokeTester(e) {
 
     // Register Type Instructions
     new ADD(e)
+    new SUB(e)
 }
 
 class DecoderTester extends ChiselFlatSpec {
@@ -62,6 +63,11 @@ class DecoderTester extends ChiselFlatSpec {
   "Decoder" should s"test ADD instruction (with verilator)" in {
     Driver(() => new InstructionDecoder(config), "verilator") {
       e => new ADD(e)
+    } should be (true)
+  }
+  "Decoder" should s"test SUB instruction (with verilator)" in {
+    Driver(() => new InstructionDecoder(config), "verilator") {
+      e => new SUB(e)
     } should be (true)
   }
 }
