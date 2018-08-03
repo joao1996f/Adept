@@ -105,3 +105,48 @@ class SUB(c: InstructionDecoder) extends DecoderTestBase(c) {
     SUB(rs1, rs2, imm, rd)
   }
 }
+
+class SLL(c: InstructionDecoder) extends DecoderTestBase(c) {
+  private def SLL(rs1: Int, rs2: Int, imm: Int, rd: Int) {
+    val instr = (((127 & imm) << 25) | ((31 & rs2) << 20) |
+                 ((31 & rs1) << 15) | (sll << 12) |
+                 ((31 & rd) << 7) | op_code.Registers.litValue())
+    val new_imm = signExtension(imm, 7)
+    val trap = if (imm == 0) {
+                 0
+               } else {
+                 1
+               }
+    poke(c.io.stall_reg, false)
+    poke(c.io.basic.instruction, instr)
+
+    step(1)
+
+    expect(c.io.basic.out.registers.we, true)
+    expect(c.io.basic.out.registers.rsd_sel, rd)
+    expect(c.io.basic.out.registers.rs1_sel, rs1)
+    expect(c.io.basic.out.registers.rs2_sel, rs2)
+    expect(c.io.basic.out.immediate, new_imm)
+    expect(c.io.basic.out.trap, trap)
+    expect(c.io.basic.out.alu.op, AluOps.sll)
+    expect(c.io.basic.out.sel_rf_wb, AdeptControlSignals.result_alu)
+    expect(c.io.basic.out.sel_operand_a, AdeptControlSignals.sel_oper_A_rs1)
+    expect(c.io.basic.out.sel_operand_b, AdeptControlSignals.sel_oper_B_rs2)
+  }
+
+  for (i <- 0 until 100) {
+    val rs1 = rnd.nextInt(32)
+    val rs2 = rnd.nextInt(32)
+    val random = rnd.nextInt(128)
+    val imm = if (random % 2 == 0) {
+                0
+              } else if (random % 5 == 0) {
+                funct7alu
+              } else {
+                random
+              }
+    val rd  = rnd.nextInt(32)
+
+    SLL(rs1, rs2, imm, rd)
+  }
+}

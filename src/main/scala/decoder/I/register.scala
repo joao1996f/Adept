@@ -23,7 +23,8 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.registers.rsd_sel := rsd_sel
     io.registers.we      := true.B
 
-    io.alu.op            := alu_ops.getALUOp(op, imm, op_codes.Registers)
+    val alu_op            = alu_ops.getALUOp(op, imm, op_codes.Registers)
+    io.alu.op            := alu_op
 
     io.immediate         := imm.asSInt
 
@@ -32,7 +33,10 @@ private class RegisterControlSignals(override val config: AdeptConfig,
     io.sel_rf_wb         := core_ctl_signals.result_alu
 
     // Check if the 7 MSBs respect the instruction set
-    when (imm =/= 0.U && imm =/= "b0100000".U){
+    when ((imm =/= 0.U && imm =/= "b0100000".U) ||
+          (imm === 0.U && (alu_op === alu_ops.sub || alu_op === alu_ops.sra)) ||
+          (imm === "b0100000".U &&
+          (alu_op =/= alu_ops.sub && alu_op =/= alu_ops.sra))) {
       io.trap := true.B
     } .otherwise {
       io.trap := false.B
