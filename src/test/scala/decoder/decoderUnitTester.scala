@@ -42,7 +42,7 @@ class DecoderTester extends ChiselFlatSpec {
   ///////////////////////////////////////////////////////////////////////////
   // Immediate Type Instructions
   ////////////////////////////////////////////////////////////////////////////
-  /*"Decoder" should s"test ADDI instruction (with verilator)" in {
+  "Decoder" should s"test ADDI instruction (with verilator)" in {
     Driver(() => new InstructionDecoder(config), "verilator") {
       e => new ADDI(e)
     } should be (true)
@@ -56,7 +56,7 @@ class DecoderTester extends ChiselFlatSpec {
     Driver(() => new InstructionDecoder(config), "verilator") {
       e => new SLLI(e)
     } should be (true)
-  }*/
+  }
 
   ////////////////////////////////////////////////////////////////////////////
   // Register Type Instructions
